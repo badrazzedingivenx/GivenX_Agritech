@@ -46,18 +46,23 @@ class _SplashScreenState extends State<SplashScreen>
             'assets/images/app1.png',
             fit: BoxFit.cover,
           ),
-          Center(
-            child: FadeTransition(
-              opacity: _animation,
-              child: ScaleTransition(
-                scale: _animation,
-                child: Image.asset(
-                  'assets/images/logoS.png',
-                  width: 320,
-                  height: 320,
+          // Move logo higher by using a Column
+          Column(
+            children: [
+              const SizedBox(height: 40), // Move logo even higher
+              FadeTransition(
+                opacity: _animation,
+                child: ScaleTransition(
+                  scale: _animation,
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 320,
+                    height: 320,
+                  ),
                 ),
               ),
-            ),
+              const Spacer(),
+            ],
           ),
         ],
       ),
