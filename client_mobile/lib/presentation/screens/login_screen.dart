@@ -1,6 +1,12 @@
 
+
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../data/mock_data/mock_users.dart';
+import 'dashboard/farmer_dashboard.dart';
+import 'dashboard/usine_dashboard.dart';
+import 'dashboard/transporteur_dashboard.dart';
+import 'dashboard/financeur_dashboard.dart';
 
 class LoginScreen extends StatelessWidget {
   static const routeName = '/login';
@@ -83,10 +89,75 @@ class _LoginFormState extends State<_LoginForm> {
         _passwordError = 'Password is required';
       }
       if (_emailError == null && _passwordError == null) {
-        // Proceed with login
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful (demo only)')),
+        // Check credentials against mockUsers
+        final user = mockUsers.firstWhere(
+          (u) => u['email'] == email && u['password'] == password,
+          orElse: () => {},
         );
+        if (user.isNotEmpty) {
+          final role = user['role'];
+          if (role == 'Agriculteur') {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => FarmerDashboard(
+                  fullName: user['fullName'] ?? 'Farmer',
+                  email: user['email'] ?? '',
+                  phone: user['phone'] ?? '',
+                  city: user['city'] ?? '',
+                  farmingType: user['farmingType'] ?? '',
+                  mainProducts: user['mainProducts'] ?? '',
+                ),
+              ),
+            );
+          } else if (role == 'Usine') {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => UsineDashboard(
+                  fullName: user['fullName'] ?? 'Usine',
+                  email: user['email'] ?? '',
+                  phone: user['phone'] ?? '',
+                  city: user['city'] ?? '',
+                  companyName: user['companyName'] ?? '',
+                  productTypes: user['productTypes'] ?? '',
+                ),
+              ),
+            );
+          } else if (role == 'Transporteur') {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => TransporteurDashboard(
+                  fullName: user['fullName'] ?? 'Transporteur',
+                  email: user['email'] ?? '',
+                  phone: user['phone'] ?? '',
+                  city: user['city'] ?? '',
+                  vehicleType: user['vehicleType'] ?? '',
+                  capacity: user['capacity'] ?? '',
+                ),
+              ),
+            );
+          } else if (role == 'Financeur') {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => FinanceurDashboard(
+                  fullName: user['fullName'] ?? 'Financeur',
+                  email: user['email'] ?? '',
+                  phone: user['phone'] ?? '',
+                  city: user['city'] ?? '',
+                  fundingType: user['fundingType'] ?? '',
+                  budgetRange: user['budgetRange'] ?? '',
+                ),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Unknown role.')),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid email or password.')),
+          );
+        }
       }
     });
   }
