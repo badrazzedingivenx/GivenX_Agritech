@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'login_screen.dart';
 
 class IntroScreen extends StatefulWidget {
   static const routeName = '/intro';
@@ -16,23 +17,23 @@ class _IntroScreenState extends State<IntroScreen> {
   final List<Map<String, String>> _pages = [
     {
       'image': 'assets/images/app2.png',
-      'title': 'Direct Sourcing',
-      'desc': 'Connect with local farmers and find the freshest produce, direct from the field.'
+      'title': 'Farmer',
+      'desc': 'Publish your harvests, receive orders, and request financing.'
     },
     {
       'image': 'assets/images/app3.png',
-      'title': 'Restaurant-to-Source',
-      'desc': 'Simplify your supply chain, reduce costs, and access a vast marketplace of growers.'
+      'title': 'Factory / Exporter',
+      'desc': 'Publish orders, track shipments, and manage your supply chain.'
     },
     {
       'image': 'assets/images/app4.png',
-      'title': 'Efficient Logistics',
-      'desc': 'Manage deliveries, track shipments in real-time, and optimize routes.'
+      'title': 'Transporter',
+      'desc': 'View assigned deliveries, accept new missions, and optimize your routes.'
     },
     {
       'image': 'assets/images/app5.png',
-      'title': 'Smart Ordering',
-      'desc': 'Create and manage orders effortlessly with powerful digital tools.'
+      'title': 'Financer',
+      'desc': 'Finance agricultural orders and track your returns.'
     },
   ];
 
@@ -90,7 +91,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                     color: Colors.transparent,
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(22),
-                                      onTap: () => Navigator.of(context).pushReplacementNamed('/role'),
+                                      onTap: () => Navigator.of(context).pushReplacementNamed(LoginScreen.routeName),
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
                                         decoration: BoxDecoration(
@@ -224,7 +225,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                           if (index == _pages.length - 1)
                                             ElevatedButton(
                                               onPressed: () {
-                                                Navigator.of(context).pushReplacementNamed('/role');
+                                                Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: const Color(0xFF2E7D32),

@@ -1,5 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../data/mock_data/user_roles.dart';
+
+import 'register_screen.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   static const routeName = '/role';
@@ -15,20 +18,23 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final roles = userRoles;
+    void _navigateToRegister() {
+      if (_selectedIndex != null) {
+        final role = roles[_selectedIndex!]['label'] as String;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RegisterScreen(role: role),
+          ),
+        );
+      }
+    }
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.white.withOpacity(0.85),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          'Select Your Role',
-          style: TextStyle(
-            color: Color(0xFF2E7D32),
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            letterSpacing: 0.2,
-          ),
-        ),
+        title: null,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Color(0xFF2E7D32)),
       ),
@@ -40,24 +46,43 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               fit: BoxFit.cover,
             ),
           ),
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xCCF8F5F2), // 80% opacity
-                  Color(0xCCF3EBDD), // 80% opacity
-                ],
-              ),
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(24.0),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Center(
-                      child: GridView.builder(
+          Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Container(
+                  width: 380,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.10),
+                        blurRadius: 32,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 0),
+                      const Center(
+                        child: Text(
+                          'Select Your Role',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: roles.length,
@@ -79,7 +104,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: Colors.white.withOpacity(isSelected ? 0.22 : 0.13),
                                 borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
@@ -93,8 +118,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                 border: Border.all(
                                   color: isSelected
                                       ? const Color(0xFF2E7D32)
-                                      : Colors.grey.shade200,
-                                  width: 2.5,
+                                      : Colors.white.withOpacity(0.4),
+                                  width: 2.0,
                                 ),
                               ),
                               child: Column(
@@ -113,7 +138,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                       size: 48,
                                       color: isSelected
                                           ? const Color(0xFF2E7D32)
-                                          : const Color(0xFF2E7D32),
+                                          : Colors.white,
                                     ),
                                   ),
                                   const SizedBox(height: 14),
@@ -124,7 +149,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                       fontWeight: FontWeight.w600,
                                       color: isSelected
                                           ? const Color(0xFF2E7D32)
-                                          : const Color(0xFF2E7D32),
+                                          : Colors.white,
                                       letterSpacing: 0.2,
                                     ),
                                   ),
@@ -134,41 +159,40 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                           );
                         },
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _selectedIndex != null ? () {
-                        // TODO: Proceed to next screen or save role
-                      } : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2E7D32),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 20),
-                        elevation: 10,
-                        shadowColor: const Color(0xFF2E7D32).withOpacity(0.22),
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 18,
-                          letterSpacing: 0.5,
+                      const SizedBox(height: 28),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _selectedIndex != null ? _navigateToRegister : null,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 8,
+                            shadowColor: const Color(0xFF2E7D32).withOpacity(0.22),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                              letterSpacing: 0.5,
+                            ),
+                            backgroundColor: const Color(0xFF2E7D32),
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text(
+                            'Continue',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                         ),
                       ),
-                      child: const Text(
-                        'Continue',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 18,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
