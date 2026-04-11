@@ -48,7 +48,7 @@ class DashboardScaffold extends StatelessWidget {
       automaticallyImplyLeading: false,
       title: Image.asset(
         'assets/images/logo.png',
-        height: 64,
+        height: 90, // Increased from 64 to 90
       ),
       actions: [
         IconButton(

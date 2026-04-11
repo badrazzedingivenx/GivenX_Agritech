@@ -30,11 +30,7 @@ class _IntroScreenState extends State<IntroScreen> {
       'title': 'Transporter',
       'desc': 'View assigned deliveries, accept new missions, and optimize your routes.'
     },
-    {
-      'image': 'assets/images/app5.png',
-      'title': 'Financer',
-      'desc': 'Finance agricultural orders and track your returns.'
-    },
+    // Removed financer/financeur page
   ];
 
   @override
