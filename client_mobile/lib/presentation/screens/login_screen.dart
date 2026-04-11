@@ -1,12 +1,10 @@
-
-
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../data/mock_data/mock_users.dart';
 import 'dashboard/farmer_dashboard.dart';
-import 'dashboard/usine_dashboard.dart';
 import 'dashboard/transporteur_dashboard.dart';
 import 'dashboard/financeur_dashboard.dart';
+import 'dashboard/usine_dashboard.dart';
 
 class LoginScreen extends StatelessWidget {
   static const routeName = '/login';
@@ -33,11 +31,13 @@ class LoginScreen extends StatelessWidget {
                 filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                 child: Container(
                   width: 380,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
                   decoration: BoxDecoration(
                     color: Colors.grey.withOpacity(0.18),
                     borderRadius: BorderRadius.circular(32),
-                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.2),
+                    border: Border.all(
+                        color: Colors.white.withOpacity(0.4), width: 1.2),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.10),
@@ -63,7 +63,6 @@ class _LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<_LoginForm> {
-
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -262,7 +261,8 @@ class _LoginFormState extends State<_LoginForm> {
                   showDialog(
                     context: context,
                     builder: (context) {
-                      final TextEditingController _forgotEmailController = TextEditingController();
+                      final TextEditingController _forgotEmailController =
+                          TextEditingController();
                       String? _forgotEmailError;
                       return StatefulBuilder(
                         builder: (context, setState) {
@@ -271,14 +271,18 @@ class _LoginFormState extends State<_LoginForm> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(28),
                               child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                                filter:
+                                    ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                                 child: Container(
                                   width: 340,
-                                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 28, vertical: 32),
                                   decoration: BoxDecoration(
                                     color: Colors.grey.withOpacity(0.18),
                                     borderRadius: BorderRadius.circular(28),
-                                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.2),
+                                    border: Border.all(
+                                        color: Colors.white.withOpacity(0.4),
+                                        width: 1.2),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withOpacity(0.10),
@@ -289,7 +293,8 @@ class _LoginFormState extends State<_LoginForm> {
                                   ),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'Forgot Password',
@@ -311,23 +316,36 @@ class _LoginFormState extends State<_LoginForm> {
                                       const SizedBox(height: 22),
                                       TextField(
                                         controller: _forgotEmailController,
-                                        keyboardType: TextInputType.emailAddress,
-                                        style: const TextStyle(color: Colors.white),
+                                        keyboardType:
+                                            TextInputType.emailAddress,
+                                        style: const TextStyle(
+                                            color: Colors.white),
                                         decoration: InputDecoration(
                                           filled: true,
-                                          fillColor: Colors.white.withOpacity(0.13),
+                                          fillColor:
+                                              Colors.white.withOpacity(0.13),
                                           hintText: 'Email',
-                                          hintStyle: const TextStyle(color: Colors.white70),
-                                          prefixIcon: const Icon(Icons.email, color: Colors.white70),
+                                          hintStyle: const TextStyle(
+                                              color: Colors.white70),
+                                          prefixIcon: const Icon(Icons.email,
+                                              color: Colors.white70),
                                           errorText: _forgotEmailError,
-                                          errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                                          errorStyle: const TextStyle(
+                                              color: Colors.redAccent,
+                                              fontSize: 13),
                                           enabledBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(16),
-                                            borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                            borderSide: BorderSide(
+                                                color: Colors.white
+                                                    .withOpacity(0.4)),
                                           ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(16),
-                                            borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                            borderSide: const BorderSide(
+                                                color: Color(0xFF2E7D32),
+                                                width: 2),
                                           ),
                                         ),
                                       ),
@@ -336,32 +354,45 @@ class _LoginFormState extends State<_LoginForm> {
                                         width: double.infinity,
                                         child: ElevatedButton(
                                           onPressed: () {
-                                            final email = _forgotEmailController.text.trim();
-                                            final gmailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@gmail\.com\b');
+                                            final email = _forgotEmailController
+                                                .text
+                                                .trim();
+                                            final gmailRegex = RegExp(
+                                                r'^[a-zA-Z0-9._%+-]+@gmail\.com\b');
                                             setState(() {
                                               _forgotEmailError = null;
                                               if (email.isEmpty) {
-                                                _forgotEmailError = 'Email is required';
-                                              } else if (!gmailRegex.hasMatch(email)) {
-                                                _forgotEmailError = 'Please enter a valid Gmail address';
+                                                _forgotEmailError =
+                                                    'Email is required';
+                                              } else if (!gmailRegex
+                                                  .hasMatch(email)) {
+                                                _forgotEmailError =
+                                                    'Please enter a valid Gmail address';
                                               }
                                             });
                                             if (_forgotEmailError == null) {
                                               Navigator.of(context).pop();
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text('If this email exists, a reset link has been sent. (demo only)')),
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                const SnackBar(
+                                                    content: Text(
+                                                        'If this email exists, a reset link has been sent. (demo only)')),
                                               );
                                             }
                                           },
                                           style: ElevatedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(vertical: 16),
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 16),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(16),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
                                             ),
-                                            backgroundColor: const Color(0xFF2E7D32),
+                                            backgroundColor:
+                                                const Color(0xFF2E7D32),
                                             foregroundColor: Colors.white,
                                             elevation: 8,
-                                            shadowColor: const Color(0xFF2E7D32).withOpacity(0.22),
+                                            shadowColor: const Color(0xFF2E7D32)
+                                                .withOpacity(0.22),
                                             textStyle: const TextStyle(
                                               fontWeight: FontWeight.w600,
                                               fontSize: 16,
@@ -456,19 +487,19 @@ class _LoginFormState extends State<_LoginForm> {
               "Don't have an account? ",
               style: TextStyle(color: Colors.white, fontSize: 15),
             ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).pushNamed('/role');
-                },
-                child: const Text(
-                  'Signup',
-                  style: TextStyle(
-                    color: Color(0xFF43EA7A),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).pushNamed('/role');
+              },
+              child: const Text(
+                'Signup',
+                style: TextStyle(
+                  color: Color(0xFF43EA7A),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
                 ),
               ),
+            ),
           ],
         ),
         const SizedBox(height: 10),
