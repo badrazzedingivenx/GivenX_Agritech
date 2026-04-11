@@ -6,7 +6,7 @@ import '../../data/mock_data/mock_users.dart';
 import 'dashboard/farmer_dashboard.dart';
 import 'dashboard/usine_dashboard.dart';
 import 'dashboard/transporteur_dashboard.dart';
-import 'dashboard/financeur_dashboard.dart';
+import 'dashboard/banque_dashboard.dart';
 
 class LoginScreen extends StatelessWidget {
   static const routeName = '/login';
@@ -135,16 +135,15 @@ class _LoginFormState extends State<_LoginForm> {
                 ),
               ),
             );
-          } else if (role == 'Financeur') {
+          } else if (role == 'Banque') {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
-                builder: (context) => FinanceurDashboard(
-                  fullName: user['fullName'] ?? 'Financeur',
+                builder: (context) => BanqueDashboard(
+                  bankName: user['bankName'] ?? '',
+                  officialId: user['officialId'] ?? '',
                   email: user['email'] ?? '',
                   phone: user['phone'] ?? '',
-                  city: user['city'] ?? '',
-                  fundingType: user['fundingType'] ?? '',
-                  budgetRange: user['budgetRange'] ?? '',
+                  logoPath: user['logoPath'] ?? '',
                 ),
               ),
             );

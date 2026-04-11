@@ -33,15 +33,15 @@ List<Map<String, String>> mockUsers = [
     'vehicleType': 'Truck',
     'capacity': '10 Tons',
   },
-  // Financeur (Financer)
+  // Banque (Bank)
   {
-    'email': 'financer@gmail.com',
-    'password': 'financer123',
-    'role': 'Financeur',
-    'fullName': 'Imane Finance',
+    'role': 'Banque',
+    'bankName': 'Banque Agricole',
+    'officialId': 'CAM-001',
+    'email': 'banque@gmail.com',
+    'password': 'banque123',
     'phone': '0600000004',
-    'city': 'Rabat',
-    'fundingType': 'Microloan',
-    'budgetRange': '10000-50000 MAD',
+    'logoPath': 'assets/images/bank_logo.png',
+    'adminValidated': 'false',
   },
 ];

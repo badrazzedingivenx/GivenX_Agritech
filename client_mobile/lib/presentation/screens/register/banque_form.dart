@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
-import '../dashboard/financeur_dashboard.dart';
+import '../dashboard/banque_dashboard.dart';
 
-class FinanceurForm extends StatefulWidget {
-  const FinanceurForm({super.key});
+class BanqueForm extends StatefulWidget {
+  const BanqueForm({Key? key}) : super(key: key);
 
   @override
-  State<FinanceurForm> createState() => _FinanceurFormState();
+  State<BanqueForm> createState() => _BanqueFormState();
 }
 
-class _FinanceurFormState extends State<FinanceurForm> {
+class _BanqueFormState extends State<BanqueForm> {
   final _formKey = GlobalKey<FormState>();
   final Map<String, String?> _data = {};
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _logoController = TextEditingController();
   bool _showPassword = false;
   bool _showConfirmPassword = false;
-  final List<String> _fundingTypes = ['Agriculture', 'Livestock', 'Both'];
-  String? _selectedFundingType;
-  final List<String> _budgetRanges = ['Less than 10k', '10k–50k', '50k–100k', '>100k'];
-  String? _selectedBudgetRange;
+  String? _uploadedLogoPath;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +27,7 @@ class _FinanceurFormState extends State<FinanceurForm> {
         children: [
           const Center(
             child: Text(
-              'Register as Financeur',
+              'Register as Banque',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -41,7 +39,7 @@ class _FinanceurFormState extends State<FinanceurForm> {
           const SizedBox(height: 10),
           const Center(
             child: Text(
-              'Create your financeur account',
+              'Create your bank account',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.white70,
@@ -51,17 +49,15 @@ class _FinanceurFormState extends State<FinanceurForm> {
             ),
           ),
           const SizedBox(height: 32),
-          _buildTextField('Full Name', 'fullName', required: true, icon: Icons.person),
+          _buildTextField('Bank Name', 'bankName', required: true, icon: Icons.account_balance),
+          const SizedBox(height: 18),
+          _buildTextField('Official ID (ex: CAM-001)', 'officialId', required: true, icon: Icons.badge),
+          const SizedBox(height: 18),
+          _buildTextField('Institutional Email', 'email', required: true, email: true, icon: Icons.email, keyboardType: TextInputType.emailAddress),
           const SizedBox(height: 18),
           _buildTextField('Phone Number', 'phone', required: true, icon: Icons.phone, keyboardType: TextInputType.phone),
           const SizedBox(height: 18),
-          _buildTextField('City', 'city', required: true, icon: Icons.location_city),
-          const SizedBox(height: 18),
-          _buildFundingTypeDropdown(),
-          const SizedBox(height: 18),
-          _buildBudgetRangeDropdown(),
-          const SizedBox(height: 18),
-          _buildTextField('Email', 'email', required: true, email: true, icon: Icons.email, keyboardType: TextInputType.emailAddress),
+          _buildLogoUploadField(),
           const SizedBox(height: 18),
           TextFormField(
             controller: _passwordController,
@@ -136,17 +132,32 @@ class _FinanceurFormState extends State<FinanceurForm> {
                 final valid = _formKey.currentState!.validate();
                 if (valid) {
                   _formKey.currentState!.save();
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FinanceurDashboard(
-                        fullName: _data['fullName'] ?? '',
-                        email: _data['email'] ?? '',
-                        phone: _data['phone'] ?? '',
-                        city: _data['city'] ?? '',
-                        fundingType: _selectedFundingType ?? '',
-                        budgetRange: _selectedBudgetRange ?? '',
-                      ),
+                  // Simulate admin validation required
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Awaiting Admin Validation'),
+                      content: const Text('Your registration is pending admin approval. You will be notified once validated.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BanqueDashboard(
+                                  bankName: _data['bankName'] ?? '',
+                                  officialId: _data['officialId'] ?? '',
+                                  email: _data['email'] ?? '',
+                                  phone: _data['phone'] ?? '',
+                                  logoPath: _uploadedLogoPath ?? '',
+                                ),
+                              ),
+                            );
+                          },
+                          child: const Text('OK'),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -217,78 +228,75 @@ class _FinanceurFormState extends State<FinanceurForm> {
           borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
         ),
       ),
-        validator: validator ?? (value) {
-          if (required && (value == null || value.isEmpty)) {
-            return 'Required';
-          }
-          if (email && value != null && !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(value)) {
-            return 'Please enter a valid email address';
-          }
-          return null;
-        },
+      validator: validator ?? (value) {
+        if (required && (value == null || value.isEmpty)) {
+          return 'Required';
+        }
+        if (email && value != null && !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(value)) {
+          return 'Please enter a valid email address';
+        }
+        return null;
+      },
       onSaved: onSaved ?? (value) => _data[key] = value,
     );
   }
 
-  Widget _buildFundingTypeDropdown() {
-    return DropdownButtonFormField<String>(
-      value: _selectedFundingType,
-      items: _fundingTypes
-          .map((type) => DropdownMenuItem(
-                value: type,
-                child: Text(type, style: const TextStyle(color: Colors.white)),
-              ))
-          .toList(),
-      onChanged: (value) => setState(() => _selectedFundingType = value),
-      onSaved: (value) => _selectedFundingType = value,
-      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.13),
-        labelText: 'Funding Type',
-        labelStyle: const TextStyle(color: Colors.white70),
-        prefixIcon: const Icon(Icons.account_balance_wallet, color: Colors.white70),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+  Widget _buildLogoUploadField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Upload Logo / Verification Documents', style: TextStyle(color: Colors.white70, fontSize: 15)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _logoController,
+                readOnly: true,
+                style: const TextStyle(color: Colors.white70),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.13),
+                  hintText: 'No file selected',
+                  hintStyle: const TextStyle(color: Colors.white54),
+                  prefixIcon: const Icon(Icons.upload_file, color: Colors.white70),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+                  ),
+                ),
+                validator: (value) {
+                  if ((_uploadedLogoPath == null || _uploadedLogoPath!.isEmpty)) {
+                    return 'Required';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: () async {
+                // Simulate file picking
+                setState(() {
+                  _uploadedLogoPath = 'assets/images/bank_logo.png';
+                  _logoController.text = 'bank_logo.png';
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2E7D32),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Upload'),
+            ),
+          ],
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
-        ),
-      ),
-      dropdownColor: const Color(0xFF2E7D32),
-    );
-  }
-
-  Widget _buildBudgetRangeDropdown() {
-    return DropdownButtonFormField<String>(
-      value: _selectedBudgetRange,
-      items: _budgetRanges
-          .map((range) => DropdownMenuItem(
-                value: range,
-                child: Text(range, style: const TextStyle(color: Colors.white)),
-              ))
-          .toList(),
-      onChanged: (value) => setState(() => _selectedBudgetRange = value),
-      onSaved: (value) => _selectedBudgetRange = value,
-      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.13),
-        labelText: 'Budget Range',
-        labelStyle: const TextStyle(color: Colors.white70),
-        prefixIcon: const Icon(Icons.monetization_on, color: Colors.white70),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
-        ),
-      ),
-      dropdownColor: const Color(0xFF2E7D32),
+      ],
     );
   }
 }

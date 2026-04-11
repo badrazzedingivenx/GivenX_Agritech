@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'register/fermer_form.dart';
 import 'register/usine_form.dart';
 import 'register/transporteur_form.dart';
-import 'register/financeur_form.dart';
+import 'register/banque_form.dart';
 
 class RegisterScreen extends StatelessWidget {
   final String role;
@@ -17,7 +17,7 @@ class RegisterScreen extends StatelessWidget {
     if (role == 'Farmer') mappedRole = 'Agriculteur';
     else if (role == 'Factory/Exporter') mappedRole = 'Usine / Exportateur';
     else if (role == 'Transporter') mappedRole = 'Transporteur';
-    else if (role == 'Financer') mappedRole = 'Financeur';
+    else if (role == 'Banque') mappedRole = 'Banque';
 
     switch (mappedRole) {
       case 'Agriculteur':
@@ -29,8 +29,8 @@ class RegisterScreen extends StatelessWidget {
       case 'Transporteur':
         form = const TransporteurForm();
         break;
-      case 'Financeur':
-        form = const FinanceurForm();
+      case 'Banque':
+        form = const BanqueForm();
         break;
       default:
         form = const Center(child: Text('Unknown role'));
