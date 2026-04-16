@@ -1,0 +1,97 @@
+﻿Analyzing client_mobile...                                      
+
+   info - Parameter 'key' could be a super parameter - lib\presentation\screens\dashboard\banque_dashboard.dart:12:9 - use_super_parameters
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:61:25 - prefer_const_constructors
+   info - Use 'const' literals as arguments to constructors of '@immutable' classes - lib\presentation\screens\dashboard\banque_dashboard.dart:63:37 - prefer_const_literals_to_create_immutables
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:65:29 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:65:52 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:65:112 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:74:34 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:85:21 - prefer_const_constructors
+   info - Use 'const' literals as arguments to constructors of '@immutable' classes - lib\presentation\screens\dashboard\banque_dashboard.dart:87:33 - prefer_const_literals_to_create_immutables
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:88:25 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:95:25 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:142:13 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:154:28 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:156:30 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:174:32 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:176:34 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:210:22 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:212:24 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\banque_dashboard.dart:228:13 - prefer_const_constructors
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\dashboard\banque_dashboard.dart:274:36 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\presentation\screens\dashboard\farmer_dashboard.dart:13:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\dashboard\farmer_dashboard.dart:162:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\dashboard\farmer_dashboard.dart:205:36 - deprecated_member_use
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\farmer_dashboard.dart:261:13 - prefer_const_constructors
+   info - Parameter 'key' could be a super parameter - lib\presentation\screens\dashboard\transporteur_dashboard.dart:16:9 - use_super_parameters
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\transporteur_dashboard.dart:147:62 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\transporteur_dashboard.dart:217:11 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\transporteur_dashboard.dart:218:20 - prefer_const_constructors
+   info - Use 'const' literals as arguments to constructors of '@immutable' classes - lib\presentation\screens\dashboard\transporteur_dashboard.dart:220:25 - prefer_const_literals_to_create_immutables
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\transporteur_dashboard.dart:222:17 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\dashboard\transporteur_dashboard.dart:222:64 - prefer_const_constructors
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\dashboard\transporteur_dashboard.dart:272:64 - deprecated_member_use
+warning - The value of the field '_currentPage' isn't used - lib\presentation\screens\intro_screen.dart:15:7 - unused_field
+   info - Use 'const' for final variables initialized to a constant value - lib\presentation\screens\intro_screen.dart:76:25 - prefer_const_declarations
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\intro_screen.dart:98:67 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\intro_screen.dart:133:65 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\intro_screen.dart:233:86 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\intro_screen.dart:265:86 - deprecated_member_use
+   info - The local variable '_forgotEmailController' starts with an underscore - lib\presentation\screens\login_screen.dart:264:51 - no_leading_underscores_for_local_identifiers
+   info - The local variable '_forgotEmailError' starts with an underscore - lib\presentation\screens\login_screen.dart:265:31 - no_leading_underscores_for_local_identifiers
+   info - Parameter 'key' could be a super parameter - lib\presentation\screens\register\banque_form.dart:5:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\banque_form.dart:68:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\banque_form.dart:81:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\banque_form.dart:101:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\banque_form.dart:114:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\banque_form.dart:171:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\banque_form.dart:214:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\banque_form.dart:224:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\banque_form.dart:259:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\banque_form.dart:265:64 - deprecated_member_use
+   info - The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\presentation\screens\register\fermer_form.dart:2:8 - unnecessary_import
+warning - The value of the field '_mainProductsController' isn't used - lib\presentation\screens\register\fermer_form.dart:23:31 - unused_field
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\fermer_form.dart:79:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\fermer_form.dart:92:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\fermer_form.dart:112:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\fermer_form.dart:125:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\fermer_form.dart:182:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\fermer_form.dart:225:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\fermer_form.dart:235:54 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\screens\register\fermer_form.dart:257:7 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\fermer_form.dart:269:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\fermer_form.dart:275:54 - deprecated_member_use
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\register\fermer_form.dart:317:11 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\presentation\screens\register\fermer_form.dart:319:20 - prefer_const_constructors
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\transporteur_form.dart:71:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\transporteur_form.dart:84:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\transporteur_form.dart:104:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\transporteur_form.dart:117:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\transporteur_form.dart:159:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\transporteur_form.dart:202:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\transporteur_form.dart:212:54 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\screens\register\transporteur_form.dart:234:7 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\transporteur_form.dart:246:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register\transporteur_form.dart:252:54 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\presentation\screens\register\usine_form.dart:28:9 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\presentation\screens\register_screen.dart:17:27 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\screens\register_screen.dart:18:42 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\screens\register_screen.dart:19:37 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\screens\register_screen.dart:20:32 - curly_braces_in_flow_control_structures
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register_screen.dart:58:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register_screen.dart:60:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\register_screen.dart:63:45 - deprecated_member_use
+   info - Use 'const' for final variables initialized to a constant value - lib\presentation\screens\role_selection_screen.dart:20:5 - prefer_const_declarations
+   info - The local variable '_navigateToRegister' starts with an underscore - lib\presentation\screens\role_selection_screen.dart:21:10 - no_leading_underscores_for_local_identifiers
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\role_selection_screen.dart:58:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\role_selection_screen.dart:60:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\role_selection_screen.dart:63:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\role_selection_screen.dart:107:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\role_selection_screen.dart:112:67 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\role_selection_screen.dart:121:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\role_selection_screen.dart:131:69 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\screens\role_selection_screen.dart:173:66 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\screens\splash_screen.dart:29:20 - use_build_context_synchronously
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\dashboard_scaffold.dart:11:9 - use_super_parameters
+

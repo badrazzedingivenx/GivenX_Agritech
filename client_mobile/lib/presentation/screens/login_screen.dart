@@ -35,12 +35,12 @@ class LoginScreen extends StatelessWidget {
                   width: 380,
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
                   decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.18),
+                    color: Colors.grey.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(32),
-                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.2),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.2),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.10),
+                        color: Colors.black.withValues(alpha: 0.10),
                         blurRadius: 32,
                         offset: const Offset(0, 12),
                       ),
@@ -198,7 +198,7 @@ class _LoginFormState extends State<_LoginForm> {
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white.withOpacity(0.13),
+            fillColor: Colors.white.withValues(alpha: 0.13),
             hintText: 'Email',
             hintStyle: const TextStyle(color: Colors.white70),
             prefixIcon: const Icon(Icons.email, color: Colors.white70),
@@ -206,7 +206,7 @@ class _LoginFormState extends State<_LoginForm> {
             errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -222,7 +222,7 @@ class _LoginFormState extends State<_LoginForm> {
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white.withOpacity(0.13),
+            fillColor: Colors.white.withValues(alpha: 0.13),
             hintText: 'Password',
             hintStyle: const TextStyle(color: Colors.white70),
             prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
@@ -241,7 +241,7 @@ class _LoginFormState extends State<_LoginForm> {
             errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -275,12 +275,12 @@ class _LoginFormState extends State<_LoginForm> {
                                   width: 340,
                                   padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey.withOpacity(0.18),
+                                    color: Colors.grey.withValues(alpha: 0.18),
                                     borderRadius: BorderRadius.circular(28),
-                                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.2),
+                                    border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.2),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.10),
+                                        color: Colors.black.withValues(alpha: 0.10),
                                         blurRadius: 24,
                                         offset: const Offset(0, 8),
                                       ),
@@ -314,7 +314,7 @@ class _LoginFormState extends State<_LoginForm> {
                                         style: const TextStyle(color: Colors.white),
                                         decoration: InputDecoration(
                                           filled: true,
-                                          fillColor: Colors.white.withOpacity(0.13),
+                                          fillColor: Colors.white.withValues(alpha: 0.13),
                                           hintText: 'Email',
                                           hintStyle: const TextStyle(color: Colors.white70),
                                           prefixIcon: const Icon(Icons.email, color: Colors.white70),
@@ -322,7 +322,7 @@ class _LoginFormState extends State<_LoginForm> {
                                           errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
                                           enabledBorder: OutlineInputBorder(
                                             borderRadius: BorderRadius.circular(16),
-                                            borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+                                            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
                                           ),
                                           focusedBorder: OutlineInputBorder(
                                             borderRadius: BorderRadius.circular(16),
@@ -360,7 +360,7 @@ class _LoginFormState extends State<_LoginForm> {
                                             backgroundColor: const Color(0xFF2E7D32),
                                             foregroundColor: Colors.white,
                                             elevation: 8,
-                                            shadowColor: const Color(0xFF2E7D32).withOpacity(0.22),
+                                            shadowColor: const Color(0xFF2E7D32).withValues(alpha: 0.22),
                                             textStyle: const TextStyle(
                                               fontWeight: FontWeight.w600,
                                               fontSize: 16,
@@ -427,7 +427,7 @@ class _LoginFormState extends State<_LoginForm> {
                 borderRadius: BorderRadius.circular(16),
               ),
               elevation: 8,
-              shadowColor: const Color(0xFF2E7D32).withOpacity(0.22),
+              shadowColor: const Color(0xFF2E7D32).withValues(alpha: 0.22),
               textStyle: const TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 18,

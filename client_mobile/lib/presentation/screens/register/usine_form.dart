@@ -44,14 +44,14 @@ class _UsineFormState extends State<UsineForm> {
         },
         decoration: InputDecoration(
           filled: true,
-          fillColor: Colors.white.withOpacity(0.13),
+          fillColor: Colors.white.withValues(alpha: 0.13),
           labelText: 'Product Types',
           labelStyle: const TextStyle(color: Colors.white70),
           prefixIcon: const Icon(Icons.category, color: Colors.white70),
           errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -147,7 +147,7 @@ class _UsineFormState extends State<UsineForm> {
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.13),
+                fillColor: Colors.white.withValues(alpha: 0.13),
                 labelText: 'Password',
                 labelStyle: const TextStyle(color: Colors.white70),
                 prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
@@ -158,7 +158,7 @@ class _UsineFormState extends State<UsineForm> {
                 errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -180,7 +180,7 @@ class _UsineFormState extends State<UsineForm> {
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.13),
+                fillColor: Colors.white.withValues(alpha: 0.13),
                 labelText: 'Confirm Password',
                 labelStyle: const TextStyle(color: Colors.white70),
                 prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
@@ -191,7 +191,7 @@ class _UsineFormState extends State<UsineForm> {
                 errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -234,7 +234,7 @@ class _UsineFormState extends State<UsineForm> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   elevation: 8,
-                  shadowColor: const Color(0xFF2E7D32).withOpacity(0.22),
+                  shadowColor: const Color(0xFF2E7D32).withValues(alpha: 0.22),
                   textStyle: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 18,
@@ -279,7 +279,7 @@ class _UsineFormState extends State<UsineForm> {
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white.withOpacity(0.13),
+            fillColor: Colors.white.withValues(alpha: 0.13),
             labelText: label,
             labelStyle: const TextStyle(color: Colors.white70),
             hintText: helper,
@@ -290,7 +290,7 @@ class _UsineFormState extends State<UsineForm> {
             errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
