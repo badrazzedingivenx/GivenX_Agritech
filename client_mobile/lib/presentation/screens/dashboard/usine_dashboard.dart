@@ -466,85 +466,85 @@ class _HomeTab extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         GestureDetector(
-            onTap: () => onTabChange?.call(2),
-            child: Container(
-              height: 180,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Image.asset(
-                    'assets/images/marketplace_banner.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.8),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 20,
-                  left: 20,
-                  right: 20,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF43EA7A),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text('NEW ARRIVALS',
-                            style: TextStyle(
-                                color: Color(0xFF0F3628),
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1)),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text('Direct Sourcing from 500+ Local Farms',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              shadows: [
-                                Shadow(
-                                    color: Colors.black45,
-                                    blurRadius: 10,
-                                    offset: Offset(0, 2))
-                              ])),
-                    ],
-                  ),
+          onTap: () => onTabChange?.call(2),
+          child: Container(
+            height: 180,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Image.asset(
+                      'assets/images/marketplace_banner.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.8),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF43EA7A),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text('NEW ARRIVALS',
+                              style: TextStyle(
+                                  color: Color(0xFF0F3628),
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1)),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('Direct Sourcing from 500+ Local Farms',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                shadows: [
+                                  Shadow(
+                                      color: Colors.black45,
+                                      blurRadius: 10,
+                                      offset: Offset(0, 2))
+                                ])),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
       ],
     );
   }
@@ -1664,208 +1664,108 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
       'image': 'assets/images/usine/tractor.jpg',
     },
 
-    // --- FRUITS (10) ---
+    // --- FRUITS (5) ---
     {
-      'name': 'Organic Dragon Fruit',
-      'origin': 'Agadir, Morocco',
-      'price': '\$4.20/kg',
-      'priceValue': 4.20,
-      'category': 'Fruits',
-      'isUrgent': true,
-      'isOrganic': true,
-      'image': 'assets/images/usine/dragon_fruit.jpg',
-    },
-    {
-      'name': 'Sweet Clementines (Box)',
+      'name': 'Navel Oranges',
       'origin': 'Berkane, Morocco',
-      'price': '\$12.50',
-      'priceValue': 12.50,
+      'price': '\$0.65/kg',
+      'priceValue': 0.65,
       'category': 'Fruits',
       'isUrgent': false,
       'isOrganic': true,
-      'image': 'assets/images/usine/dragon_fruit.jpg',
+      'image': 'assets/images/usine/oranges.jpg',
     },
     {
-      'name': 'Golden Delicious Apples',
+      'name': 'Watermelon (Dalla7)',
+      'origin': 'Zagora, Morocco',
+      'price': '\$0.40/kg',
+      'priceValue': 0.40,
+      'category': 'Fruits',
+      'isUrgent': true,
+      'isOrganic': false,
+      'image': 'assets/images/usine/watermelon.jpg',
+    },
+    {
+      'name': 'Sweet Strawberries',
+      'origin': 'Larache, Morocco',
+      'price': '\$2.50/kg',
+      'priceValue': 2.50,
+      'category': 'Fruits',
+      'isUrgent': true,
+      'isOrganic': true,
+      'image': 'assets/images/usine/strawberries.jpg',
+    },
+    {
+      'name': 'Red Apples',
       'origin': 'Midelt, Morocco',
       'price': '\$1.10/kg',
       'priceValue': 1.10,
       'category': 'Fruits',
       'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/dragon_fruit.jpg',
+      'isOrganic': true,
+      'image': 'assets/images/usine/apples.jpg',
     },
     {
-      'name': 'Fresh Strawberries',
-      'origin': 'Larache, Morocco',
+      'name': 'Avocado (Hass)',
+      'origin': 'Gharb, Morocco',
       'price': '\$3.50/kg',
       'priceValue': 3.50,
       'category': 'Fruits',
-      'isUrgent': true,
-      'isOrganic': true,
-      'image': 'assets/images/usine/dragon_fruit.jpg',
-    },
-    {
-      'name': 'Pomegranate (Anar)',
-      'origin': 'Taza, Morocco',
-      'price': '\$2.20/kg',
-      'priceValue': 2.20,
-      'category': 'Fruits',
       'isUrgent': false,
       'isOrganic': true,
-      'image': 'assets/images/usine/dragon_fruit.jpg',
-    },
-    {
-      'name': 'Watermelon (Red)',
-      'origin': 'Zagora, Morocco',
-      'price': '\$0.40/kg',
-      'priceValue': 0.40,
-      'category': 'Fruits',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/dragon_fruit.jpg',
-    },
-    {
-      'name': 'Navel Oranges (Bulk)',
-      'origin': 'Beni Mellal, Morocco',
-      'price': '\$0.85/kg',
-      'priceValue': 0.85,
-      'category': 'Fruits',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/dragon_fruit.jpg',
-    },
-    {
-      'name': 'Red Seedless Grapes',
-      'origin': 'Bouznika, Morocco',
-      'price': '\$2.10/kg',
-      'priceValue': 2.10,
-      'category': 'Fruits',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/dragon_fruit.jpg',
-    },
-    {
-      'name': 'Fresh Figs (Brown)',
-      'origin': 'Taounate, Morocco',
-      'price': '\$5.00/kg',
-      'priceValue': 5.0,
-      'category': 'Fruits',
-      'isUrgent': true,
-      'isOrganic': true,
-      'image': 'assets/images/usine/dragon_fruit.jpg',
-    },
-    {
-      'name': 'Bananas (Canary)',
-      'origin': 'Souss, Morocco',
-      'price': '\$0.95/kg',
-      'priceValue': 0.95,
-      'category': 'Fruits',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/dragon_fruit.jpg',
+      'image': 'assets/images/usine/avocado.jpg',
     },
 
-    // --- VEGETABLES (10) ---
+    // --- VEGETABLES (5) ---
     {
-      'name': 'Organic Fresh Tomatoes',
-      'origin': 'Souss-Massa, Morocco',
-      'price': '\$0.95/kg',
-      'priceValue': 0.95,
-      'category': 'Vegetables',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/Tomatoes.jpg',
-    },
-    {
-      'name': 'Red Onions (Large)',
-      'origin': 'Moulay Bousselham, Morocco',
-      'price': '\$0.60/kg',
-      'priceValue': 0.60,
-      'category': 'Vegetables',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/Tomatoes.jpg',
-    },
-    {
-      'name': 'Russet Potatoes (Bulk)',
-      'origin': 'Middle Atlas, Morocco',
-      'price': '\$0.55/kg',
-      'priceValue': 0.55,
-      'category': 'Vegetables',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/Tomatoes.jpg',
-    },
-    {
-      'name': 'Bell Peppers (Mix)',
+      'name': 'Red Tomatoes',
       'origin': 'Agadir, Morocco',
-      'price': '\$1.80/kg',
-      'priceValue': 1.80,
-      'category': 'Vegetables',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/Tomatoes.jpg',
-    },
-    {
-      'name': 'Fresh Carrots',
-      'origin': 'Berrchid, Morocco',
-      'price': '\$0.70/kg',
-      'priceValue': 0.70,
-      'category': 'Vegetables',
-      'isUrgent': true,
-      'isOrganic': true,
-      'image': 'assets/images/usine/lettuce.jpg',
-    },
-    {
-      'name': 'Eggplant (Black)',
-      'origin': 'Taroudant, Morocco',
       'price': '\$0.80/kg',
       'priceValue': 0.80,
       'category': 'Vegetables',
       'isUrgent': false,
       'isOrganic': true,
-      'image': 'assets/images/usine/lettuce.jpg',
+      'image': 'assets/images/usine/tomatoes.jpg',
     },
     {
-      'name': 'Green Zucchini',
-      'origin': 'Larache, Morocco',
-      'price': '\$1.20/kg',
-      'priceValue': 1.20,
-      'category': 'Vegetables',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/lettuce.jpg',
-    },
-    {
-      'name': 'Cauliflower (White)',
-      'origin': 'Sidi Bennour, Morocco',
-      'price': '\$1.50/unit',
-      'priceValue': 1.50,
-      'category': 'Vegetables',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/lettuce.jpg',
-    },
-    {
-      'name': 'Red Chili Peppers',
-      'origin': 'Fquih Ben Salah, Morocco',
-      'price': '\$3.00/kg',
-      'priceValue': 3.0,
+      'name': 'Red Onions',
+      'origin': 'Hajeb, Morocco',
+      'price': '\$0.60/kg',
+      'priceValue': 0.60,
       'category': 'Vegetables',
       'isUrgent': true,
       'isOrganic': false,
-      'image': 'assets/images/usine/Tomatoes.jpg',
+      'image': 'assets/images/usine/onions.jpg',
     },
     {
-      'name': 'Garlic (Bulk)',
-      'origin': 'Taza, Morocco',
-      'price': '\$4.50/kg',
-      'priceValue': 4.50,
+      'name': 'Fresh Carrots',
+      'origin': 'Berkane, Morocco',
+      'price': '\$0.50/kg',
+      'priceValue': 0.50,
       'category': 'Vegetables',
       'isUrgent': false,
       'isOrganic': true,
-      'image': 'assets/images/usine/Tomatoes.jpg',
+      'image': 'assets/images/usine/carrots.jpg',
+    },
+    {
+      'name': 'Potatoes (Spunta)',
+      'origin': 'Berrechid, Morocco',
+      'price': '\$0.70/kg',
+      'priceValue': 0.70,
+      'category': 'Vegetables',
+      'isUrgent': false,
+      'isOrganic': false,
+      'image': 'assets/images/usine/potatoes.jpg',
+    },
+    {
+      'name': 'Fresh Garlic',
+      'origin': 'Taza, Morocco',
+      'price': '\$4.00/kg',
+      'priceValue': 4.0,
+      'category': 'Vegetables',
+      'isUrgent': false,
+      'isOrganic': true,
+      'image': 'assets/images/usine/garlic.jpg',
     },
   ];
 
@@ -3127,8 +3027,8 @@ class _OrderSuccessSheet extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16)),
                   ),
                   child: const Text("Track Order",
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 14)),
+                      style:
+                          TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                 ),
               ),
             ],
