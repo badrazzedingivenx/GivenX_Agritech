@@ -20,7 +20,6 @@ class _FermerFormState extends State<FermerForm> {
   final List<String> _productOptions = [
     'Maize', 'Wheat', 'Rice', 'Cattle', 'Goats', 'Sheep', 'Vegetables', 'Fruits', 'Other'
   ];
-  final TextEditingController _mainProductsController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _mainProductsError = false;
   bool _showPassword = false;

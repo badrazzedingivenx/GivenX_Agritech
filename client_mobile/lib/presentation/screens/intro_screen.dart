@@ -12,7 +12,6 @@ class IntroScreen extends StatefulWidget {
 
 class _IntroScreenState extends State<IntroScreen> {
   final PageController _controller = PageController();
-  int _currentPage = 0;
 
   final List<Map<String, String>> _pages = [
     {
@@ -63,11 +62,6 @@ class _IntroScreenState extends State<IntroScreen> {
                 child: PageView.builder(
                   controller: _controller,
                   itemCount: _pages.length,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentPage = index;
-                    });
-                  },
                   itemBuilder: (context, index) {
                     final page = _pages[index];
                     return LayoutBuilder(

@@ -14,14 +14,14 @@ class TransporteurDashboard extends StatelessWidget {
   final String city;
 
   const TransporteurDashboard({
-    Key? key,
+    super.key,
     required this.fullName,
     required this.email,
     required this.phone,
     required this.vehicleType,
     required this.capacity,
     required this.city,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

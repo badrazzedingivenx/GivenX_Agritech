@@ -9,26 +9,26 @@ class DashboardScaffold extends StatelessWidget {
   final FloatingActionButton? floatingActionButton;
 
   const DashboardScaffold({
-    Key? key,
+    super.key,
     required this.body,
     this.currentIndex = 0,
     this.onTabSelected,
     this.appBar,
     this.floatingActionButton,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FAF5),
-      appBar: appBar ?? _defaultAppBar(),
+      backgroundColor: Theme.of(context).colorScheme.background,
+      appBar: appBar ?? _defaultAppBar(context),
       body: body,
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: onTabSelected,
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF2E7D32),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
         items: const [
@@ -41,14 +41,14 @@ class DashboardScaffold extends StatelessWidget {
     );
   }
 
-  PreferredSizeWidget _defaultAppBar() {
+  PreferredSizeWidget _defaultAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 0,
       automaticallyImplyLeading: false,
       title: Image.asset(
         'assets/images/logo.png',
-        height: 90, // Increased from 64 to 90
+        height: 90,
       ),
       actions: [
         IconButton(

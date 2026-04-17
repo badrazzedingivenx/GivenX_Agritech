@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../dashboard/banque_dashboard.dart';
 
 class BanqueForm extends StatefulWidget {
-  const BanqueForm({Key? key}) : super(key: key);
+  const BanqueForm({super.key});
 
   @override
   State<BanqueForm> createState() => _BanqueFormState();

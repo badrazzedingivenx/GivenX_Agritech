@@ -9,14 +9,14 @@ class UsineDashboard extends StatelessWidget {
   final String email;
 
   const UsineDashboard({
-    Key? key,
+    super.key,
     required this.fullName,
     required this.phone,
     required this.city,
     required this.companyName,
     required this.productTypes,
     required this.email,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

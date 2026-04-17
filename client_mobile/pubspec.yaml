@@ -15,7 +15,10 @@ dependencies:
   cupertino_icons: ^1.0.2
   provider: ^6.0.5
   smooth_page_indicator: ^1.1.0
-
+  math_expressions: ^2.1.0
+  image_picker: ^0.8.7+6
+  speech_to_text: ^6.6.2
+  google_ml_kit: ^0.8.0
 
 dev_dependencies:
   flutter_test:
@@ -34,12 +37,18 @@ flutter:
     - assets/images/app5.png
     - assets/images/lettuce.jpg
     - assets/images/bank_logo.png
-    
-
-
-  
-
-    
-
+    - assets/images/appTomat.jpg
+    - assets/images/appweight.jpg
+    # زيد هاد السطر لتحت باش يقرا الصور الجداد لي زدنا في الكود
+    - assets/images/appApple.png
+    - assets/images/appbanans.png
+    - assets/images/appOranges.png
+    - assets/images/apponions.png
+    - assets/images/appcarrot.png
+    - assets/images/appstrawberries.png
+    - assets/images/appcabbage.png
+    - assets/images/appOats.png
+    - assets/images/appPotatos.png
+    - assets/images/appSunflowers_Seeds.png
 
 
