@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:agriflow/l10n/app_localizations.dart';
 import '../dashboard/transporteur_dashboard.dart';
 
 class TransporteurForm extends StatefulWidget {
@@ -15,7 +15,11 @@ class _TransporteurFormState extends State<TransporteurForm> {
   final TextEditingController _passwordController = TextEditingController();
   bool _showPassword = false;
   bool _showConfirmPassword = false;
-  final List<String> _vehicleTypes = ['Truck', 'Van', 'Pickup'];
+  List<String> get _vehicleTypes => [
+    AppLocalizations.of(context)!.registerVehicleTruck,
+    AppLocalizations.of(context)!.registerVehicleVan,
+    AppLocalizations.of(context)!.registerVehiclePickup,
+  ];
   String? _selectedVehicleType;
 
   @override
@@ -26,10 +30,10 @@ class _TransporteurFormState extends State<TransporteurForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Center(
+          Center(
             child: Text(
-              'Register as Transporteur',
-              style: TextStyle(
+              AppLocalizations.of(context)!.registerTransporteurTitle,
+              style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.white70,
@@ -38,10 +42,10 @@ class _TransporteurFormState extends State<TransporteurForm> {
             ),
           ),
           const SizedBox(height: 10),
-          const Center(
+          Center(
             child: Text(
-              'Create your transporteur account',
-              style: TextStyle(
+              AppLocalizations.of(context)!.registerTransporteurSubtitle,
+              style: const TextStyle(
                 fontSize: 16,
                 color: Colors.white70,
                 fontWeight: FontWeight.w400,
@@ -50,17 +54,17 @@ class _TransporteurFormState extends State<TransporteurForm> {
             ),
           ),
           const SizedBox(height: 32),
-          _buildTextField('Full Name', 'fullName', required: true, icon: Icons.person),
+          _buildTextField(AppLocalizations.of(context)!.registerFullName, 'fullName', required: true, icon: Icons.person),
           const SizedBox(height: 18),
-          _buildTextField('Phone Number', 'phone', required: true, icon: Icons.phone, keyboardType: TextInputType.phone),
+          _buildTextField(AppLocalizations.of(context)!.registerPhoneNumber, 'phone', required: true, icon: Icons.phone, keyboardType: TextInputType.phone),
           const SizedBox(height: 18),
-          _buildTextField('City', 'city', required: true, icon: Icons.location_city),
+          _buildTextField(AppLocalizations.of(context)!.registerCity, 'city', required: true, icon: Icons.location_city),
           const SizedBox(height: 18),
           _buildVehicleTypeDropdown(),
           const SizedBox(height: 18),
-          _buildTextField('Capacity (e.g., 2 tons)', 'capacity', required: true, icon: Icons.local_shipping),
+          _buildTextField(AppLocalizations.of(context)!.registerCapacity, 'capacity', required: true, icon: Icons.local_shipping),
           const SizedBox(height: 18),
-          _buildTextField('Email', 'email', required: true, email: true, icon: Icons.email, keyboardType: TextInputType.emailAddress),
+          _buildTextField(AppLocalizations.of(context)!.registerEmail, 'email', required: true, email: true, icon: Icons.email, keyboardType: TextInputType.emailAddress),
           const SizedBox(height: 18),
           TextFormField(
             controller: _passwordController,
@@ -69,9 +73,9 @@ class _TransporteurFormState extends State<TransporteurForm> {
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white.withOpacity(0.13),
-              labelText: 'Password',
+              labelText: AppLocalizations.of(context)!.loginPasswordHint,
               labelStyle: const TextStyle(color: Colors.white70),
-              hintText: 'Password',
+              hintText: AppLocalizations.of(context)!.loginPasswordHint,
               hintStyle: const TextStyle(color: Colors.white70),
               prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
               suffixIcon: IconButton(
@@ -89,8 +93,8 @@ class _TransporteurFormState extends State<TransporteurForm> {
               ),
             ),
             validator: (value) {
-              if (value == null || value.isEmpty) return 'Required';
-              if (value.length < 6) return 'Password too weak';
+              if (value == null || value.isEmpty) return AppLocalizations.of(context)!.registerFieldRequired;
+              if (value.length < 6) return AppLocalizations.of(context)!.registerPasswordTooWeak;
               return null;
             },
             onSaved: (value) => _data['password'] = value,
@@ -102,9 +106,9 @@ class _TransporteurFormState extends State<TransporteurForm> {
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white.withOpacity(0.13),
-              labelText: 'Confirm Password',
+              labelText: AppLocalizations.of(context)!.registerConfirmPassword,
               labelStyle: const TextStyle(color: Colors.white70),
-              hintText: 'Confirm Password',
+              hintText: AppLocalizations.of(context)!.registerConfirmPassword,
               hintStyle: const TextStyle(color: Colors.white70),
               prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
               suffixIcon: IconButton(
@@ -122,8 +126,8 @@ class _TransporteurFormState extends State<TransporteurForm> {
               ),
             ),
             validator: (value) {
-              if (value == null || value.isEmpty) return 'Required';
-              if (value != _passwordController.text) return 'Passwords do not match';
+              if (value == null || value.isEmpty) return AppLocalizations.of(context)!.registerFieldRequired;
+              if (value != _passwordController.text) return AppLocalizations.of(context)!.registerPasswordsDoNotMatch;
               return null;
             },
           ),
@@ -165,9 +169,9 @@ class _TransporteurFormState extends State<TransporteurForm> {
                 backgroundColor: const Color(0xFF2E7D32),
                 foregroundColor: Colors.white,
               ),
-              child: const Text(
-                'Register',
-                style: TextStyle(
+              child: Text(
+                AppLocalizations.of(context)!.loginSignup,
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 18,
@@ -218,10 +222,10 @@ class _TransporteurFormState extends State<TransporteurForm> {
       ),
         validator: validator ?? (value) {
           if (required && (value == null || value.isEmpty)) {
-            return 'Required';
+            return AppLocalizations.of(context)!.registerFieldRequired;
           }
           if (email && value != null && !RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$').hasMatch(value)) {
-            return 'Enter a valid email';
+            return AppLocalizations.of(context)!.registerInvalidEmail;
           }
           return null;
         },
@@ -240,11 +244,11 @@ class _TransporteurFormState extends State<TransporteurForm> {
           .toList(),
       onChanged: (value) => setState(() => _selectedVehicleType = value),
       onSaved: (value) => _selectedVehicleType = value,
-      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+      validator: (value) => value == null || value.isEmpty ? AppLocalizations.of(context)!.registerFieldRequired : null,
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white.withOpacity(0.13),
-        labelText: 'Vehicle Type',
+        labelText: AppLocalizations.of(context)!.registerVehicleType,
         labelStyle: const TextStyle(color: Colors.white70),
         prefixIcon: const Icon(Icons.directions_car, color: Colors.white70),
         enabledBorder: OutlineInputBorder(

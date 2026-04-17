@@ -3,6 +3,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../data/mock_data/mock_users.dart';
+import 'package:agriflow/l10n/app_localizations.dart';
 import 'dashboard/farmer_dashboard.dart';
 import 'dashboard/usine_dashboard.dart';
 import 'dashboard/transporteur_dashboard.dart';
@@ -81,12 +82,12 @@ class _LoginFormState extends State<_LoginForm> {
       final password = _passwordController.text;
       final gmailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@gmail\.com\b');
       if (email.isEmpty) {
-        _emailError = 'Email is required';
+        _emailError = AppLocalizations.of(context)!.loginEmailRequired;
       } else if (!gmailRegex.hasMatch(email)) {
-        _emailError = 'Please enter a valid Gmail address';
+        _emailError = AppLocalizations.of(context)!.loginEmailInvalid;
       }
       if (password.isEmpty) {
-        _passwordError = 'Password is required';
+        _passwordError = AppLocalizations.of(context)!.loginPasswordRequired;
       }
       if (_emailError == null && _passwordError == null) {
         // Check credentials against mockUsers
@@ -149,12 +150,12 @@ class _LoginFormState extends State<_LoginForm> {
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Unknown role.')),
+              SnackBar(content: Text(AppLocalizations.of(context)!.loginUnknownRole)),
             );
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid email or password.')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.loginInvalidCredentials)),
           );
         }
       }
@@ -167,10 +168,10 @@ class _LoginFormState extends State<_LoginForm> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Center(
+        Center(
           child: Text(
-            'Login',
-            style: TextStyle(
+            AppLocalizations.of(context)!.loginTitle,
+            style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
               color: Colors.white70,
@@ -179,10 +180,10 @@ class _LoginFormState extends State<_LoginForm> {
           ),
         ),
         const SizedBox(height: 10),
-        const Center(
+        Center(
           child: Text(
-            'Welcome back please login to your account',
-            style: TextStyle(
+            AppLocalizations.of(context)!.loginSubtitle,
+            style: const TextStyle(
               fontSize: 16,
               color: Colors.white70,
               fontWeight: FontWeight.w400,
@@ -199,7 +200,7 @@ class _LoginFormState extends State<_LoginForm> {
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white.withOpacity(0.13),
-            hintText: 'Email',
+            hintText: AppLocalizations.of(context)!.loginEmailHint,
             hintStyle: const TextStyle(color: Colors.white70),
             prefixIcon: const Icon(Icons.email, color: Colors.white70),
             errorText: _emailError,
@@ -223,7 +224,7 @@ class _LoginFormState extends State<_LoginForm> {
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white.withOpacity(0.13),
-            hintText: 'Password',
+            hintText: AppLocalizations.of(context)!.loginPasswordHint,
             hintStyle: const TextStyle(color: Colors.white70),
             prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
             suffixIcon: IconButton(
@@ -290,9 +291,9 @@ class _LoginFormState extends State<_LoginForm> {
                                     mainAxisSize: MainAxisSize.min,
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Forgot Password',
-                                        style: TextStyle(
+                                      Text(
+                                        AppLocalizations.of(context)!.loginForgotPasswordTitle,
+                                        style: const TextStyle(
                                           fontSize: 22,
                                           fontWeight: FontWeight.bold,
                                           color: Color(0xFF2E7D32),
@@ -300,9 +301,9 @@ class _LoginFormState extends State<_LoginForm> {
                                         ),
                                       ),
                                       const SizedBox(height: 16),
-                                      const Text(
-                                        'Enter your email address and we\'ll send you a reset link.',
-                                        style: TextStyle(
+                                      Text(
+                                        AppLocalizations.of(context)!.loginForgotPasswordDesc,
+                                        style: const TextStyle(
                                           fontSize: 15,
                                           color: Colors.white,
                                         ),
@@ -315,7 +316,7 @@ class _LoginFormState extends State<_LoginForm> {
                                         decoration: InputDecoration(
                                           filled: true,
                                           fillColor: Colors.white.withOpacity(0.13),
-                                          hintText: 'Email',
+                                          hintText: AppLocalizations.of(context)!.loginEmailHint,
                                           hintStyle: const TextStyle(color: Colors.white70),
                                           prefixIcon: const Icon(Icons.email, color: Colors.white70),
                                           errorText: _forgotEmailError,
@@ -340,15 +341,15 @@ class _LoginFormState extends State<_LoginForm> {
                                             setState(() {
                                               _forgotEmailError = null;
                                               if (email.isEmpty) {
-                                                _forgotEmailError = 'Email is required';
+                                                _forgotEmailError = AppLocalizations.of(context)!.loginEmailRequired;
                                               } else if (!gmailRegex.hasMatch(email)) {
-                                                _forgotEmailError = 'Please enter a valid Gmail address';
+                                                _forgotEmailError = AppLocalizations.of(context)!.loginEmailInvalid;
                                               }
                                             });
                                             if (_forgotEmailError == null) {
                                               Navigator.of(context).pop();
                                               ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text('If this email exists, a reset link has been sent. (demo only)')),
+                                                SnackBar(content: Text(AppLocalizations.of(context)!.loginResetLinkSent)),
                                               );
                                             }
                                           },
@@ -381,9 +382,9 @@ class _LoginFormState extends State<_LoginForm> {
                     },
                   );
                 },
-                child: const Text(
-                  'Forgot Password?',
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)!.loginForgotPassword,
+                  style: const TextStyle(
                     color: Color(0xFF43EA7A),
                     fontWeight: FontWeight.w500,
                     fontSize: 15,
@@ -409,9 +410,9 @@ class _LoginFormState extends State<_LoginForm> {
               checkColor: Colors.white,
               side: const BorderSide(color: Colors.white70),
             ),
-            const Text(
-              'Remember me',
-              style: TextStyle(color: Colors.white, fontSize: 15),
+            Text(
+              AppLocalizations.of(context)!.loginRememberMe,
+              style: const TextStyle(color: Colors.white, fontSize: 15),
             ),
           ],
         ),
@@ -436,9 +437,9 @@ class _LoginFormState extends State<_LoginForm> {
               backgroundColor: const Color(0xFF2E7D32),
               foregroundColor: Colors.white,
             ),
-            child: const Text(
-              'Login',
-              style: TextStyle(
+            child: Text(
+              AppLocalizations.of(context)!.loginButton,
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
                 fontSize: 18,
@@ -451,17 +452,17 @@ class _LoginFormState extends State<_LoginForm> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "Don't have an account? ",
-              style: TextStyle(color: Colors.white, fontSize: 15),
+            Text(
+              AppLocalizations.of(context)!.loginNoAccount,
+              style: const TextStyle(color: Colors.white, fontSize: 15),
             ),
               GestureDetector(
                 onTap: () {
                   Navigator.of(context).pushNamed('/role');
                 },
-                child: const Text(
-                  'Signup',
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)!.loginSignup,
+                  style: const TextStyle(
                     color: Color(0xFF43EA7A),
                     fontWeight: FontWeight.bold,
                     fontSize: 15,

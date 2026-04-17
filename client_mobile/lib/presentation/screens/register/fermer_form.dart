@@ -1,6 +1,7 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:agriflow/l10n/app_localizations.dart';
 import '../../../data/mock_data/mock_users.dart';
 import '../dashboard/farmer_dashboard.dart';
 
@@ -14,11 +15,23 @@ class FermerForm extends StatefulWidget {
 class _FermerFormState extends State<FermerForm> {
   final _formKey = GlobalKey<FormState>();
   final Map<String, String?> _data = {};
-  final List<String> _farmingTypes = ['Agriculture', 'Livestock', 'Both'];
+  List<String> get _farmingTypes => [
+    AppLocalizations.of(context)!.registerFarmingTypeAgriculture,
+    AppLocalizations.of(context)!.registerFarmingTypeLivestock,
+    AppLocalizations.of(context)!.registerFarmingTypeBoth,
+  ];
   String? _selectedFarmingType;
   final List<String> _mainProducts = [];
-  final List<String> _productOptions = [
-    'Maize', 'Wheat', 'Rice', 'Cattle', 'Goats', 'Sheep', 'Vegetables', 'Fruits', 'Other'
+  List<String> get _productOptions => [
+    AppLocalizations.of(context)!.registerProductMaize,
+    AppLocalizations.of(context)!.registerProductWheat,
+    AppLocalizations.of(context)!.registerProductRice,
+    AppLocalizations.of(context)!.registerProductCattle,
+    AppLocalizations.of(context)!.registerProductGoats,
+    AppLocalizations.of(context)!.registerProductSheep,
+    AppLocalizations.of(context)!.registerProductVegetables,
+    AppLocalizations.of(context)!.registerProductFruits,
+    AppLocalizations.of(context)!.registerProductOther,
   ];
   final TextEditingController _mainProductsController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -34,10 +47,10 @@ class _FermerFormState extends State<FermerForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Center(
+          Center(
             child: Text(
-              'Register as Farmer',
-              style: TextStyle(
+              AppLocalizations.of(context)!.registerFarmerTitle,
+              style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.white70,
@@ -46,10 +59,10 @@ class _FermerFormState extends State<FermerForm> {
             ),
           ),
           const SizedBox(height: 10),
-          const Center(
+          Center(
             child: Text(
-              'Create your farmer account',
-              style: TextStyle(
+              AppLocalizations.of(context)!.registerFarmerSubtitle,
+              style: const TextStyle(
                 fontSize: 16,
                 color: Colors.white70,
                 fontWeight: FontWeight.w400,
@@ -58,17 +71,17 @@ class _FermerFormState extends State<FermerForm> {
             ),
           ),
           const SizedBox(height: 32),
-          _buildTextField('Full Name', 'fullName', required: true, icon: Icons.person),
+          _buildTextField(AppLocalizations.of(context)!.registerFullName, 'fullName', required: true, icon: Icons.person),
           const SizedBox(height: 18),
-          _buildTextField('Phone Number', 'phone', required: true, icon: Icons.phone, keyboardType: TextInputType.phone),
+          _buildTextField(AppLocalizations.of(context)!.registerPhoneNumber, 'phone', required: true, icon: Icons.phone, keyboardType: TextInputType.phone),
           const SizedBox(height: 18),
-          _buildTextField('City', 'city', required: true, icon: Icons.location_city),
+          _buildTextField(AppLocalizations.of(context)!.registerCity, 'city', required: true, icon: Icons.location_city),
           const SizedBox(height: 18),
           _buildFarmingTypeDropdown(),
           const SizedBox(height: 18),
           _buildMainProductsField(),
           const SizedBox(height: 18),
-          _buildTextField('Email', 'email', required: true, email: true, icon: Icons.email, keyboardType: TextInputType.emailAddress),
+          _buildTextField(AppLocalizations.of(context)!.registerEmail, 'email', required: true, email: true, icon: Icons.email, keyboardType: TextInputType.emailAddress),
           const SizedBox(height: 18),
           TextFormField(
             controller: _passwordController,
@@ -77,9 +90,9 @@ class _FermerFormState extends State<FermerForm> {
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white.withOpacity(0.13),
-              labelText: 'Password',
+              labelText: AppLocalizations.of(context)!.loginPasswordHint,
               labelStyle: const TextStyle(color: Colors.white70),
-              hintText: 'Password',
+              hintText: AppLocalizations.of(context)!.loginPasswordHint,
               hintStyle: const TextStyle(color: Colors.white70),
               prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
               suffixIcon: IconButton(
@@ -97,8 +110,8 @@ class _FermerFormState extends State<FermerForm> {
               ),
             ),
             validator: (value) {
-              if (value == null || value.isEmpty) return 'Required';
-              if (value.length < 6) return 'Password too weak';
+              if (value == null || value.isEmpty) return AppLocalizations.of(context)!.registerFieldRequired;
+              if (value.length < 6) return AppLocalizations.of(context)!.registerPasswordTooWeak;
               return null;
             },
             onSaved: (value) => _data['password'] = value,
@@ -110,9 +123,9 @@ class _FermerFormState extends State<FermerForm> {
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white.withOpacity(0.13),
-              labelText: 'Confirm Password',
+              labelText: AppLocalizations.of(context)!.registerConfirmPassword,
               labelStyle: const TextStyle(color: Colors.white70),
-              hintText: 'Confirm Password',
+              hintText: AppLocalizations.of(context)!.registerConfirmPassword,
               hintStyle: const TextStyle(color: Colors.white70),
               prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
               suffixIcon: IconButton(
@@ -130,8 +143,8 @@ class _FermerFormState extends State<FermerForm> {
               ),
             ),
             validator: (value) {
-              if (value == null || value.isEmpty) return 'Required';
-              if (value != _passwordController.text) return 'Passwords do not match';
+              if (value == null || value.isEmpty) return AppLocalizations.of(context)!.registerFieldRequired;
+              if (value != _passwordController.text) return AppLocalizations.of(context)!.registerPasswordsDoNotMatch;
               return null;
             },
           ),
@@ -188,9 +201,9 @@ class _FermerFormState extends State<FermerForm> {
                 backgroundColor: const Color(0xFF2E7D32),
                 foregroundColor: Colors.white,
               ),
-              child: const Text(
-                'Register',
-                style: TextStyle(
+              child: Text(
+                AppLocalizations.of(context)!.loginSignup,
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 18,
@@ -241,10 +254,10 @@ class _FermerFormState extends State<FermerForm> {
       ),
       validator: validator ?? (value) {
         if (required && (value == null || value.isEmpty)) {
-          return 'Required';
+          return AppLocalizations.of(context)!.registerFieldRequired;
         }
-        if (email && value != null && !RegExp(r'^[\w\-.]+@[\w\-]+\.[a-zA-Z]{2,4}$').hasMatch(value)) {
-          return 'Invalid email';
+        if (email && value != null && !RegExp(r'^[\w\-.]+@[\w\-]+\.[a-zA-Z]{2,4} 24').hasMatch(value)) {
+          return AppLocalizations.of(context)!.registerInvalidEmail;
         }
         return null;
       },
@@ -263,11 +276,11 @@ class _FermerFormState extends State<FermerForm> {
           .toList(),
       onChanged: (value) => setState(() => _selectedFarmingType = value),
       onSaved: (value) => _data['farmingType'] = value,
-      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+      validator: (value) => value == null || value.isEmpty ? AppLocalizations.of(context)!.registerFieldRequired : null,
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white.withOpacity(0.13),
-        labelText: 'Type of Farming',
+        labelText: AppLocalizations.of(context)!.registerFarmingType,
         labelStyle: const TextStyle(color: Colors.white70),
         prefixIcon: const Icon(Icons.agriculture, color: Colors.white70),
         enabledBorder: OutlineInputBorder(
@@ -287,7 +300,7 @@ class _FermerFormState extends State<FermerForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Main Products', style: TextStyle(color: Colors.white70, fontSize: 16)),
+        Text(AppLocalizations.of(context)!.registerMainProducts, style: const TextStyle(color: Colors.white70, fontSize: 16)),
         const SizedBox(height: 6),
         Wrap(
           spacing: 12,
@@ -316,7 +329,7 @@ class _FermerFormState extends State<FermerForm> {
         if (_mainProductsError)
           Padding(
             padding: const EdgeInsets.only(left: 8.0, top: 2),
-            child: Text('Select at least one product', style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+            child: Text(AppLocalizations.of(context)!.registerSelectAtLeastOneProduct, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
           ),
       ],
     );

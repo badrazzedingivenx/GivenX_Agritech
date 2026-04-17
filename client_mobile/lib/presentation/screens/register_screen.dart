@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:agriflow/l10n/app_localizations.dart';
 import 'register/fermer_form.dart';
 import 'register/usine_form.dart';
 import 'register/transporteur_form.dart';
@@ -12,28 +13,21 @@ class RegisterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget form;
-    // Map English UI label to French role for form selection
-    String mappedRole = role;
-    if (role == 'Farmer') mappedRole = 'Agriculteur';
-    else if (role == 'Factory/Exporter') mappedRole = 'Usine / Exportateur';
-    else if (role == 'Transporter') mappedRole = 'Transporteur';
-    else if (role == 'Banque') mappedRole = 'Banque';
-
-    switch (mappedRole) {
-      case 'Agriculteur':
+    switch (role) {
+      case 'roleFarmer':
         form = const FermerForm();
         break;
-      case 'Usine / Exportateur':
+      case 'roleFactory':
         form = const UsineForm();
         break;
-      case 'Transporteur':
+      case 'roleTransporter':
         form = const TransporteurForm();
         break;
-      case 'Banque':
+      case 'roleBanque':
         form = const BanqueForm();
         break;
       default:
-        form = const Center(child: Text('Unknown role'));
+        form = Center(child: Text(AppLocalizations.of(context)!.registerUnknownRole));
     }
     return Scaffold(
       extendBodyBehindAppBar: true,

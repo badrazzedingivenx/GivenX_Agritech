@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:agriflow/l10n/app_localizations.dart';
 import '../dashboard/usine_dashboard.dart';
 
 class UsineForm extends StatefulWidget {
@@ -9,17 +10,17 @@ class UsineForm extends StatefulWidget {
 }
 
 class _UsineFormState extends State<UsineForm> {
-    final List<String> _productTypeOptions = [
-      'Fruits',
-      'Vegetables',
-      'Cereals',
-      'Legumes',
-      'Dairy Products',
-      'Meat & Poultry',
-      'Processed Food',
-      'Organic Products',
-      'Animal Feed',
-      'Other',
+    List<String> get _productTypeOptions => [
+      AppLocalizations.of(context)!.registerProductFruits,
+      AppLocalizations.of(context)!.registerProductVegetables,
+      AppLocalizations.of(context)!.registerProductCereals,
+      AppLocalizations.of(context)!.registerProductLegumes,
+      AppLocalizations.of(context)!.registerProductDairy,
+      AppLocalizations.of(context)!.registerProductMeat,
+      AppLocalizations.of(context)!.registerProductProcessed,
+      AppLocalizations.of(context)!.registerProductOrganic,
+      AppLocalizations.of(context)!.registerProductFeed,
+      AppLocalizations.of(context)!.registerProductOther,
     ];
     String? _selectedProductType;
 
@@ -39,13 +40,13 @@ class _UsineFormState extends State<UsineForm> {
         },
         onSaved: (value) => _data['productTypes'] = value,
         validator: (value) {
-          if (value == null || value.isEmpty) return 'Required';
+          if (value == null || value.isEmpty) return AppLocalizations.of(context)!.registerFieldRequired;
           return null;
         },
         decoration: InputDecoration(
           filled: true,
           fillColor: Colors.white.withOpacity(0.13),
-          labelText: 'Product Types',
+          labelText: AppLocalizations.of(context)!.registerProductTypes,
           labelStyle: const TextStyle(color: Colors.white70),
           prefixIcon: const Icon(Icons.category, color: Colors.white70),
           errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
@@ -77,10 +78,10 @@ class _UsineFormState extends State<UsineForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Center(
+            Center(
               child: Text(
-                'Register as Exporter/Factory',
-                style: TextStyle(
+                AppLocalizations.of(context)!.registerUsineTitle,
+                style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Colors.white70,
@@ -89,10 +90,10 @@ class _UsineFormState extends State<UsineForm> {
               ),
             ),
             const SizedBox(height: 10),
-            const Center(
+            Center(
               child: Text(
-                'Create your exporter/factory account',
-                style: TextStyle(
+                AppLocalizations.of(context)!.registerUsineSubtitle,
+                style: const TextStyle(
                   fontSize: 16,
                   color: Colors.white70,
                   fontWeight: FontWeight.w400,
@@ -102,14 +103,14 @@ class _UsineFormState extends State<UsineForm> {
             ),
             const SizedBox(height: 32),
             _buildTextField(
-              label: 'Full Name',
+              label: AppLocalizations.of(context)!.registerFullName,
               keyName: 'fullName',
               required: true,
               icon: Icons.person,
             ),
             const SizedBox(height: 18),
             _buildTextField(
-              label: 'Phone Number',
+              label: AppLocalizations.of(context)!.registerPhoneNumber,
               keyName: 'phone',
               required: true,
               icon: Icons.phone,
@@ -117,14 +118,14 @@ class _UsineFormState extends State<UsineForm> {
             ),
             const SizedBox(height: 18),
             _buildTextField(
-              label: 'City',
+              label: AppLocalizations.of(context)!.registerCity,
               keyName: 'city',
               required: true,
               icon: Icons.location_city,
             ),
             const SizedBox(height: 18),
             _buildTextField(
-              label: 'Company Name',
+              label: AppLocalizations.of(context)!.registerCompanyName,
               keyName: 'companyName',
               required: true,
               icon: Icons.business,
@@ -133,7 +134,7 @@ class _UsineFormState extends State<UsineForm> {
             _buildProductTypeDropdown(),
             const SizedBox(height: 18),
             _buildTextField(
-              label: 'Email',
+              label: AppLocalizations.of(context)!.registerEmail,
               keyName: 'email',
               required: true,
               email: true,
@@ -148,7 +149,7 @@ class _UsineFormState extends State<UsineForm> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.13),
-                labelText: 'Password',
+                labelText: AppLocalizations.of(context)!.loginPasswordHint,
                 labelStyle: const TextStyle(color: Colors.white70),
                 prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
                 suffixIcon: IconButton(
@@ -166,8 +167,8 @@ class _UsineFormState extends State<UsineForm> {
                 ),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                if (value.length < 6) return 'Password too weak';
+                if (value == null || value.isEmpty) return AppLocalizations.of(context)!.registerFieldRequired;
+                if (value.length < 6) return AppLocalizations.of(context)!.registerPasswordTooWeak;
                 return null;
               },
               onSaved: (value) => _data['password'] = value,
@@ -181,7 +182,7 @@ class _UsineFormState extends State<UsineForm> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.13),
-                labelText: 'Confirm Password',
+                labelText: AppLocalizations.of(context)!.registerConfirmPassword,
                 labelStyle: const TextStyle(color: Colors.white70),
                 prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
                 suffixIcon: IconButton(
@@ -199,8 +200,8 @@ class _UsineFormState extends State<UsineForm> {
                 ),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                if (value != _passwordController.text) return 'Passwords do not match';
+                if (value == null || value.isEmpty) return AppLocalizations.of(context)!.registerFieldRequired;
+                if (value != _passwordController.text) return AppLocalizations.of(context)!.registerPasswordsDoNotMatch;
                 return null;
               },
             ),
@@ -243,9 +244,9 @@ class _UsineFormState extends State<UsineForm> {
                   backgroundColor: const Color(0xFF2E7D32),
                   foregroundColor: Colors.white,
                 ),
-                child: const Text(
-                  'Register',
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)!.loginSignup,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                     fontSize: 18,
@@ -299,10 +300,10 @@ class _UsineFormState extends State<UsineForm> {
           ),
           validator: (value) {
             if (required && (value == null || value.isEmpty)) {
-              return 'Required';
+              return AppLocalizations.of(context)!.registerFieldRequired;
             }
             if (email && value != null && !RegExp(r'^[\w\-.]+@[\w\-]+\.[a-zA-Z]{2,4}$').hasMatch(value)) {
-              return 'Invalid email';
+              return AppLocalizations.of(context)!.registerInvalidEmail;
             }
             return null;
           },

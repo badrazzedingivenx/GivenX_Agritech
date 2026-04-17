@@ -1,6 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+
+
 import '../../data/mock_data/user_roles.dart';
+import 'package:agriflow/l10n/app_localizations.dart';
 
 import 'register_screen.dart';
 
@@ -20,11 +23,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     final roles = userRoles;
     void _navigateToRegister() {
       if (_selectedIndex != null) {
-        final role = roles[_selectedIndex!]['label'] as String;
+        final roleKey = roles[_selectedIndex!]['key'] as String;
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => RegisterScreen(role: role),
+            builder: (_) => RegisterScreen(role: roleKey),
           ),
         );
       }
@@ -70,10 +73,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const SizedBox(height: 0),
-                      const Center(
+                      Center(
                         child: Text(
-                          'Select Your Role',
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.roleSelectTitle,
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontWeight: FontWeight.bold,
                             fontSize: 22,
@@ -143,7 +146,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                   ),
                                   const SizedBox(height: 14),
                                   Text(
-                                    role['label'] as String,
+                                    _localizedRoleLabel(context, role['key'] as String),
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600,
@@ -179,9 +182,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             backgroundColor: const Color(0xFF2E7D32),
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text(
-                            'Continue',
-                            style: TextStyle(
+                          child: Text(
+                            AppLocalizations.of(context)!.next,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
                               fontSize: 18,
@@ -199,5 +202,21 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         ],
       ),
     );
+  }
+
+  String _localizedRoleLabel(BuildContext context, String key) {
+    final loc = AppLocalizations.of(context)!;
+    switch (key) {
+      case 'roleFarmer':
+        return loc.roleFarmer;
+      case 'roleFactory':
+        return loc.roleFactory;
+      case 'roleTransporter':
+        return loc.roleTransporter;
+      case 'roleBanque':
+        return loc.roleBanque;
+      default:
+        return '';
+    }
   }
 }

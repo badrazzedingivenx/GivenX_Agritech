@@ -1,12 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart';
 import 'presentation/navigation/app_router.dart';
+import 'l10n/app_localizations.dart';
 
 void main() {
   runApp(const AgriFlowApp());
 }
 
-class AgriFlowApp extends StatelessWidget {
+class AgriFlowApp extends StatefulWidget {
   const AgriFlowApp({super.key});
+
+  @override
+  State<AgriFlowApp> createState() => _AgriFlowAppState();
+}
+
+class _AgriFlowAppState extends State<AgriFlowApp> {
+  Locale? _locale;
+
+  void setLocale(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +38,11 @@ class AgriFlowApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 16),
         ),
       ),
+      locale: _locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       initialRoute: '/splash',
-      onGenerateRoute: AppRouter.onGenerateRoute,
+      onGenerateRoute: (settings) => AppRouter.onGenerateRoute(settings, setLocale),
       debugShowCheckedModeBanner: false,
     );
   }
