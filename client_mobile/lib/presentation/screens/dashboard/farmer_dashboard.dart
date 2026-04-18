@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
 import '../../widgets/dashboard_scaffold.dart';
-import '../products/products_page.dart'; // الصفحة اللي فيها الماركت والبحث
-import '../products/Addproducts_page.dart'; // الصفحة فين كنزيدو المنتجات
+import '../products/products_page.dart';
+import '../products/addproducts_page.dart';
+import '../profile_farmer.dart';
 
 class FarmerDashboard extends StatelessWidget {
   final String fullName;
@@ -24,59 +26,93 @@ class FarmerDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DashboardScaffold(
+      currentIndex: 0,
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
-          mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             const SizedBox(height: 12),
+
             Text(
               'Morning, $fullName',
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2E7D32),
+              ),
             ),
+
             const SizedBox(height: 6),
+
             const Text(
               'Your supply chain is looking healthy today.',
               style: TextStyle(fontSize: 16, color: Colors.black54),
             ),
+
             const SizedBox(height: 24),
+
+            /// ================= BUTTONS =================
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      // التعديل 1: هاد الزر كيدي لزيادة منتج جديد (AddProductPage)
                       Navigator.push(
-                        context, 
-                        MaterialPageRoute(builder: (context) =>  AddProductPage(onProductAdded: (data) {},))
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AddProductPage(
+                            onProductAdded: (data) {},
+                          ),
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2E7D32),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text('ADD PRODUCT'),
                   ),
                 ),
+
                 const SizedBox(width: 12),
+
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ProductsPage(),
+                        ),
+                      );
+                    },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF2E7D32),
-                      side: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+                      side: const BorderSide(
+                        color: Color(0xFF2E7D32),
+                        width: 1.5,
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text('VIEW ORDERS'),
                   ),
                 ),
               ],
             ),
+
             const SizedBox(height: 24),
+
+            /// ================= STATS =================
             _dashboardStatCard(
               icon: Icons.inventory_2,
               label: 'Total Products',
@@ -85,16 +121,20 @@ class FarmerDashboard extends StatelessWidget {
               color: Colors.green.shade50,
               valueColor: Colors.green,
             ),
+
             const SizedBox(height: 16),
+
             _dashboardStatCard(
               icon: Icons.local_shipping,
               label: 'Active Orders',
               value: '8',
-              subLabel: '3 pending fulfillment',
+              subLabel: '3 pending',
               color: Colors.pink.shade50,
               valueColor: Colors.pink,
             ),
+
             const SizedBox(height: 16),
+
             _dashboardStatCard(
               icon: Icons.attach_money,
               label: 'Total Earnings',
@@ -103,65 +143,153 @@ class FarmerDashboard extends StatelessWidget {
               color: Colors.green.shade50,
               valueColor: Colors.green,
             ),
+
             const SizedBox(height: 28),
+
+            /// ================= RECENT ORDERS =================
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Recent Orders', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                TextButton(onPressed: () {}, child: const Text('See all activity')),
+                const Text(
+                  'Recent Orders',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                TextButton(
+                  onPressed: () {},
+                  child: const Text('See all activity'),
+                ),
               ],
             ),
-            _recentOrderTile('Organic Grocers Inc.', '14kg Heirloom Tomatoes • #ORD-7721', 'IN TRANSIT', '420.00 MAD'),
-            _recentOrderTile('Fresh Daily Market', '50kg Organic Wheat • #ORD-7719', 'PROCESSING', '1,280.00 MAD'),
-            _recentOrderTile('The Green Table', '8kg Microgreens • #ORD-7715', 'COMPLETED', '215.00 MAD'),
+
+            _recentOrderTile(
+              'Organic Grocers Inc.',
+              '14kg Tomatoes • #ORD-7721',
+              'IN TRANSIT',
+              '420.00 MAD',
+            ),
+            _recentOrderTile(
+              'Fresh Daily Market',
+              '50kg Wheat • #ORD-7719',
+              'PROCESSING',
+              '1,280.00 MAD',
+            ),
+            _recentOrderTile(
+              'The Green Table',
+              '8kg Microgreens • #ORD-7715',
+              'COMPLETED',
+              '215.00 MAD',
+            ),
+
             const SizedBox(height: 28),
+
             _topSellingCard(),
+
             const SizedBox(height: 24),
           ],
         ),
       ),
-      currentIndex: 0,
+
+      /// ================= NAVIGATION =================
       onTabSelected: (index) {
-        // التعديل 2: ملي تبركي على الأيقونة رقم 1 (Products) في الـ Bar كتدي لصفحة العرض (ProductsPage)
-        if (index == 1) { 
-          Navigator.push(
-            context, 
-            MaterialPageRoute(builder: (context) => const ProductsPage())
-          );
+        switch (index) {
+
+          case 0:
+            break;
+
+          case 1:
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ProductsPage(),
+              ),
+            );
+            break;
+
+          case 2:
+            // future orders page
+            break;
+
+          case 3:
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ProfileFarmerPage(
+                  fullName: fullName,
+                  email: email,
+                  phone: phone,
+                  city: city,
+                  farmingType: farmingType,
+                  mainProducts: mainProducts,
+                ),
+              ),
+            );
+            break;
         }
       },
-      // التعديل 3: حيدنا الـ FloatingActionButton باش ما تبقاش مزاحمة الـ UI
-      floatingActionButton: null, 
     );
   }
 
-  // ... (باقي الـ Widgets: _dashboardStatCard, _recentOrderTile, _topSellingCard كيبقاو هما هما)
+  // باقي functions نفسهم بلا تغيير 👇
 
-  Widget _dashboardStatCard({required IconData icon, required String label, required String value, String? subLabel, required Color color, required Color valueColor}) {
+  Widget _dashboardStatCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    String? subLabel,
+    required Color color,
+    required Color valueColor,
+  }) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(18),
+      ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Icon(icon, color: valueColor, size: 28),
           ),
           const SizedBox(width: 18),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(fontSize: 16, color: Colors.black54)),
+              Text(label,
+                  style: const TextStyle(fontSize: 16, color: Colors.black54)),
               Row(
                 children: [
-                  Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: valueColor)),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: valueColor,
+                    ),
+                  ),
                   if (subLabel != null) ...[
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: valueColor.withOpacity(0.13), borderRadius: BorderRadius.circular(8)),
-                      child: Text(subLabel, style: TextStyle(fontSize: 13, color: valueColor, fontWeight: FontWeight.w600)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: valueColor.withOpacity(0.13),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        subLabel,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: valueColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ]
                 ],
@@ -173,44 +301,54 @@ class FarmerDashboard extends StatelessWidget {
     );
   }
 
-  Widget _recentOrderTile(String title, String subtitle, String status, String amount) {
+  Widget _recentOrderTile(
+    String title,
+    String subtitle,
+    String status,
+    String amount,
+  ) {
     Color statusColor;
+
     switch (status) {
-      case 'IN TRANSIT': statusColor = Colors.green; break;
-      case 'PROCESSING': statusColor = Colors.orange; break;
-      case 'COMPLETED': statusColor = Colors.grey; break;
-      default: statusColor = Colors.blueGrey;
+      case 'IN TRANSIT':
+        statusColor = Colors.green;
+        break;
+      case 'PROCESSING':
+        statusColor = Colors.orange;
+        break;
+      case 'COMPLETED':
+        statusColor = Colors.grey;
+        break;
+      default:
+        statusColor = Colors.blueGrey;
     }
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
       child: ListTile(
-        leading: const Icon(Icons.shopping_basket, color: Color(0xFF2E7D32)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        leading: const Icon(
+          Icons.shopping_basket,
+          color: Color(0xFF2E7D32),
+        ),
+        title: Text(title,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
-        trailing: SizedBox(
-          width: 110,
-          child: FittedBox(
-            alignment: Alignment.centerRight,
-            fit: BoxFit.scaleDown,
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: '$status\n',
-                    style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  TextSpan(
-                    text: amount,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-                  ),
-                ],
-              ),
-              textAlign: TextAlign.right,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(status,
+                style: TextStyle(
+                  color: statusColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                )),
+            Text(amount,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
         ),
       ),
     );
@@ -218,7 +356,9 @@ class FarmerDashboard extends StatelessWidget {
 
   Widget _topSellingCard() {
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(18.0),
         child: Column(
@@ -227,23 +367,34 @@ class FarmerDashboard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
               child: Image.asset(
-                'assets/images/lettuce.jpg', 
-                height: 120, width: double.infinity, fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(height: 120, color: Colors.grey[200], child: const Icon(Icons.image_not_supported)),
+                'assets/images/lettuce.jpg',
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    Container(height: 120, color: Colors.grey[200]),
               ),
             ),
             const SizedBox(height: 12),
-            const Text('TOP SELLING', style: TextStyle(fontSize: 13, color: Colors.green)),
+            const Text('TOP SELLING',
+                style: TextStyle(fontSize: 13, color: Colors.green)),
             const SizedBox(height: 4),
-            const Text('Hydroponic Sweet Basil', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Hydroponic Basil',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Row(
               children: [
-                const Text('Yield Progress', style: TextStyle(fontSize: 15)),
+                const Text('Yield Progress'),
                 const SizedBox(width: 12),
-                Expanded(child: LinearProgressIndicator(value: 0.82, color: Colors.green, backgroundColor: Colors.green.shade100)),
+                Expanded(
+                  child: LinearProgressIndicator(
+                    value: 0.82,
+                    backgroundColor: Colors.green.shade100,
+                    color: Colors.green,
+                  ),
+                ),
                 const SizedBox(width: 8),
-                const Text('82%', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('82%'),
               ],
             ),
           ],

@@ -28,27 +28,17 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/logoS.png
-    - assets/images/logo.png
-    - assets/images/app1.png
-    - assets/images/app2.png
-    - assets/images/app3.png
-    - assets/images/app4.png
-    - assets/images/app5.png
-    - assets/images/lettuce.jpg
-    - assets/images/bank_logo.png
-    - assets/images/appTomat.jpg
-    - assets/images/appweight.jpg
-    # زيد هاد السطر لتحت باش يقرا الصور الجداد لي زدنا في الكود
-    - assets/images/appApple.png
-    - assets/images/appbanans.png
-    - assets/images/appOranges.png
-    - assets/images/apponions.png
-    - assets/images/appcarrot.png
-    - assets/images/appstrawberries.png
-    - assets/images/appcabbage.png
-    - assets/images/appOats.png
-    - assets/images/appPotatos.png
-    - assets/images/appSunflowers_Seeds.png
+    - assets/images/
+    - assets/images/usine/
+
+    
+
+
+
+
+  
+
+    
+
 
 

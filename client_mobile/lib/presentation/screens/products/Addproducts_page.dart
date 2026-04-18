@@ -258,6 +258,14 @@ class _AddProductPageState extends State<AddProductPage> with SingleTickerProvid
             title: const Text("Add Product",
                 style: TextStyle(color: Color(0xFF1B5E20), fontWeight: FontWeight.bold)),
             backgroundColor: Colors.white,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.person, color: Color(0xFF1B5E20)),
+                onPressed: () {
+                  // Action supprimée : ancienne navigation vers ProfileFarmerPage
+                },
+              ),
+            ],
             elevation: 0,
           ),
           body: Stack(
