@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:agriflow/l10n/app_localizations.dart';
 import '../dashboard/usine_dashboard.dart';
 
 class UsineForm extends StatefulWidget {
@@ -10,17 +9,17 @@ class UsineForm extends StatefulWidget {
 }
 
 class _UsineFormState extends State<UsineForm> {
-    List<String> get _productTypeOptions => [
-      AppLocalizations.of(context)!.registerProductFruits,
-      AppLocalizations.of(context)!.registerProductVegetables,
-      AppLocalizations.of(context)!.registerProductCereals,
-      AppLocalizations.of(context)!.registerProductLegumes,
-      AppLocalizations.of(context)!.registerProductDairy,
-      AppLocalizations.of(context)!.registerProductMeat,
-      AppLocalizations.of(context)!.registerProductProcessed,
-      AppLocalizations.of(context)!.registerProductOrganic,
-      AppLocalizations.of(context)!.registerProductFeed,
-      AppLocalizations.of(context)!.registerProductOther,
+    final List<String> _productTypeOptions = [
+      'Fruits',
+      'Vegetables',
+      'Cereals',
+      'Legumes',
+      'Dairy Products',
+      'Meat & Poultry',
+      'Processed Food',
+      'Organic Products',
+      'Animal Feed',
+      'Other',
     ];
     String? _selectedProductType;
 
@@ -40,19 +39,19 @@ class _UsineFormState extends State<UsineForm> {
         },
         onSaved: (value) => _data['productTypes'] = value,
         validator: (value) {
-          if (value == null || value.isEmpty) return AppLocalizations.of(context)!.registerFieldRequired;
+          if (value == null || value.isEmpty) return 'Required';
           return null;
         },
         decoration: InputDecoration(
           filled: true,
-          fillColor: Colors.white.withOpacity(0.13),
-          labelText: AppLocalizations.of(context)!.registerProductTypes,
+          fillColor: Colors.white.withValues(alpha: 0.13),
+          labelText: 'Product Types',
           labelStyle: const TextStyle(color: Colors.white70),
           prefixIcon: const Icon(Icons.category, color: Colors.white70),
           errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -78,10 +77,10 @@ class _UsineFormState extends State<UsineForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
+            const Center(
               child: Text(
-                AppLocalizations.of(context)!.registerUsineTitle,
-                style: const TextStyle(
+                'Register as Exporter/Factory',
+                style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Colors.white70,
@@ -90,10 +89,10 @@ class _UsineFormState extends State<UsineForm> {
               ),
             ),
             const SizedBox(height: 10),
-            Center(
+            const Center(
               child: Text(
-                AppLocalizations.of(context)!.registerUsineSubtitle,
-                style: const TextStyle(
+                'Create your exporter/factory account',
+                style: TextStyle(
                   fontSize: 16,
                   color: Colors.white70,
                   fontWeight: FontWeight.w400,
@@ -103,14 +102,14 @@ class _UsineFormState extends State<UsineForm> {
             ),
             const SizedBox(height: 32),
             _buildTextField(
-              label: AppLocalizations.of(context)!.registerFullName,
+              label: 'Full Name',
               keyName: 'fullName',
               required: true,
               icon: Icons.person,
             ),
             const SizedBox(height: 18),
             _buildTextField(
-              label: AppLocalizations.of(context)!.registerPhoneNumber,
+              label: 'Phone Number',
               keyName: 'phone',
               required: true,
               icon: Icons.phone,
@@ -118,14 +117,14 @@ class _UsineFormState extends State<UsineForm> {
             ),
             const SizedBox(height: 18),
             _buildTextField(
-              label: AppLocalizations.of(context)!.registerCity,
+              label: 'City',
               keyName: 'city',
               required: true,
               icon: Icons.location_city,
             ),
             const SizedBox(height: 18),
             _buildTextField(
-              label: AppLocalizations.of(context)!.registerCompanyName,
+              label: 'Company Name',
               keyName: 'companyName',
               required: true,
               icon: Icons.business,
@@ -134,7 +133,7 @@ class _UsineFormState extends State<UsineForm> {
             _buildProductTypeDropdown(),
             const SizedBox(height: 18),
             _buildTextField(
-              label: AppLocalizations.of(context)!.registerEmail,
+              label: 'Email',
               keyName: 'email',
               required: true,
               email: true,
@@ -148,8 +147,8 @@ class _UsineFormState extends State<UsineForm> {
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.13),
-                labelText: AppLocalizations.of(context)!.loginPasswordHint,
+                fillColor: Colors.white.withValues(alpha: 0.13),
+                labelText: 'Password',
                 labelStyle: const TextStyle(color: Colors.white70),
                 prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
                 suffixIcon: IconButton(
@@ -159,7 +158,7 @@ class _UsineFormState extends State<UsineForm> {
                 errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -167,8 +166,8 @@ class _UsineFormState extends State<UsineForm> {
                 ),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) return AppLocalizations.of(context)!.registerFieldRequired;
-                if (value.length < 6) return AppLocalizations.of(context)!.registerPasswordTooWeak;
+                if (value == null || value.isEmpty) return 'Required';
+                if (value.length < 6) return 'Password too weak';
                 return null;
               },
               onSaved: (value) => _data['password'] = value,
@@ -181,8 +180,8 @@ class _UsineFormState extends State<UsineForm> {
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.13),
-                labelText: AppLocalizations.of(context)!.registerConfirmPassword,
+                fillColor: Colors.white.withValues(alpha: 0.13),
+                labelText: 'Confirm Password',
                 labelStyle: const TextStyle(color: Colors.white70),
                 prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
                 suffixIcon: IconButton(
@@ -192,7 +191,7 @@ class _UsineFormState extends State<UsineForm> {
                 errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -200,8 +199,8 @@ class _UsineFormState extends State<UsineForm> {
                 ),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) return AppLocalizations.of(context)!.registerFieldRequired;
-                if (value != _passwordController.text) return AppLocalizations.of(context)!.registerPasswordsDoNotMatch;
+                if (value == null || value.isEmpty) return 'Required';
+                if (value != _passwordController.text) return 'Passwords do not match';
                 return null;
               },
             ),
@@ -235,7 +234,7 @@ class _UsineFormState extends State<UsineForm> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   elevation: 8,
-                  shadowColor: const Color(0xFF2E7D32).withOpacity(0.22),
+                  shadowColor: const Color(0xFF2E7D32).withValues(alpha: 0.22),
                   textStyle: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 18,
@@ -244,9 +243,9 @@ class _UsineFormState extends State<UsineForm> {
                   backgroundColor: const Color(0xFF2E7D32),
                   foregroundColor: Colors.white,
                 ),
-                child: Text(
-                  AppLocalizations.of(context)!.loginSignup,
-                  style: const TextStyle(
+                child: const Text(
+                  'Register',
+                  style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                     fontSize: 18,
@@ -280,7 +279,7 @@ class _UsineFormState extends State<UsineForm> {
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white.withOpacity(0.13),
+            fillColor: Colors.white.withValues(alpha: 0.13),
             labelText: label,
             labelStyle: const TextStyle(color: Colors.white70),
             hintText: helper,
@@ -291,7 +290,7 @@ class _UsineFormState extends State<UsineForm> {
             errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -300,10 +299,10 @@ class _UsineFormState extends State<UsineForm> {
           ),
           validator: (value) {
             if (required && (value == null || value.isEmpty)) {
-              return AppLocalizations.of(context)!.registerFieldRequired;
+              return 'Required';
             }
             if (email && value != null && !RegExp(r'^[\w\-.]+@[\w\-]+\.[a-zA-Z]{2,4}$').hasMatch(value)) {
-              return AppLocalizations.of(context)!.registerInvalidEmail;
+              return 'Invalid email';
             }
             return null;
           },
