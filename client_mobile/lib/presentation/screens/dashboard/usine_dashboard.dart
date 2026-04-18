@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 // ─────────────────────────────────────────────────────────
@@ -1949,29 +1950,51 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
 
   Widget _buildProductCard(Map<String, dynamic> p) {
     final bool isUrgent = p['isUrgent'] == true;
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 6))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(28)),
-                child: Builder(builder: (context) {
-                  final img = p['image'] as String;
-                  if (img.startsWith('http')) {
-                    return Image.network(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(product: p),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 15,
+                offset: const Offset(0, 6))
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(28)),
+                  child: Builder(builder: (context) {
+                    final img = p['image'] as String;
+                    if (img.startsWith('http')) {
+                      return Image.network(
+                        img,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          height: 200,
+                          color: const Color(0xFFF1F4F1),
+                          child: const Icon(Icons.image_not_supported_outlined,
+                              size: 40, color: Colors.grey),
+                        ),
+                      );
+                    }
+                    return Image.asset(
                       img,
                       height: 200,
                       width: double.infinity,
@@ -1983,138 +2006,145 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                             size: 40, color: Colors.grey),
                       ),
                     );
-                  }
-                  return Image.asset(
-                    img,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 200,
-                      color: const Color(0xFFF1F4F1),
-                      child: const Icon(Icons.image_not_supported_outlined,
-                          size: 40, color: Colors.grey),
-                    ),
-                  );
-                }),
-              ),
-              if (isUrgent)
-                Positioned(
-                  top: 15,
-                  left: 15,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.flash_on,
-                            size: 14, color: widget.primaryGreen),
-                        const SizedBox(width: 4),
-                        Text('URGENT',
-                            style: TextStyle(
-                                color: widget.primaryGreen,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0.5)),
-                      ],
-                    ),
-                  ),
+                  }),
                 ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                if (isUrgent)
+                  Positioned(
+                    top: 15,
+                    left: 15,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(p['name'] as String,
+                          Icon(Icons.flash_on,
+                              size: 14, color: widget.primaryGreen),
+                          const SizedBox(width: 4),
+                          Text('URGENT',
                               style: TextStyle(
-                                  color: widget.textColor,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800)),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(Icons.location_on_outlined,
-                                  size: 14, color: widget.textLight),
-                              const SizedBox(width: 4),
-                              Text(p['origin'] as String,
-                                  style: TextStyle(
-                                      color: widget.textLight, fontSize: 13)),
-                            ],
-                          ),
+                                  color: widget.primaryGreen,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.5)),
                         ],
                       ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(p['price'] as String,
-                            style: TextStyle(
-                                color: widget.primaryGreen,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900)),
-                        Text('inc. taxes',
-                            style: TextStyle(
-                                color: widget.textLight, fontSize: 10)),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.star,
-                            size: 16, color: Colors.orange.shade400),
-                        const SizedBox(width: 4),
-                        Text('4.8',
-                            style: TextStyle(
-                                color: widget.textColor,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold)),
-                        const SizedBox(width: 4),
-                        Text('(24 comments)',
-                            style: TextStyle(
-                                color: widget.textLight, fontSize: 12)),
-                      ],
-                    ),
-                    ElevatedButton(
-                      onPressed: () => _handleOrder(p),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: widget.primaryGreen,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: const Text('Order Now',
-                          style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w700)),
-                    ),
-                  ],
-                ),
+                  ),
               ],
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(p['name'] as String,
+                                style: TextStyle(
+                                    color: widget.textColor,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800)),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.location_on_outlined,
+                                    size: 14, color: widget.textLight),
+                                const SizedBox(width: 4),
+                                Text(p['origin'] as String,
+                                    style: TextStyle(
+                                        color: widget.textLight, fontSize: 13)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(p['price'] as String,
+                              style: TextStyle(
+                                  color: widget.primaryGreen,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900)),
+                          Text('inc. taxes',
+                              style: TextStyle(
+                                  color: widget.textLight, fontSize: 10)),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.star,
+                              size: 16, color: Colors.orange.shade400),
+                          const SizedBox(width: 4),
+                          Text('4.8',
+                              style: TextStyle(
+                                  color: widget.textColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 4),
+                          Text('(24 comments)',
+                              style: TextStyle(
+                                  color: widget.textLight, fontSize: 12)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ProductDetailScreen(product: p),
+                                ),
+                              );
+                            },
+                            icon: Icon(Icons.info_outline,
+                                color: widget.primaryGreen),
+                            tooltip: 'View Details',
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => _handleOrder(p),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: widget.primaryGreen,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
+                            ),
+                            child: const Text('Order Now',
+                                style: TextStyle(
+                                    fontSize: 13, fontWeight: FontWeight.w700)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2313,9 +2343,17 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
         textLight: widget.textLight,
         onTrackOrder: () {
           Navigator.pop(context); // Close sheet
-          if (widget.onNavigateToShipments != null) {
-            widget.onNavigateToShipments!();
-          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OrderTrackingScreen(
+                product: product,
+                primaryGreen: widget.primaryGreen,
+                textColor: widget.textColor,
+                textLight: widget.textLight,
+              ),
+            ),
+          );
         },
       ),
     );
@@ -3036,6 +3074,1455 @@ class _OrderSuccessSheet extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+//  PRODUCT DETAIL SCREEN (Integrated)
+// ─────────────────────────────────────────────────────────
+
+class ProductDetailScreen extends StatefulWidget {
+  final Map<String, dynamic> product;
+
+  const ProductDetailScreen({super.key, required this.product});
+
+  @override
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  int _quantity = 1;
+  bool _isFavorite = false;
+
+  static const Color primaryGreen = Color(0xFF23763D);
+  static const Color bgColor = Color(0xFFF1F8F1);
+  static const Color cardColor = Colors.white;
+  static const Color textColor = Color(0xFF1A1D1A);
+  static const Color textLight = Color(0xFF757575);
+
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.product;
+    final String name = p['name'] ?? 'Organic Product';
+    final String price = p['price'] ?? '\$0.00';
+    final String image = p['image'] ?? 'assets/images/usine/avocado.jpg';
+    final String origin = p['origin'] ?? 'Local Farm';
+    final bool isOrganic = p['isOrganic'] ?? true;
+
+    return Scaffold(
+      backgroundColor: bgColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: primaryGreen),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'AgriDirect',
+          style: TextStyle(
+            color: primaryGreen,
+            fontWeight: FontWeight.w800,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined, color: primaryGreen),
+            onPressed: () {},
+          ),
+          const CircleAvatar(
+            radius: 17,
+            backgroundColor: primaryGreen,
+            child: CircleAvatar(
+              radius: 15,
+              backgroundImage: NetworkImage(
+                  'https://images.unsplash.com/photo-1535711603865-0a7197029837?q=80&w=100&auto=format&fit=crop'),
+            ),
+          ),
+          const SizedBox(width: 16),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product Image Section with Gradient Overlay
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Container(
+                height: 380,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(35),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryGreen.withOpacity(0.15),
+                      blurRadius: 30,
+                      offset: const Offset(0, 15),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(35),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: image.startsWith('http')
+                            ? Image.network(image, fit: BoxFit.cover)
+                            : Image.asset(image, fit: BoxFit.cover),
+                      ),
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0.05),
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.2),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (isOrganic)
+                        Positioned(
+                          top: 20,
+                          left: 20,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.95),
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.verified_outlined,
+                                    size: 16, color: Color(0xFF2E7D32)),
+                                SizedBox(width: 6),
+                                Text(
+                                  'CERTIFIED ORGANIC',
+                                  style: TextStyle(
+                                    color: Color(0xFF2E7D32),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Name and Favorite
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w900,
+                            color: textColor,
+                            letterSpacing: -0.8,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => setState(() => _isFavorite = !_isFavorite),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _isFavorite
+                                ? Colors.red.withOpacity(0.1)
+                                : const Color(0xFFEFF5ED),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: _isFavorite ? Colors.red : primaryGreen,
+                            size: 26,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Price and Stock status
+                  Row(
+                    children: [
+                      Text(
+                        price.split('/')[0],
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: primaryGreen,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        '/ unit',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: textLight,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: primaryGreen.withOpacity(0.1)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.bolt_rounded,
+                                size: 16, color: primaryGreen),
+                            SizedBox(width: 4),
+                            Text(
+                              'IN STOCK',
+                              style: TextStyle(
+                                color: primaryGreen,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Product Story
+                  const Text(
+                    'PRODUCT STORY',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: textLight,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      'Hand-picked from the sun-drenched hills of the Central Coast. These premium items are buttery, rich in healthy fats, and grown without synthetic pesticides. Perfect for artisanal toast or a nutrient-dense snack.',
+                      style: TextStyle(
+                        color: textColor.withOpacity(0.8),
+                        fontSize: 16,
+                        height: 1.7,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Farmer Info Card
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF5ED),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                          color: primaryGreen.withOpacity(0.05)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const CircleAvatar(
+                            radius: 28,
+                            backgroundImage: NetworkImage(
+                                'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=100&auto=format&fit=crop'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'PRODUCED BY',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: textLight,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Green Valley Estates',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w900,
+                                  color: textColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => _openFarmerChat(context),
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDDE8DB),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.chat_bubble_rounded,
+                                    size: 18, color: textColor),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Contact\nFarmer',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: textColor,
+                                    height: 1.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Quick Info Cards
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoCard(
+                            Icons.local_shipping_rounded,
+                            'EST. DELIVERY',
+                            '24 – 48 Hours'),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildInfoCard(
+                            Icons.location_on_rounded, 'ORIGIN', origin),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Harvest Statistics
+                  Row(
+                    children: [
+                      const Text(
+                        'Harvest Statistics',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: textColor,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Divider(
+                          color: Colors.grey.withOpacity(0.2),
+                          thickness: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildStatCard('92%', 'OIL CONTENT',
+                      'Exceptional creaminess and stability for culinary use.',
+                      accentColor: const Color(0xFF1B5E20)),
+                  const SizedBox(height: 16),
+                  _buildStatCard('320g', 'AVG. WEIGHT',
+                      'Large size fruits with minimal stone-to-flesh ratio.',
+                      accentColor: const Color(0xFF880E4F)),
+                  const SizedBox(height: 16),
+                  _buildStatCard('A++', 'SUSTAINABILITY',
+                      'Carbon-negative orchard practices with water recycling.',
+                      accentColor: const Color(0xFF006064)),
+                  const SizedBox(height: 120),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomSheet: Container(
+        height: 100,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF5ED),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove, size: 20),
+                    onPressed: () {
+                      if (_quantity > 1) setState(() => _quantity--);
+                    },
+                  ),
+                  SizedBox(
+                    width: 30,
+                    child: Text(
+                      '$_quantity',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: textColor,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 20),
+                    onPressed: () => setState(() => _quantity++),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.shopping_cart_outlined),
+                label: const Text('PLACE ORDER'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryGreen,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF5ED),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: primaryGreen, size: 20),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: textLight,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String value, String title, String subtitle,
+      {Color accentColor = primaryGreen}) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.w900,
+              color: accentColor,
+              letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: textLight,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 13,
+              color: textLight,
+              height: 1.5,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openFarmerChat(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _IntegratedFarmerChatSheet(farmerName: 'Green Valley Estates'),
+    );
+  }
+}
+
+class _IntegratedFarmerChatSheet extends StatelessWidget {
+  final String farmerName;
+
+  const _IntegratedFarmerChatSheet({required this.farmerName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                const CircleAvatar(
+                  radius: 20,
+                  backgroundImage: NetworkImage(
+                      'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=100&auto=format&fit=crop'),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        farmerName,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const Text(
+                        'Online • Typically responds in 5m',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 32),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              children: [
+                _buildMessage(
+                  'Hello! I\'m interested in your Organic Avocados. Are they available for bulk shipping?',
+                  isMe: true,
+                ),
+                _buildMessage(
+                  'Hello! Yes, they are. We just harvested a fresh batch this morning. How many units are you looking for?',
+                  isMe: false,
+                ),
+                _buildMessage(
+                  'I need around 500 units for our factory next week.',
+                  isMe: true,
+                ),
+                _buildMessage(
+                  'That shouldn\'t be a problem. I can offer you a wholesale discount for that quantity. Would you like me to send a formal quote?',
+                  isMe: false,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF4F6F4),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: const TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Type a message...',
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF23763D),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.send, color: Colors.white, size: 20),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessage(String text, {required bool isMe}) {
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        constraints: const BoxConstraints(maxWidth: 280),
+        decoration: BoxDecoration(
+          color: isMe ? const Color(0xFF23763D) : const Color(0xFFF4F6F4),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(20),
+            topRight: const Radius.circular(20),
+            bottomLeft: Radius.circular(isMe ? 20 : 0),
+            bottomRight: Radius.circular(isMe ? 0 : 20),
+          ),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isMe ? Colors.white : Colors.black87,
+            height: 1.4,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+//  ORDER TRACKING SCREEN (Integrated)
+// ─────────────────────────────────────────────────────────
+
+class OrderTrackingScreen extends StatelessWidget {
+  final Map<String, dynamic> product;
+  final Color primaryGreen;
+  final Color textColor;
+  final Color textLight;
+
+  const OrderTrackingScreen({
+    super.key,
+    required this.product,
+    required this.primaryGreen,
+    required this.textColor,
+    required this.textLight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF1F8F1),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: primaryGreen),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Order Details',
+          style: TextStyle(
+            color: primaryGreen,
+            fontWeight: FontWeight.w800,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.more_vert, color: primaryGreen),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Tracking ID Card ──────────────────────────
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(35),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryGreen.withOpacity(0.05),
+                    blurRadius: 30,
+                    offset: const Offset(0, 15),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'TRACKING ID',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF757575),
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '#ORD-5529-X',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              color: textColor,
+                              letterSpacing: -1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF2E7D32),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'In Transit',
+                              style: TextStyle(
+                                color: Color(0xFF2E7D32),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 35),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F8F1),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Icon(Icons.calendar_today_rounded,
+                            color: primaryGreen, size: 24),
+                      ),
+                      const SizedBox(width: 18),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Estimated Delivery',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF757575),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Oct 30, 2023',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: textColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 25),
+
+            // ── Live Journey ──────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 40,
+                    offset: const Offset(0, 20),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.route_rounded,
+                          color: primaryGreen, size: 28),
+                      const SizedBox(width: 14),
+                      const Text(
+                        'Live Journey',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF1A1D1A),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                  _buildTimelineStep(
+                    primaryGreen: primaryGreen,
+                    textColor: textColor,
+                    icon: Icons.description_outlined,
+                    title: 'Order Placed',
+                    subtitle: 'Oct 24, 2023 \u2022 09:15 AM',
+                    isCompleted: true,
+                  ),
+                  _buildTimelineStep(
+                    primaryGreen: primaryGreen,
+                    textColor: textColor,
+                    icon: Icons.factory_outlined,
+                    title: 'Factory Processing',
+                    subtitle: 'Oct 26, 2023 \u2022 02:30 PM',
+                    isCompleted: true,
+                  ),
+                  _buildTimelineStep(
+                    primaryGreen: primaryGreen,
+                    textColor: textColor,
+                    icon: Icons.local_shipping_outlined,
+                    title: 'In Transit',
+                    subtitle: 'Moving through Heartland Hub, KS',
+                    isActive: true,
+                    isCompleted: true,
+                  ),
+                  // Map snippet
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(left: 52, top: 5, bottom: 25),
+                    child: Container(
+                      height: 200,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(28),
+                        color: const Color(0xFFE8F5E9),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: Stack(
+                          children: [
+                            // Map background
+                            Positioned.fill(
+                              child: CustomPaint(
+                                painter: _MapPainter(),
+                              ),
+                            ),
+                            // Live route badge
+                            Positioned(
+                              bottom: 14,
+                              left: 14,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 10,
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.green,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      'LIVE ROUTE',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // FACTORY label
+                            const Positioned(
+                              top: 20,
+                              right: 25,
+                              child: Text(
+                                'FACTORY',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF2E7D32),
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  _buildTimelineStep(
+                    primaryGreen: primaryGreen,
+                    textColor: textColor,
+                    icon: Icons.home_work_outlined,
+                    title: 'Delivered to Factory',
+                    subtitle: 'Estimated Oct 30',
+                    isLast: true,
+                    isCompleted: false,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 35),
+
+            // ── Order Summary ─────────────────────────────
+            Text(
+              'Order Summary',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: textColor,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildSummaryItem(
+              primaryGreen: primaryGreen,
+              icon: Icons.eco_rounded,
+              title: product['name'] as String? ?? 'Organic Produce',
+              subtitle: 'Batch #VG-992',
+              quantity: '5 Tons',
+            ),
+            const SizedBox(height: 14),
+            _buildSummaryItem(
+              primaryGreen: primaryGreen,
+              icon: Icons.science_rounded,
+              title: 'Fertilizer',
+              subtitle: 'Nitrogen Rich Mix',
+              quantity: '2 Tons',
+            ),
+            const SizedBox(height: 35),
+
+            // ── Total Value ───────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: primaryGreen.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(35),
+                border:
+                    Border.all(color: primaryGreen.withOpacity(0.1)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Total Value',
+                        style: TextStyle(
+                          color: primaryGreen,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Insured Logistics',
+                        style: TextStyle(
+                          color: Color(0xFF757575),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '\$12,450.00',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900,
+                          color: textColor,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      const Text(
+                        'USD',
+                        style: TextStyle(
+                          color: Color(0xFF757575),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimelineStep({
+    required Color primaryGreen,
+    required Color textColor,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    bool isLast = false,
+    bool isActive = false,
+    bool isCompleted = false,
+  }) {
+    final Color circleColor = isActive || isCompleted
+        ? const Color(0xFF2E7D32)
+        : const Color(0xFFEFF5ED);
+    final Color titleColor = isActive
+        ? const Color(0xFF2E7D32)
+        : (isCompleted ? textColor : const Color(0xFFBDBDBD));
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: circleColor,
+                shape: BoxShape.circle,
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: Colors.green.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        )
+                      ]
+                    : null,
+              ),
+              child: Icon(icon, color: Colors.white, size: 22),
+            ),
+            if (!isLast)
+              Container(
+                width: 2.5,
+                height: isActive ? 260 : 40,
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? const Color(0xFF2E7D32).withOpacity(0.2)
+                      : const Color(0xFFF1F1F1),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: titleColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF757575),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryItem({
+    required Color primaryGreen,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String quantity,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.02), blurRadius: 20),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF5ED),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Icon(icon, color: primaryGreen, size: 24),
+          ),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1A1D1A))),
+                Text(subtitle,
+                    style: const TextStyle(
+                        fontSize: 13, color: Color(0xFF757575))),
+              ],
+            ),
+          ),
+          Text(
+            quantity,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF2E7D32),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Custom Painter for map background ──────────────────────
+class _MapPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bgPaint = Paint()..color = const Color(0xFFD8EDD8);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+
+    // Draw grid lines
+    final gridPaint = Paint()
+      ..color = const Color(0xFFB8D8B8)
+      ..strokeWidth = 1;
+    for (double x = 0; x < size.width; x += 30) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+    for (double y = 0; y < size.height; y += 30) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    // Draw dashed route
+    final routePaint = Paint()
+      ..color = const Color(0xFF2E7D32)
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
+    final path = Path()
+      ..moveTo(size.width * 0.15, size.height * 0.8)
+      ..cubicTo(
+        size.width * 0.35,
+        size.height * 0.2,
+        size.width * 0.65,
+        size.height * 0.8,
+        size.width * 0.85,
+        size.height * 0.2,
+      );
+
+    // Dashed path
+    const dashLen = 10.0;
+    const gapLen = 6.0;
+    final metrics = path.computeMetrics();
+    for (final metric in metrics) {
+      double dist = 0;
+      while (dist < metric.length) {
+        final end = (dist + dashLen).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(dist, end), routePaint);
+        dist += dashLen + gapLen;
+      }
+    }
+
+    // Draw truck dot (active position)
+    final dotPaint = Paint()..color = const Color(0xFF1B5E20);
+    canvas.drawCircle(
+        Offset(size.width * 0.5, size.height * 0.5), 8, dotPaint);
+    final dotOuterPaint = Paint()
+      ..color = const Color(0xFF1B5E20).withOpacity(0.2)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(
+        Offset(size.width * 0.5, size.height * 0.5), 16, dotOuterPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ── Bottom Nav Widget ───────────────────────────────────────
+class _TrackingBottomNav extends StatelessWidget {
+  final Color primaryGreen;
+  const _TrackingBottomNav({required this.primaryGreen});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 100,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(35)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _navItem(Icons.storefront_outlined, 'MARKET', false),
+          _navItem(Icons.local_shipping_rounded, 'ORDERS', true),
+          _navItem(Icons.agriculture_outlined, 'FLEET', false),
+          _navItem(Icons.person_outline, 'ACCOUNT', false),
+        ],
+      ),
+    );
+  }
+
+  Widget _navItem(IconData icon, String label, bool active) {
+    if (active) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1B5E20),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(height: 4),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF1B5E20),
+                  letterSpacing: 0.5)),
+        ],
+      );
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: const Color(0xFF757575), size: 26),
+        const SizedBox(height: 6),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF757575),
+                letterSpacing: 0.5)),
+      ],
     );
   }
 }
