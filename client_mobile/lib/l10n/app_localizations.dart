@@ -183,162 +183,6 @@ abstract class AppLocalizations {
   /// **'Other'**
   String get registerProductOther;
 
-  /// No description provided for @registerProductCereals.
-  ///
-  /// In en, this message translates to:
-  /// **'Cereals'**
-  String get registerProductCereals;
-
-  /// No description provided for @registerProductLegumes.
-  ///
-  /// In en, this message translates to:
-  /// **'Legumes'**
-  String get registerProductLegumes;
-
-  /// No description provided for @registerProductDairy.
-  ///
-  /// In en, this message translates to:
-  /// **'Dairy Products'**
-  String get registerProductDairy;
-
-  /// No description provided for @registerProductMeat.
-  ///
-  /// In en, this message translates to:
-  /// **'Meat & Poultry'**
-  String get registerProductMeat;
-
-  /// No description provided for @registerProductProcessed.
-  ///
-  /// In en, this message translates to:
-  /// **'Processed Food'**
-  String get registerProductProcessed;
-
-  /// No description provided for @registerProductOrganic.
-  ///
-  /// In en, this message translates to:
-  /// **'Organic Products'**
-  String get registerProductOrganic;
-
-  /// No description provided for @registerProductFeed.
-  ///
-  /// In en, this message translates to:
-  /// **'Animal Feed'**
-  String get registerProductFeed;
-
-  /// No description provided for @registerProductTypes.
-  ///
-  /// In en, this message translates to:
-  /// **'Product Types'**
-  String get registerProductTypes;
-
-  /// No description provided for @registerCompanyName.
-  ///
-  /// In en, this message translates to:
-  /// **'Company Name'**
-  String get registerCompanyName;
-
-  /// No description provided for @registerUsineTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Register as Exporter/Factory'**
-  String get registerUsineTitle;
-
-  /// No description provided for @registerUsineSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Create your exporter/factory account'**
-  String get registerUsineSubtitle;
-
-  /// No description provided for @registerTransporteurTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Register as Transporter'**
-  String get registerTransporteurTitle;
-
-  /// No description provided for @registerTransporteurSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Create your transporter account'**
-  String get registerTransporteurSubtitle;
-
-  /// No description provided for @registerVehicleType.
-  ///
-  /// In en, this message translates to:
-  /// **'Vehicle Type'**
-  String get registerVehicleType;
-
-  /// No description provided for @registerVehicleTruck.
-  ///
-  /// In en, this message translates to:
-  /// **'Truck'**
-  String get registerVehicleTruck;
-
-  /// No description provided for @registerVehicleVan.
-  ///
-  /// In en, this message translates to:
-  /// **'Van'**
-  String get registerVehicleVan;
-
-  /// No description provided for @registerVehiclePickup.
-  ///
-  /// In en, this message translates to:
-  /// **'Pickup'**
-  String get registerVehiclePickup;
-
-  /// No description provided for @registerCapacity.
-  ///
-  /// In en, this message translates to:
-  /// **'Capacity (e.g., 2 tons)'**
-  String get registerCapacity;
-
-  /// No description provided for @registerBanqueTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Register as Bank'**
-  String get registerBanqueTitle;
-
-  /// No description provided for @registerBanqueSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Create your bank account'**
-  String get registerBanqueSubtitle;
-
-  /// No description provided for @registerBankName.
-  ///
-  /// In en, this message translates to:
-  /// **'Bank Name'**
-  String get registerBankName;
-
-  /// No description provided for @registerOfficialId.
-  ///
-  /// In en, this message translates to:
-  /// **'Official ID (ex: CAM-001)'**
-  String get registerOfficialId;
-
-  /// No description provided for @registerInstitutionalEmail.
-  ///
-  /// In en, this message translates to:
-  /// **'Institutional Email'**
-  String get registerInstitutionalEmail;
-
-  /// No description provided for @registerUploadLogo.
-  ///
-  /// In en, this message translates to:
-  /// **'Upload Logo / Verification Documents'**
-  String get registerUploadLogo;
-
-  /// No description provided for @registerNoFileSelected.
-  ///
-  /// In en, this message translates to:
-  /// **'No file selected'**
-  String get registerNoFileSelected;
-
-  /// No description provided for @registerUpload.
-  ///
-  /// In en, this message translates to:
-  /// **'Upload'**
-  String get registerUpload;
-
   /// No description provided for @registerFieldRequired.
   ///
   /// In en, this message translates to:
@@ -620,6 +464,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Banque'**
   String get roleBanque;
+
+  /// No description provided for @registerVehicleTruck.
+  ///
+  /// In en, this message translates to:
+  /// **'Truck'**
+  String get registerVehicleTruck;
+
+  /// No description provided for @registerVehicleVan.
+  ///
+  /// In en, this message translates to:
+  /// **'Van'**
+  String get registerVehicleVan;
+
+  /// No description provided for @registerVehiclePickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup'**
+  String get registerVehiclePickup;
+
+  /// No description provided for @registerTransporteurTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Register as Transporter'**
+  String get registerTransporteurTitle;
+
+  /// No description provided for @registerTransporteurSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your transporter account'**
+  String get registerTransporteurSubtitle;
+
+  /// No description provided for @registerCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Capacity'**
+  String get registerCapacity;
+
+  /// No description provided for @registerVehicleType.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle Type'**
+  String get registerVehicleType;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

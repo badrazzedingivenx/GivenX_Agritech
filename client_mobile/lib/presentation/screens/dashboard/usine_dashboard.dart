@@ -4190,6 +4190,7 @@ class OrderTrackingScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: primaryGreen.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(35),
+      
                 border:
                     Border.all(color: primaryGreen.withOpacity(0.1)),
               ),

@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 
-import '../../data/mock_data/user_roles.dart';
+
 import 'package:agriflow/l10n/app_localizations.dart';
 
 import 'register_screen.dart';
@@ -20,7 +20,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final roles = userRoles;
+    // Roles defined statically (icons can't come from json-server)
+    final roles = [
+      {'key': 'roleFarmer', 'label': 'Agriculteur', 'icon': Icons.agriculture},
+      {'key': 'roleFactory', 'label': 'Usine', 'icon': Icons.factory},
+      {'key': 'roleTransporter', 'label': 'Transporteur', 'icon': Icons.local_shipping},
+      {'key': 'roleBanque', 'label': 'Banque', 'icon': Icons.account_balance},
+    ];
     void _navigateToRegister() {
       if (_selectedIndex != null) {
         final roleKey = roles[_selectedIndex!]['key'] as String;

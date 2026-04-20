@@ -1,0 +1,72 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "farmer@gmail.com",
+      "password": "farmer123",
+      "role": "Agriculteur",
+      "fullName": "Ali Farmer",
+      "phone": "0600000001",
+      "city": "Agadir",
+      "farmingType": "Agriculture",
+      "mainProducts": "Maize, Wheat"
+    },
+    {
+      "id": 2,
+      "email": "factory@gmail.com",
+      "password": "factory123",
+      "role": "Usine",
+      "fullName": "Sara Usine",
+      "phone": "0600000002",
+      "city": "Casablanca",
+      "companyName": "AgriFactory",
+      "productTypes": "Canned Vegetables, Flour"
+    },
+    {
+      "id": 3,
+      "email": "transporter@gmail.com",
+      "password": "trans123",
+      "role": "Transporteur",
+      "fullName": "Mohamed Transport",
+      "phone": "0600000003",
+      "city": "Marrakech",
+      "vehicleType": "Truck",
+      "capacity": "10 Tons"
+    },
+    {
+      "id": 4,
+      "email": "bank@test.com",
+      "password": "1234",
+      "role": "Banque",
+      "bankName": "Banque Agricole",
+      "officialId": "CAM-001"
+    },
+    {
+      "id": 5,
+      "email": "admin@test.com",
+      "password": "1234",
+      "role": "admin"
+    },
+    {
+      "id": 6,
+      "email": "user@test.com",
+      "password": "1234",
+      "role": "user"
+    }
+  ],
+  "banks": [
+    {
+      "id": 1,
+      "name": "Banque Agricole",
+      "email": "bank@test.com",
+      "password": "1234",
+      "officialId": "CAM-001"
+    }
+  ],
+  "roles": [
+    { "key": "roleFarmer", "label": "Agriculteur" },
+    { "key": "roleFactory", "label": "Usine" },
+    { "key": "roleTransporter", "label": "Transporteur" },
+    { "key": "roleBanque", "label": "Banque" }
+  ]
+}

@@ -2,7 +2,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:agriflow/l10n/app_localizations.dart';
-import '../../../data/mock_data/mock_users.dart';
+import '../../../services/api_service.dart';
 import '../dashboard/farmer_dashboard.dart';
 
 class FermerForm extends StatefulWidget {
@@ -33,6 +33,7 @@ class _FermerFormState extends State<FermerForm> {
     AppLocalizations.of(context)!.registerProductFruits,
     AppLocalizations.of(context)!.registerProductOther,
   ];
+  bool _isLoading = false;
   final TextEditingController _mainProductsController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _mainProductsError = false;
@@ -152,38 +153,46 @@ class _FermerFormState extends State<FermerForm> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
+              onPressed: _isLoading ? null : () async {
                 final valid = _formKey.currentState!.validate();
                 setState(() {
                   _mainProductsError = _mainProducts.isEmpty;
                 });
                 if (valid && !_mainProductsError) {
                   _formKey.currentState!.save();
-                  // Add new user to mockUsers
-                  mockUsers.add({
-                    'email': _data['email'] ?? '',
-                    'password': _data['password'] ?? '',
-                    'role': 'Agriculteur',
-                    'fullName': _data['fullName'] ?? '',
-                    'phone': _data['phone'] ?? '',
-                    'city': _data['city'] ?? '',
-                    'farmingType': _data['farmingType'] ?? '',
-                    'mainProducts': _mainProducts.join(', '),
-                  });
-                  // Navigate to FarmerDashboard and pass user info
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FarmerDashboard(
-                        fullName: _data['fullName'] ?? '',
-                        email: _data['email'] ?? '',
-                        phone: _data['phone'] ?? '',
-                        city: _data['city'] ?? '',
-                        farmingType: _data['farmingType'] ?? '',
-                        mainProducts: _mainProducts.join(', '),
+                  setState(() => _isLoading = true);
+                  try {
+                    await ApiService.registerUser({
+                      'email': _data['email'] ?? '',
+                      'password': _data['password'] ?? '',
+                      'role': 'Agriculteur',
+                      'fullName': _data['fullName'] ?? '',
+                      'phone': _data['phone'] ?? '',
+                      'city': _data['city'] ?? '',
+                      'farmingType': _data['farmingType'] ?? '',
+                      'mainProducts': _mainProducts.join(', '),
+                    });
+                    if (!mounted) return;
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FarmerDashboard(
+                          fullName: _data['fullName'] ?? '',
+                          email: _data['email'] ?? '',
+                          phone: _data['phone'] ?? '',
+                          city: _data['city'] ?? '',
+                          farmingType: _data['farmingType'] ?? '',
+                          mainProducts: _mainProducts.join(', '),
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+                    setState(() => _isLoading = false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Registration failed: $e')),
+                    );
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(

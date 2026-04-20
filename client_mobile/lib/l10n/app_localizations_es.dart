@@ -9,142 +9,64 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
-  String get registerFarmingType => 'Tipo de agricultura';
+  String get registerFarmingType => 'Type of Farming';
 
   @override
-  String get registerFarmingTypeAgriculture => 'Agricultura';
+  String get registerFarmingTypeAgriculture => 'Agriculture';
 
   @override
-  String get registerFarmingTypeLivestock => 'Ganadería';
+  String get registerFarmingTypeLivestock => 'Livestock';
 
   @override
-  String get registerFarmingTypeBoth => 'Ambos';
+  String get registerFarmingTypeBoth => 'Both';
 
   @override
-  String get registerMainProducts => 'Productos principales';
+  String get registerMainProducts => 'Main Products';
 
   @override
-  String get registerProductMaize => 'Maíz';
+  String get registerProductMaize => 'Maize';
 
   @override
-  String get registerProductWheat => 'Trigo';
+  String get registerProductWheat => 'Wheat';
 
   @override
-  String get registerProductRice => 'Arroz';
+  String get registerProductRice => 'Rice';
 
   @override
-  String get registerProductCattle => 'Ganado';
+  String get registerProductCattle => 'Cattle';
 
   @override
-  String get registerProductGoats => 'Cabras';
+  String get registerProductGoats => 'Goats';
 
   @override
-  String get registerProductSheep => 'Ovejas';
+  String get registerProductSheep => 'Sheep';
 
   @override
-  String get registerProductVegetables => 'Verduras';
+  String get registerProductVegetables => 'Vegetables';
 
   @override
-  String get registerProductFruits => 'Frutas';
+  String get registerProductFruits => 'Fruits';
 
   @override
-  String get registerProductOther => 'Otro';
+  String get registerProductOther => 'Other';
 
   @override
-  String get registerProductCereals => 'Cereals';
+  String get registerFieldRequired => 'Required';
 
   @override
-  String get registerProductLegumes => 'Legumes';
+  String get registerInvalidEmail => 'Invalid email';
 
   @override
-  String get registerProductDairy => 'Dairy Products';
+  String get registerPasswordTooWeak => 'Password too weak';
 
   @override
-  String get registerProductMeat => 'Meat & Poultry';
+  String get registerPasswordsDoNotMatch => 'Passwords do not match';
 
   @override
-  String get registerProductProcessed => 'Processed Food';
+  String get registerConfirmPassword => 'Confirm Password';
 
   @override
-  String get registerProductOrganic => 'Organic Products';
-
-  @override
-  String get registerProductFeed => 'Animal Feed';
-
-  @override
-  String get registerProductTypes => 'Product Types';
-
-  @override
-  String get registerCompanyName => 'Company Name';
-
-  @override
-  String get registerUsineTitle => 'Register as Exporter/Factory';
-
-  @override
-  String get registerUsineSubtitle => 'Create your exporter/factory account';
-
-  @override
-  String get registerTransporteurTitle => 'Register as Transporter';
-
-  @override
-  String get registerTransporteurSubtitle => 'Create your transporter account';
-
-  @override
-  String get registerVehicleType => 'Vehicle Type';
-
-  @override
-  String get registerVehicleTruck => 'Truck';
-
-  @override
-  String get registerVehicleVan => 'Van';
-
-  @override
-  String get registerVehiclePickup => 'Pickup';
-
-  @override
-  String get registerCapacity => 'Capacity (e.g., 2 tons)';
-
-  @override
-  String get registerBanqueTitle => 'Register as Bank';
-
-  @override
-  String get registerBanqueSubtitle => 'Create your bank account';
-
-  @override
-  String get registerBankName => 'Bank Name';
-
-  @override
-  String get registerOfficialId => 'Official ID (ex: CAM-001)';
-
-  @override
-  String get registerInstitutionalEmail => 'Institutional Email';
-
-  @override
-  String get registerUploadLogo => 'Upload Logo / Verification Documents';
-
-  @override
-  String get registerNoFileSelected => 'No file selected';
-
-  @override
-  String get registerUpload => 'Upload';
-
-  @override
-  String get registerFieldRequired => 'Requerido';
-
-  @override
-  String get registerInvalidEmail => 'Correo electrónico no válido';
-
-  @override
-  String get registerPasswordTooWeak => 'Contraseña demasiado débil';
-
-  @override
-  String get registerPasswordsDoNotMatch => 'Las contraseñas no coinciden';
-
-  @override
-  String get registerConfirmPassword => 'Confirmar contraseña';
-
-  @override
-  String get registerSelectAtLeastOneProduct => 'Seleccione al menos un producto';
+  String get registerSelectAtLeastOneProduct => 'Select at least one product';
 
   @override
   String get appTitle => 'AgriFlow';
@@ -268,4 +190,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get roleBanque => 'Banco';
+
+  @override
+  String get registerVehicleTruck => 'Camión';
+
+  @override
+  String get registerVehicleVan => 'Furgoneta';
+
+  @override
+  String get registerVehiclePickup => 'Pickup';
+
+  @override
+  String get registerTransporteurTitle => 'Registrar como transportista';
+
+  @override
+  String get registerTransporteurSubtitle => 'Crea tu cuenta de transportista';
+
+  @override
+  String get registerCapacity => 'Capacidad';
+
+  @override
+  String get registerVehicleType => 'Tipo de vehículo';
 }

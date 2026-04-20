@@ -1,9 +1,12 @@
 
 
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../../data/mock_data/mock_users.dart';
+import 'package:http/http.dart' as http;
+
 import 'package:agriflow/l10n/app_localizations.dart';
+import '../../services/api_constants.dart';
 import 'dashboard/farmer_dashboard.dart';
 import 'dashboard/usine_dashboard.dart';
 import 'dashboard/transporteur_dashboard.dart';
@@ -72,36 +75,51 @@ class _LoginFormState extends State<_LoginForm> {
 
   String? _emailError;
   String? _passwordError;
-  // Role selection removed
+  bool _isLoading = false;
 
-  void _validateAndLogin() {
+  void _validateAndLogin() async {
     setState(() {
       _emailError = null;
       _passwordError = null;
-      final email = _usernameController.text.trim();
-      final password = _passwordController.text;
-      final gmailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@gmail\.com\b');
-      if (email.isEmpty) {
-        _emailError = AppLocalizations.of(context)!.loginEmailRequired;
-      } else if (!gmailRegex.hasMatch(email)) {
-        _emailError = AppLocalizations.of(context)!.loginEmailInvalid;
-      }
-      if (password.isEmpty) {
-        _passwordError = AppLocalizations.of(context)!.loginPasswordRequired;
-      }
-      if (_emailError == null && _passwordError == null) {
-        // Check credentials against mockUsers
-        final user = mockUsers.firstWhere(
-          (u) => u['email'] == email && u['password'] == password,
-          orElse: () => {},
-        );
-        if (user.isNotEmpty) {
-          final role = user['role'];
+    });
+
+    final email = _usernameController.text.trim();
+    final password = _passwordController.text;
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+
+    if (email.isEmpty) {
+      setState(() => _emailError = AppLocalizations.of(context)!.loginEmailRequired);
+      return;
+    } else if (!emailRegex.hasMatch(email)) {
+      setState(() => _emailError = AppLocalizations.of(context)!.loginEmailInvalid);
+      return;
+    }
+    if (password.isEmpty) {
+      setState(() => _passwordError = AppLocalizations.of(context)!.loginPasswordRequired);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final url = Uri.parse('${ApiConstants.users}?email=$email&password=$password');
+      final response = await http.get(url);
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        final List<dynamic> users = (body is Map<String, dynamic> && body.containsKey('data')) ? body['data'] as List<dynamic> : body as List<dynamic>;
+        if (users.isNotEmpty) {
+          final user = users.first;
+          final role = user['role'] as String? ?? '';
+
           if (role == 'Agriculteur') {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (context) => FarmerDashboard(
-                  fullName: user['fullName'] ?? 'Farmer',
+                  fullName: user['fullName'] ?? '',
                   email: user['email'] ?? '',
                   phone: user['phone'] ?? '',
                   city: user['city'] ?? '',
@@ -158,8 +176,18 @@ class _LoginFormState extends State<_LoginForm> {
             SnackBar(content: Text(AppLocalizations.of(context)!.loginInvalidCredentials)),
           );
         }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Server error. Please try again.')),
+        );
       }
-    });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Connection error: $e')),
+      );
+    }
   }
 
   @override
@@ -421,7 +449,7 @@ class _LoginFormState extends State<_LoginForm> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _validateAndLogin,
+            onPressed: _isLoading ? null : _validateAndLogin,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 18),
               shape: RoundedRectangleBorder(
@@ -437,7 +465,9 @@ class _LoginFormState extends State<_LoginForm> {
               backgroundColor: const Color(0xFF2E7D32),
               foregroundColor: Colors.white,
             ),
-            child: Text(
+            child: _isLoading
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : Text(
               AppLocalizations.of(context)!.loginButton,
               style: const TextStyle(
                 color: Colors.white,

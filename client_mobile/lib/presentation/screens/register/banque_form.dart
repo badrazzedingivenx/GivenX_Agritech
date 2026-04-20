@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../services/api_service.dart';
 import '../dashboard/banque_dashboard.dart';
 
 class BanqueForm extends StatefulWidget {
@@ -128,38 +129,55 @@ class _BanqueFormState extends State<BanqueForm> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final valid = _formKey.currentState!.validate();
                 if (valid) {
                   _formKey.currentState!.save();
-                  // Simulate admin validation required
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Awaiting Admin Validation'),
-                      content: const Text('Your registration is pending admin approval. You will be notified once validated.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BanqueDashboard(
-                                  bankName: _data['bankName'] ?? '',
-                                  officialId: _data['officialId'] ?? '',
-                                  email: _data['email'] ?? '',
-                                  phone: _data['phone'] ?? '',
-                                  logoPath: _uploadedLogoPath ?? '',
+                  try {
+                    await ApiService.registerUser({
+                      'email': _data['email'] ?? '',
+                      'password': _data['password'] ?? '',
+                      'role': 'Banque',
+                      'bankName': _data['bankName'] ?? '',
+                      'officialId': _data['officialId'] ?? '',
+                      'phone': _data['phone'] ?? '',
+                      'logoPath': _uploadedLogoPath ?? '',
+                    });
+                    if (!mounted) return;
+                    // Simulate admin validation required
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Awaiting Admin Validation'),
+                        content: const Text('Your registration is pending admin approval. You will be notified once validated.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BanqueDashboard(
+                                    bankName: _data['bankName'] ?? '',
+                                    officialId: _data['officialId'] ?? '',
+                                    email: _data['email'] ?? '',
+                                    phone: _data['phone'] ?? '',
+                                    logoPath: _uploadedLogoPath ?? '',
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
+                              );
+                            },
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Registration failed: $e')),
+                    );
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(

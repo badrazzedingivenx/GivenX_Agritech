@@ -51,84 +51,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get registerProductOther => 'Other';
 
   @override
-  String get registerProductCereals => 'Cereals';
-
-  @override
-  String get registerProductLegumes => 'Legumes';
-
-  @override
-  String get registerProductDairy => 'Dairy Products';
-
-  @override
-  String get registerProductMeat => 'Meat & Poultry';
-
-  @override
-  String get registerProductProcessed => 'Processed Food';
-
-  @override
-  String get registerProductOrganic => 'Organic Products';
-
-  @override
-  String get registerProductFeed => 'Animal Feed';
-
-  @override
-  String get registerProductTypes => 'Product Types';
-
-  @override
-  String get registerCompanyName => 'Company Name';
-
-  @override
-  String get registerUsineTitle => 'Register as Exporter/Factory';
-
-  @override
-  String get registerUsineSubtitle => 'Create your exporter/factory account';
-
-  @override
-  String get registerTransporteurTitle => 'Register as Transporter';
-
-  @override
-  String get registerTransporteurSubtitle => 'Create your transporter account';
-
-  @override
-  String get registerVehicleType => 'Vehicle Type';
-
-  @override
-  String get registerVehicleTruck => 'Truck';
-
-  @override
-  String get registerVehicleVan => 'Van';
-
-  @override
-  String get registerVehiclePickup => 'Pickup';
-
-  @override
-  String get registerCapacity => 'Capacity (e.g., 2 tons)';
-
-  @override
-  String get registerBanqueTitle => 'Register as Bank';
-
-  @override
-  String get registerBanqueSubtitle => 'Create your bank account';
-
-  @override
-  String get registerBankName => 'Bank Name';
-
-  @override
-  String get registerOfficialId => 'Official ID (ex: CAM-001)';
-
-  @override
-  String get registerInstitutionalEmail => 'Institutional Email';
-
-  @override
-  String get registerUploadLogo => 'Upload Logo / Verification Documents';
-
-  @override
-  String get registerNoFileSelected => 'No file selected';
-
-  @override
-  String get registerUpload => 'Upload';
-
-  @override
   String get registerFieldRequired => 'Required';
 
   @override
@@ -268,4 +190,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get roleBanque => 'Banque';
+
+  @override
+  String get registerVehicleTruck => 'Truck';
+
+  @override
+  String get registerVehicleVan => 'Van';
+
+  @override
+  String get registerVehiclePickup => 'Pickup';
+
+  @override
+  String get registerTransporteurTitle => 'Register as Transporter';
+
+  @override
+  String get registerTransporteurSubtitle => 'Create your transporter account';
+
+  @override
+  String get registerCapacity => 'Capacity';
+
+  @override
+  String get registerVehicleType => 'Vehicle Type';
 }

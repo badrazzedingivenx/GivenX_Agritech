@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../services/api_service.dart';
 import '../dashboard/usine_dashboard.dart';
 
 class UsineForm extends StatefulWidget {
@@ -209,23 +210,41 @@ class _UsineFormState extends State<UsineForm> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   final valid = _formKey.currentState!.validate();
                   if (valid) {
                     _formKey.currentState!.save();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => UsineDashboard(
-                          fullName: _data['fullName'] ?? '',
-                          phone: _data['phone'] ?? '',
-                          city: _data['city'] ?? '',
-                          companyName: _data['companyName'] ?? '',
-                          productTypes: _data['productTypes'] ?? '',
-                          email: _data['email'] ?? '',
+                    try {
+                      await ApiService.registerUser({
+                        'email': _data['email'] ?? '',
+                        'password': _data['password'] ?? '',
+                        'role': 'Usine',
+                        'fullName': _data['fullName'] ?? '',
+                        'phone': _data['phone'] ?? '',
+                        'city': _data['city'] ?? '',
+                        'companyName': _data['companyName'] ?? '',
+                        'productTypes': _data['productTypes'] ?? '',
+                      });
+                      if (!mounted) return;
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => UsineDashboard(
+                            fullName: _data['fullName'] ?? '',
+                            phone: _data['phone'] ?? '',
+                            city: _data['city'] ?? '',
+                            companyName: _data['companyName'] ?? '',
+                            productTypes: _data['productTypes'] ?? '',
+                            email: _data['email'] ?? '',
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    } catch (e) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Registration failed: $e')),
+                      );
+                    }
                   }
                 },
                 style: ElevatedButton.styleFrom(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:agriflow/l10n/app_localizations.dart';
+import '../../../services/api_service.dart';
 import '../dashboard/transporteur_dashboard.dart';
 
 class TransporteurForm extends StatefulWidget {
@@ -135,23 +136,41 @@ class _TransporteurFormState extends State<TransporteurForm> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final valid = _formKey.currentState!.validate();
                 if (valid) {
                   _formKey.currentState!.save();
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TransporteurDashboard(
-                        fullName: _data['fullName'] ?? '',
-                        email: _data['email'] ?? '',
-                        phone: _data['phone'] ?? '',
-                        city: _data['city'] ?? '',
-                        vehicleType: _selectedVehicleType ?? '',
-                        capacity: _data['capacity'] ?? '',
+                  try {
+                    await ApiService.registerUser({
+                      'email': _data['email'] ?? '',
+                      'password': _data['password'] ?? '',
+                      'role': 'Transporteur',
+                      'fullName': _data['fullName'] ?? '',
+                      'phone': _data['phone'] ?? '',
+                      'city': _data['city'] ?? '',
+                      'vehicleType': _selectedVehicleType ?? '',
+                      'capacity': _data['capacity'] ?? '',
+                    });
+                    if (!mounted) return;
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TransporteurDashboard(
+                          fullName: _data['fullName'] ?? '',
+                          email: _data['email'] ?? '',
+                          phone: _data['phone'] ?? '',
+                          city: _data['city'] ?? '',
+                          vehicleType: _selectedVehicleType ?? '',
+                          capacity: _data['capacity'] ?? '',
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Registration failed: $e')),
+                    );
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(
