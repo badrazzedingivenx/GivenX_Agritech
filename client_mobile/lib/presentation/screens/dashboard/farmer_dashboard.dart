@@ -69,9 +69,7 @@ class FarmerDashboard extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => AddProductPage(
-                            onProductAdded: (data) {},
-                          ),
+                          builder: (_) => const AddProductPage(),
                         ),
                       );
                     },

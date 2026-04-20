@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../services/session_service.dart';
+import '../../models/user.dart';
+import 'dashboard/farmer_dashboard.dart';
+import 'dashboard/usine_dashboard.dart';
+import 'dashboard/transporteur_dashboard.dart';
+import 'dashboard/banque_dashboard.dart';
 
 class SplashScreen extends StatefulWidget {
   static const routeName = '/splash';
@@ -26,8 +32,67 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _controller.forward();
     Future.delayed(const Duration(seconds: 4), () {
-      Navigator.of(context).pushReplacementNamed('/intro');
+      _checkSessionAndNavigate();
     });
+  }
+
+  Future<void> _checkSessionAndNavigate() async {
+    final user = await SessionService.getUser();
+    if (!mounted) return;
+
+    if (user != null) {
+      _navigateToDashboard(user);
+    } else {
+      Navigator.of(context).pushReplacementNamed('/intro');
+    }
+  }
+
+  void _navigateToDashboard(User user) {
+    Widget dashboard;
+    switch (user.role) {
+      case UserRole.farmer:
+        dashboard = FarmerDashboard(
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone,
+          city: user.city,
+          farmingType: user.farmingType ?? '',
+          mainProducts: user.mainProducts ?? '',
+        );
+      case UserRole.buyer:
+        dashboard = UsineDashboard(
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone,
+          city: user.city,
+          companyName: user.companyName ?? '',
+          productTypes: user.productTypes ?? '',
+          buyerType: user.buyerType?.toJson() ?? 'restaurant',
+        );
+      case UserRole.transporter:
+        dashboard = TransporteurDashboard(
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone,
+          city: user.city,
+          vehicleType: user.vehicleType ?? '',
+          capacity: user.capacity ?? '',
+        );
+      case UserRole.bank:
+        dashboard = BanqueDashboard(
+          bankName: user.bankName ?? '',
+          officialId: user.officialId ?? '',
+          email: user.email,
+          phone: user.phone,
+          logoPath: user.logoPath ?? '',
+        );
+      case UserRole.admin:
+        Navigator.of(context).pushReplacementNamed('/intro');
+        return;
+    }
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => dashboard),
+    );
   }
 
   @override

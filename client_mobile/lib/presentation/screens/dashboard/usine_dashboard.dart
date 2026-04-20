@@ -14,6 +14,7 @@ class UsineDashboard extends StatefulWidget {
   final String city;
   final String companyName;
   final String productTypes;
+  final String buyerType; // 'restaurant' or 'industry'
 
   const UsineDashboard({
     super.key,
@@ -23,6 +24,7 @@ class UsineDashboard extends StatefulWidget {
     required this.city,
     required this.companyName,
     required this.productTypes,
+    this.buyerType = 'restaurant',
   });
 
   @override
@@ -138,7 +140,7 @@ class _HomeTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('EXPORTER DASHBOARD',
+          Text('BUYER DASHBOARD',
               style: TextStyle(
                   color: primaryGreen,
                   fontSize: 11,

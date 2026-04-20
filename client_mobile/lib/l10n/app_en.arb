@@ -22,8 +22,8 @@
   "appTitle": "AgriFlow",
   "introFarmerTitle": "Farmer",
   "introFarmerDesc": "Publish your harvests, receive orders, and request financing.",
-  "introFactoryTitle": "Factory / Exporter",
-  "introFactoryDesc": "Publish orders, track shipments, and manage your supply chain.",
+  "introFactoryTitle": "Buyer",
+  "introFactoryDesc": "Browse products, place bulk orders, and manage your supply chain.",
   "introTransporterTitle": "Transporter",
   "introTransporterDesc": "View assigned deliveries, accept new missions, and optimize your routes.",
   "introBankTitle": "Bank",
@@ -61,7 +61,7 @@
   "registerEmail": "Email"
   ,
   "roleFarmer": "Farmer",
-  "roleFactory": "Factory/Exporter",
+  "roleFactory": "Buyer",
   "roleTransporter": "Transporter",
   "roleBanque": "Banque"
   ,

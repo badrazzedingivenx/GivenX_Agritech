@@ -8,7 +8,8 @@ import 'register/banque_form.dart';
 
 class RegisterScreen extends StatelessWidget {
   final String role;
-  const RegisterScreen({super.key, required this.role});
+  final String? buyerType;
+  const RegisterScreen({super.key, required this.role, this.buyerType});
 
   @override
   Widget build(BuildContext context) {
@@ -17,8 +18,9 @@ class RegisterScreen extends StatelessWidget {
       case 'roleFarmer':
         form = const FermerForm();
         break;
+      case 'roleBuyer':
       case 'roleFactory':
-        form = const UsineForm();
+        form = UsineForm(buyerType: buyerType ?? 'restaurant');
         break;
       case 'roleTransporter':
         form = const TransporteurForm();
@@ -40,31 +42,37 @@ class RegisterScreen extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           ),
-          Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(32),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: Container(
-                  width: 380,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.10),
-                        blurRadius: 32,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
+          SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: Container(
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.10),
+                          blurRadius: 32,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: form,
                   ),
-                  child: SingleChildScrollView(child: form),
                 ),
               ),
             ),
           ),
+        ),
         ],
       ),
     );

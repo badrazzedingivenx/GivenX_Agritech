@@ -3,59 +3,170 @@ import 'package:http/http.dart' as http;
 import 'api_constants.dart';
 
 class ApiService {
+  // ─── Helpers ───────────────────────────────────────────
+
+  static dynamic _unwrap(dynamic body) {
+    if (body is Map<String, dynamic> && body.containsKey('data')) {
+      return body['data'];
+    }
+    return body;
+  }
+
+  static Future<List<dynamic>> _getList(String url) async {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      return _unwrap(jsonDecode(response.body)) as List<dynamic>;
+    }
+    throw Exception('GET $url failed (${response.statusCode})');
+  }
+
+  static Future<Map<String, dynamic>> _post(String url, Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return _unwrap(jsonDecode(response.body)) as Map<String, dynamic>;
+    }
+    throw Exception('POST $url failed (${response.statusCode})');
+  }
+
+  static Future<Map<String, dynamic>> _patch(String url, Map<String, dynamic> data) async {
+    final response = await http.patch(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200) {
+      return _unwrap(jsonDecode(response.body)) as Map<String, dynamic>;
+    }
+    throw Exception('PATCH $url failed (${response.statusCode})');
+  }
+
+  static Future<void> _delete(String url) async {
+    final response = await http.delete(Uri.parse(url));
+    if (response.statusCode != 200) {
+      throw Exception('DELETE $url failed (${response.statusCode})');
+    }
+  }
+
+  // ─── Auth ──────────────────────────────────────────────
+
   static Future<List<dynamic>> getUsers({String? email, String? password}) async {
     String url = ApiConstants.users;
     if (email != null && password != null) {
       url += '?email=$email&password=$password';
     }
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      final body = jsonDecode(response.body);
-      if (body is Map<String, dynamic> && body.containsKey('data')) {
-        return body['data'] as List<dynamic>;
-      }
-      return body as List<dynamic>;
-    }
-    throw Exception('Failed to fetch users');
+    return _getList(url);
+  }
+
+  static Future<Map<String, dynamic>> login(String email, String password) async {
+    return _post(ApiConstants.login, {'email': email, 'password': password});
   }
 
   static Future<Map<String, dynamic>> registerUser(Map<String, dynamic> userData) async {
-    final response = await http.post(
-      Uri.parse(ApiConstants.users),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(userData),
-    );
-    if (response.statusCode == 201) {
-      final body = jsonDecode(response.body);
-      if (body is Map<String, dynamic> && body.containsKey('data')) {
-        return body['data'] as Map<String, dynamic>;
-      }
-      return body as Map<String, dynamic>;
-    }
-    throw Exception('Failed to register user');
+    print('[RegisterUser] Payload: $userData');
+    return _post(ApiConstants.users, userData);
   }
 
   static Future<List<dynamic>> getRoles() async {
-    final response = await http.get(Uri.parse(ApiConstants.roles));
-    if (response.statusCode == 200) {
-      final body = jsonDecode(response.body);
-      if (body is Map<String, dynamic> && body.containsKey('data')) {
-        return body['data'] as List<dynamic>;
-      }
-      return body as List<dynamic>;
-    }
-    throw Exception('Failed to fetch roles');
+    return _getList(ApiConstants.roles);
   }
 
   static Future<List<dynamic>> getBanks() async {
-    final response = await http.get(Uri.parse(ApiConstants.banks));
-    if (response.statusCode == 200) {
-      final body = jsonDecode(response.body);
-      if (body is Map<String, dynamic> && body.containsKey('data')) {
-        return body['data'] as List<dynamic>;
-      }
-      return body as List<dynamic>;
-    }
-    throw Exception('Failed to fetch banks');
+    return _getList(ApiConstants.banks);
+  }
+
+  // ─── Products ──────────────────────────────────────────
+
+  static Future<List<dynamic>> getProducts({String? sellerId}) async {
+    String url = ApiConstants.products;
+    if (sellerId != null) url += '?sellerId=$sellerId';
+    return _getList(url);
+  }
+
+  static Future<Map<String, dynamic>> createProduct(Map<String, dynamic> data) async {
+    return _post(ApiConstants.products, data);
+  }
+
+  static Future<Map<String, dynamic>> updateProduct(int id, Map<String, dynamic> data) async {
+    return _patch('${ApiConstants.products}/$id', data);
+  }
+
+  static Future<void> deleteProduct(int id) async {
+    return _delete('${ApiConstants.products}/$id');
+  }
+
+  // ─── Orders ────────────────────────────────────────────
+
+  static Future<List<dynamic>> getOrders({String? buyerId, String? sellerId}) async {
+    String url = ApiConstants.orders;
+    final params = <String>[];
+    if (buyerId != null) params.add('buyerId=$buyerId');
+    if (sellerId != null) params.add('sellerId=$sellerId');
+    if (params.isNotEmpty) url += '?${params.join('&')}';
+    return _getList(url);
+  }
+
+  static Future<Map<String, dynamic>> createOrder(Map<String, dynamic> data) async {
+    return _post(ApiConstants.orders, data);
+  }
+
+  static Future<Map<String, dynamic>> updateOrder(int id, Map<String, dynamic> data) async {
+    return _patch('${ApiConstants.orders}/$id', data);
+  }
+
+  // ─── Shipments ─────────────────────────────────────────
+
+  static Future<List<dynamic>> getShipments({String? transporterId, String? orderId}) async {
+    String url = ApiConstants.shipments;
+    final params = <String>[];
+    if (transporterId != null) params.add('transporterId=$transporterId');
+    if (orderId != null) params.add('orderId=$orderId');
+    if (params.isNotEmpty) url += '?${params.join('&')}';
+    return _getList(url);
+  }
+
+  static Future<Map<String, dynamic>> createShipment(Map<String, dynamic> data) async {
+    return _post(ApiConstants.shipments, data);
+  }
+
+  static Future<Map<String, dynamic>> updateShipment(int id, Map<String, dynamic> data) async {
+    return _patch('${ApiConstants.shipments}/$id', data);
+  }
+
+  // ─── Messages ──────────────────────────────────────────
+
+  static Future<List<dynamic>> getMessages({String? senderId, String? receiverId}) async {
+    String url = ApiConstants.messages;
+    final params = <String>[];
+    if (senderId != null) params.add('senderId=$senderId');
+    if (receiverId != null) params.add('receiverId=$receiverId');
+    if (params.isNotEmpty) url += '?${params.join('&')}';
+    return _getList(url);
+  }
+
+  static Future<Map<String, dynamic>> sendMessage(Map<String, dynamic> data) async {
+    return _post(ApiConstants.messages, data);
+  }
+
+  // ─── Payments ──────────────────────────────────────────
+
+  static Future<List<dynamic>> getPayments({String? orderId, String? userId}) async {
+    String url = ApiConstants.payments;
+    final params = <String>[];
+    if (orderId != null) params.add('orderId=$orderId');
+    if (userId != null) params.add('userId=$userId');
+    if (params.isNotEmpty) url += '?${params.join('&')}';
+    return _getList(url);
+  }
+
+  static Future<Map<String, dynamic>> createPayment(Map<String, dynamic> data) async {
+    return _post(ApiConstants.payments, data);
+  }
+
+  static Future<Map<String, dynamic>> updatePayment(int id, Map<String, dynamic> data) async {
+    return _patch('${ApiConstants.payments}/$id', data);
   }
 }

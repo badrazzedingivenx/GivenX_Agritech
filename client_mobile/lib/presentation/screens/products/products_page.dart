@@ -1,22 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:math_expressions/math_expressions.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-
-// --- Model ---
-class Product {
-  String id, name, category, price, unit, image, description;
-  int stockQuantity;
-  bool isAvailable;
-  File? localImage;
-
-  Product({
-    required this.id, required this.name, required this.category,
-    required this.price, required this.unit, required this.image,
-    this.stockQuantity = 10, this.isAvailable = true, this.localImage,
-    this.description = "Fresh agricultural product, harvested with care.",
-  });
-}
+import '../../../models/product.dart';
+import '../../../services/api_service.dart';
+import '../../../services/session_service.dart';
 
 class ProductsPage extends StatefulWidget {
   static const routeName = '/products';
@@ -27,8 +13,11 @@ class ProductsPage extends StatefulWidget {
 }
 
 class _ProductsPageState extends State<ProductsPage> {
+  bool _isLoading = true;
+  String? _error;
+
     void _showLowStockAlert() {
-      final lowStockProducts = myProducts.where((p) => p.stockQuantity < 5).toList();
+      final lowStockProducts = myProducts.where((p) => p.quantity < 5).toList();
       showModalBottomSheet(
         context: context,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
@@ -50,7 +39,7 @@ class _ProductsPageState extends State<ProductsPage> {
                       itemBuilder: (context, i) => ListTile(
                         leading: const Icon(Icons.warning, color: Colors.orange),
                         title: Text(lowStockProducts[i].name),
-                        trailing: Text("${lowStockProducts[i].stockQuantity} ${lowStockProducts[i].unit}",
+                        trailing: Text("${lowStockProducts[i].quantity.toInt()} ${lowStockProducts[i].unit}",
                           style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -67,56 +56,72 @@ class _ProductsPageState extends State<ProductsPage> {
   final List<String> categories = ["All", "Vegetables", "Fruits", "Grains"];
   final List<String> units = ["Kg", "Ton", "Gram", "Piece"];
 
-  List<Product> myProducts = [
-    // Fruits
-    Product(id: "1", name: "Red Apples", category: "Fruits", price: "22.00", unit: "Kg", image: "assets/images/appApple.png", stockQuantity: 12, isAvailable: true),
-    Product(id: "2", name: "Bananas", category: "Fruits", price: "15.00", unit: "Kg", image: "assets/images/appbanans.png", stockQuantity: 20, isAvailable: true),
-    Product(id: "3", name: "Oranges", category: "Fruits", price: "13.00", unit: "Kg", image: "assets/images/appOranges.png", stockQuantity: 0, isAvailable: false),
-    Product(id: "4", name: "Strawberries", category: "Fruits", price: "35.00", unit: "Kg", image: "assets/images/appstrawberries.png", stockQuantity: 7, isAvailable: true),
+  List<Product> myProducts = [];
 
-    // Vegetables
-    Product(id: "5", name: "Fresh Tomatoes", category: "Vegetables", price: "12.50", unit: "Kg", image: "assets/images/appTomat.jpg", stockQuantity: 50, isAvailable: true),
-    Product(id: "6", name: "Potatoes", category: "Vegetables", price: "8.00", unit: "Kg", image: "assets/images/appPotatos.png", stockQuantity: 15, isAvailable: true),
-    Product(id: "7", name: "Cabbage", category: "Vegetables", price: "10.00", unit: "Kg", image: "assets/images/appcabbage.png", stockQuantity: 9, isAvailable: true),
-    Product(id: "8", name: "Carrots", category: "Vegetables", price: "9.00", unit: "Kg", image: "assets/images/appcarrot.png", stockQuantity: 0, isAvailable: false),
-    Product(id: "9", name: "Onions", category: "Vegetables", price: "7.00", unit: "Kg", image: "assets/images/apponions.png", stockQuantity: 18, isAvailable: true),
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
 
-    // Grains
-    Product(id: "10", name: "Premium Durum Wheat", category: "Grains", price: "420", unit: "Ton", image: "assets/images/appweight.jpg", stockQuantity: 3, isAvailable: true),
-    Product(id: "11", name: "Oats", category: "Grains", price: "350", unit: "Ton", image: "assets/images/appOats.png", stockQuantity: 2, isAvailable: true),
-    Product(id: "12", name: "Sunflower Seeds", category: "Grains", price: "600", unit: "Ton", image: "assets/images/appSunflowers_Seeds.png", stockQuantity: 0, isAvailable: false),
-  ];
+  Future<void> _loadProducts() async {
+    setState(() { _isLoading = true; _error = null; });
+    try {
+      final user = await SessionService.getUser();
+      final sellerId = user?.id?.toString();
+      final data = await ApiService.getProducts(sellerId: sellerId);
+      if (!mounted) return;
+      setState(() {
+        myProducts = data.map((json) => Product.fromJson(json as Map<String, dynamic>)).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { _error = e.toString(); _isLoading = false; });
+    }
+  }
 
   List<Product> get filteredProducts {
     List<Product> list = myProducts.where((product) {
-      final matchesCategory = selectedCategory == 'All' || product.category == selectedCategory;
+      final catName = product.category.name[0].toUpperCase() + product.category.name.substring(1);
+      final matchesCategory = selectedCategory == 'All' || catName == selectedCategory;
       final matchesSearch = product.name.toLowerCase().contains(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     }).toList();
 
     if (sortBy == "Price") {
-      list.sort((a, b) => double.parse(a.price).compareTo(double.parse(b.price)));
+      list.sort((a, b) => a.price.compareTo(b.price));
     } else if (sortBy == "Stock") {
-      list.sort((a, b) => a.stockQuantity.compareTo(b.stockQuantity));
+      list.sort((a, b) => a.quantity.compareTo(b.quantity));
     } else {
       list.sort((a, b) => a.name.compareTo(b.name));
     }
     return list;
   }
 
-  int get lowStockCount => myProducts.where((p) => p.stockQuantity < 5).length;
-
-  Future<void> _updateProductImage(Product product, ImageSource source, StateSetter setSheetState) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setSheetState(() => product.localImage = File(pickedFile.path));
-      setState(() {});
-    }
-  }
+  int get lowStockCount => myProducts.where((p) => p.quantity < 5).length;
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF1B5E20))),
+      );
+    }
+    if (_error != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Error: $_error'),
+              const SizedBox(height: 12),
+              ElevatedButton(onPressed: _loadProducts, child: const Text('Retry')),
+            ],
+          ),
+        ),
+      );
+    }
     return Stack(
       children: [
         Positioned.fill(
@@ -241,7 +246,7 @@ class _ProductsPageState extends State<ProductsPage> {
   }
 
   Widget _buildLargeProductCard(Product product) {
-    bool isOutOfStock = product.stockQuantity <= 0 || !product.isAvailable;
+    bool isOutOfStock = product.quantity <= 0 || !product.isAvailable;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -262,19 +267,17 @@ class _ProductsPageState extends State<ProductsPage> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
             child: Opacity(
               opacity: isOutOfStock ? 0.3 : 1.0,
-              child: product.localImage != null
-                  ? Image.file(
-                      product.localImage!,
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    )
-                  : Image.asset(
-                      product.image,
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
+              child: Image.asset(
+                product.image ?? 'assets/images/app2.png',
+                height: 180,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  height: 180,
+                  color: Colors.grey[200],
+                  child: const Icon(Icons.image_not_supported, size: 60, color: Colors.grey),
+                ),
+              ),
             ),
           ),
           Padding(
@@ -285,17 +288,19 @@ class _ProductsPageState extends State<ProductsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      product.name,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B5E20),
-                        letterSpacing: 0.2,
+                    Expanded(
+                      child: Text(
+                        product.name,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1B5E20),
+                          letterSpacing: 0.2,
+                        ),
                       ),
                     ),
                     Text(
-                      "${product.price} ${product.unit}",
+                      "${product.price.toStringAsFixed(2)} MAD/${product.unit}",
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -306,7 +311,7 @@ class _ProductsPageState extends State<ProductsPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  isOutOfStock ? "OUT OF STOCK" : "In Stock: ${product.stockQuantity} ${product.unit}",
+                  isOutOfStock ? "OUT OF STOCK" : "In Stock: ${product.quantity.toInt()} ${product.unit}",
                   style: TextStyle(
                     color: isOutOfStock ? Colors.red : Colors.green,
                     fontWeight: FontWeight.w600,
@@ -343,6 +348,22 @@ class _ProductsPageState extends State<ProductsPage> {
                         elevation: 0,
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _confirmDelete(product),
+                      icon: const Icon(Icons.delete, size: 16),
+                      label: const Text("DELETE"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                        elevation: 0,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -353,10 +374,38 @@ class _ProductsPageState extends State<ProductsPage> {
     );
   }
 
+  void _confirmDelete(Product product) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: Text('Are you sure you want to delete "${product.name}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await ApiService.deleteProduct(product.id!);
+                _loadProducts();
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Delete failed: $e')),
+                );
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showEditSheet(Product product) {
     final nameController = TextEditingController(text: product.name);
-    final priceController = TextEditingController(text: product.price);
-    final stockController = TextEditingController(text: product.stockQuantity.toString());
+    final priceController = TextEditingController(text: product.price.toStringAsFixed(2));
+    final stockController = TextEditingController(text: product.quantity.toInt().toString());
     final descController = TextEditingController(text: product.description);
     String tempUnit = product.unit;
     bool tempAvailable = product.isAvailable;
@@ -373,14 +422,6 @@ class _ProductsPageState extends State<ProductsPage> {
               children: [
                 const Text("Edit Product", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 15),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(onPressed: () => _updateProductImage(product, ImageSource.camera, setSheetState), icon: const Icon(Icons.camera_alt, color: Colors.green)),
-                    const Text("Change Image"),
-                    IconButton(onPressed: () => _updateProductImage(product, ImageSource.gallery, setSheetState), icon: const Icon(Icons.image, color: Colors.green)),
-                  ],
-                ),
                 TextField(controller: nameController, decoration: const InputDecoration(labelText: "Name")),
                 const SizedBox(height: 15),
                 Row(
@@ -413,7 +454,7 @@ class _ProductsPageState extends State<ProductsPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       String name = nameController.text.trim();
                       String price = priceController.text.trim();
                       String desc = descController.text.trim();
@@ -426,15 +467,24 @@ class _ProductsPageState extends State<ProductsPage> {
                         );
                         return;
                       }
-                      setState(() {
-                        product.name = name;
-                        product.price = price;
-                        product.stockQuantity = int.tryParse(stockController.text) ?? 0;
-                        product.unit = tempUnit;
-                        product.isAvailable = tempAvailable;
-                        product.description = desc;
-                      });
-                      Navigator.pop(context);
+                      try {
+                        await ApiService.updateProduct(product.id!, {
+                          'name': name,
+                          'price': double.parse(price),
+                          'quantity': double.tryParse(stockController.text) ?? 0,
+                          'unit': tempUnit,
+                          'isAvailable': tempAvailable,
+                          'description': desc,
+                        });
+                        if (!mounted) return;
+                        Navigator.pop(context);
+                        _loadProducts();
+                      } catch (e) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Update failed: $e')),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1B5E20),

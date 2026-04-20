@@ -240,13 +240,13 @@ abstract class AppLocalizations {
   /// No description provided for @introFactoryTitle.
   ///
   /// In en, this message translates to:
-  /// **'Factory / Exporter'**
+  /// **'Buyer'**
   String get introFactoryTitle;
 
   /// No description provided for @introFactoryDesc.
   ///
   /// In en, this message translates to:
-  /// **'Publish orders, track shipments, and manage your supply chain.'**
+  /// **'Browse products, place bulk orders, and manage your supply chain.'**
   String get introFactoryDesc;
 
   /// No description provided for @introTransporterTitle.
@@ -450,7 +450,7 @@ abstract class AppLocalizations {
   /// No description provided for @roleFactory.
   ///
   /// In en, this message translates to:
-  /// **'Factory/Exporter'**
+  /// **'Buyer'**
   String get roleFactory;
 
   /// No description provided for @roleTransporter.

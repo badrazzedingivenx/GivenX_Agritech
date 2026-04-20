@@ -1,73 +1,94 @@
 import 'package:flutter/material.dart';
 import '../../../services/api_service.dart';
+import '../../../services/session_service.dart';
+import '../../../models/user.dart';
 import '../dashboard/usine_dashboard.dart';
 
 class UsineForm extends StatefulWidget {
-  const UsineForm({super.key});
+  final String buyerType; // 'restaurant' or 'industry'
+  const UsineForm({super.key, this.buyerType = 'restaurant'});
 
   @override
   State<UsineForm> createState() => _UsineFormState();
 }
 
 class _UsineFormState extends State<UsineForm> {
-    final List<String> _productTypeOptions = [
-      'Fruits',
-      'Vegetables',
-      'Cereals',
-      'Legumes',
-      'Dairy Products',
-      'Meat & Poultry',
-      'Processed Food',
-      'Organic Products',
-      'Animal Feed',
-      'Other',
-    ];
-    String? _selectedProductType;
-
-    Widget _buildProductTypeDropdown() {
-      return DropdownButtonFormField<String>(
-        value: _selectedProductType,
-        items: _productTypeOptions
-            .map((type) => DropdownMenuItem(
-                  value: type,
-                  child: Text(type, style: const TextStyle(color: Colors.white)),
-                ))
-            .toList(),
-        onChanged: (value) {
-          setState(() {
-            _selectedProductType = value;
-          });
-        },
-        onSaved: (value) => _data['productTypes'] = value,
-        validator: (value) {
-          if (value == null || value.isEmpty) return 'Required';
-          return null;
-        },
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.13),
-          labelText: 'Product Types',
-          labelStyle: const TextStyle(color: Colors.white70),
-          prefixIcon: const Icon(Icons.category, color: Colors.white70),
-          errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
-          ),
-        ),
-        dropdownColor: const Color(0xFF2E7D32),
-        style: const TextStyle(color: Colors.white),
-      );
-    }
   final _formKey = GlobalKey<FormState>();
   final Map<String, String?> _data = {};
   final TextEditingController _passwordController = TextEditingController();
   bool _showPassword = false;
   bool _showConfirmPassword = false;
+
+  // --- Restaurant-specific options ---
+  final List<String> _cuisineTypeOptions = [
+    'Moroccan',
+    'Mediterranean',
+    'Fast Food',
+    'International',
+    'Pastry & Bakery',
+    'Other',
+  ];
+  String? _selectedCuisineType;
+
+  final List<String> _dailyOrderVolumeOptions = ['Small', 'Medium'];
+  String? _selectedDailyOrderVolume;
+
+  // --- Industry-specific options ---
+  final List<String> _industryTypeOptions = [
+    'Food Processing',
+    'Canning & Packaging',
+    'Dairy Processing',
+    'Grain Milling',
+    'Beverage Production',
+    'Animal Feed Production',
+    'Other',
+  ];
+  String? _selectedIndustryType;
+
+  bool get _isRestaurant => widget.buyerType == 'restaurant';
+
+  Widget _buildDropdown({
+    required String label,
+    required List<String> items,
+    required String? value,
+    required ValueChanged<String?> onChanged,
+    required FormFieldSetter<String> onSaved,
+    required IconData icon,
+    bool required = true,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      items: items
+          .map((type) => DropdownMenuItem(
+                value: type,
+                child: Text(type, style: const TextStyle(color: Colors.white)),
+              ))
+          .toList(),
+      onChanged: onChanged,
+      onSaved: onSaved,
+      validator: required
+          ? (v) => (v == null || v.isEmpty) ? 'Required' : null
+          : null,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.13),
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        prefixIcon: Icon(icon, color: Colors.white70),
+        errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+        ),
+      ),
+      dropdownColor: const Color(0xFF2E7D32),
+      style: const TextStyle(color: Colors.white),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,37 +99,41 @@ class _UsineFormState extends State<UsineForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Center(
+            Center(
               child: Text(
-                'Register as Exporter/Factory',
-                style: TextStyle(
-                  fontSize: 28,
+                widget.buyerType == 'industry'
+                    ? 'Register as Industry'
+                    : 'Register as Restaurant',
+                style: const TextStyle(
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.white70,
                   letterSpacing: 0.2,
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            const Center(
+            const SizedBox(height: 6),
+            Center(
               child: Text(
-                'Create your exporter/factory account',
-                style: TextStyle(
-                  fontSize: 16,
+                widget.buyerType == 'industry'
+                    ? 'Create your industry buyer account'
+                    : 'Create your restaurant buyer account',
+                style: const TextStyle(
+                  fontSize: 14,
                   color: Colors.white70,
                   fontWeight: FontWeight.w400,
                   letterSpacing: 0.1,
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
             _buildTextField(
               label: 'Full Name',
               keyName: 'fullName',
               required: true,
               icon: Icons.person,
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             _buildTextField(
               label: 'Phone Number',
               keyName: 'phone',
@@ -116,23 +141,25 @@ class _UsineFormState extends State<UsineForm> {
               icon: Icons.phone,
               keyboardType: TextInputType.phone,
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             _buildTextField(
               label: 'City',
               keyName: 'city',
               required: true,
               icon: Icons.location_city,
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             _buildTextField(
-              label: 'Company Name',
+              label: _isRestaurant ? 'Restaurant Name' : 'Factory Name',
               keyName: 'companyName',
               required: true,
               icon: Icons.business,
             ),
-            const SizedBox(height: 18),
-            _buildProductTypeDropdown(),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
+            // Role-specific fields
+            if (_isRestaurant) ..._buildRestaurantFields()
+            else ..._buildIndustryFields(),
+            const SizedBox(height: 12),
             _buildTextField(
               label: 'Email',
               keyName: 'email',
@@ -141,7 +168,7 @@ class _UsineFormState extends State<UsineForm> {
               icon: Icons.email,
               keyboardType: TextInputType.emailAddress,
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             TextFormField(
               controller: _passwordController,
               obscureText: !_showPassword,
@@ -175,7 +202,7 @@ class _UsineFormState extends State<UsineForm> {
             ),
             const SizedBox(height: 8),
             // ...
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             TextFormField(
               obscureText: !_showConfirmPassword,
               style: const TextStyle(color: Colors.white),
@@ -206,7 +233,7 @@ class _UsineFormState extends State<UsineForm> {
               },
             ),
             // ...
-            const SizedBox(height: 28),
+            const SizedBox(height: 22),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -215,16 +242,25 @@ class _UsineFormState extends State<UsineForm> {
                   if (valid) {
                     _formKey.currentState!.save();
                     try {
-                      await ApiService.registerUser({
+                      final Map<String, dynamic> userData = {
                         'email': _data['email'] ?? '',
                         'password': _data['password'] ?? '',
-                        'role': 'Usine',
+                        'role': 'Buyer',
+                        'buyerType': widget.buyerType,
                         'fullName': _data['fullName'] ?? '',
                         'phone': _data['phone'] ?? '',
                         'city': _data['city'] ?? '',
                         'companyName': _data['companyName'] ?? '',
-                        'productTypes': _data['productTypes'] ?? '',
-                      });
+                      };
+                      if (_isRestaurant) {
+                        userData['cuisineType'] = _data['cuisineType'] ?? '';
+                        userData['dailyOrderVolume'] = _data['dailyOrderVolume'] ?? '';
+                      } else {
+                        userData['industryType'] = _data['industryType'] ?? '';
+                        userData['certification'] = _data['certification'] ?? '';
+                      }
+                      final result = await ApiService.registerUser(userData);
+                      await SessionService.saveSession(User.fromJson(result));
                       if (!mounted) return;
                       Navigator.pushReplacement(
                         context,
@@ -234,8 +270,9 @@ class _UsineFormState extends State<UsineForm> {
                             phone: _data['phone'] ?? '',
                             city: _data['city'] ?? '',
                             companyName: _data['companyName'] ?? '',
-                            productTypes: _data['productTypes'] ?? '',
+                            productTypes: '',  
                             email: _data['email'] ?? '',
+                            buyerType: widget.buyerType,
                           ),
                         ),
                       );
@@ -277,6 +314,48 @@ class _UsineFormState extends State<UsineForm> {
         ),
       ),
     );
+  }
+
+  List<Widget> _buildRestaurantFields() {
+    return [
+      _buildDropdown(
+        label: 'Cuisine Type',
+        items: _cuisineTypeOptions,
+        value: _selectedCuisineType,
+        onChanged: (v) => setState(() => _selectedCuisineType = v),
+        onSaved: (v) => _data['cuisineType'] = v,
+        icon: Icons.restaurant_menu,
+      ),
+      const SizedBox(height: 12),
+      _buildDropdown(
+        label: 'Daily Order Volume',
+        items: _dailyOrderVolumeOptions,
+        value: _selectedDailyOrderVolume,
+        onChanged: (v) => setState(() => _selectedDailyOrderVolume = v),
+        onSaved: (v) => _data['dailyOrderVolume'] = v,
+        icon: Icons.shopping_basket,
+      ),
+    ];
+  }
+
+  List<Widget> _buildIndustryFields() {
+    return [
+      _buildDropdown(
+        label: 'Industry Type',
+        items: _industryTypeOptions,
+        value: _selectedIndustryType,
+        onChanged: (v) => setState(() => _selectedIndustryType = v),
+        onSaved: (v) => _data['industryType'] = v,
+        icon: Icons.factory,
+      ),
+      const SizedBox(height: 12),
+      _buildTextField(
+        label: 'Certification',
+        keyName: 'certification',
+        icon: Icons.verified,
+        helper: 'e.g., ISO 22000, HACCP',
+      ),
+    ];
   }
 
   Widget _buildTextField({

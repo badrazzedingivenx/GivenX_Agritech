@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:agriflow/l10n/app_localizations.dart';
 import '../../../services/api_service.dart';
+import '../../../services/session_service.dart';
+import '../../../models/user.dart';
 import '../dashboard/transporteur_dashboard.dart';
 
 class TransporteurForm extends StatefulWidget {
@@ -35,38 +37,38 @@ class _TransporteurFormState extends State<TransporteurForm> {
             child: Text(
               AppLocalizations.of(context)!.registerTransporteurTitle,
               style: const TextStyle(
-                fontSize: 28,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Colors.white70,
                 letterSpacing: 0.2,
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           Center(
             child: Text(
               AppLocalizations.of(context)!.registerTransporteurSubtitle,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: Colors.white70,
                 fontWeight: FontWeight.w400,
                 letterSpacing: 0.1,
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
           _buildTextField(AppLocalizations.of(context)!.registerFullName, 'fullName', required: true, icon: Icons.person),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           _buildTextField(AppLocalizations.of(context)!.registerPhoneNumber, 'phone', required: true, icon: Icons.phone, keyboardType: TextInputType.phone),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           _buildTextField(AppLocalizations.of(context)!.registerCity, 'city', required: true, icon: Icons.location_city),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           _buildVehicleTypeDropdown(),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           _buildTextField(AppLocalizations.of(context)!.registerCapacity, 'capacity', required: true, icon: Icons.local_shipping),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           _buildTextField(AppLocalizations.of(context)!.registerEmail, 'email', required: true, email: true, icon: Icons.email, keyboardType: TextInputType.emailAddress),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           TextFormField(
             controller: _passwordController,
             obscureText: !_showPassword,
@@ -100,7 +102,7 @@ class _TransporteurFormState extends State<TransporteurForm> {
             },
             onSaved: (value) => _data['password'] = value,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           TextFormField(
             obscureText: !_showConfirmPassword,
             style: const TextStyle(color: Colors.white),
@@ -132,7 +134,7 @@ class _TransporteurFormState extends State<TransporteurForm> {
               return null;
             },
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 22),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -141,7 +143,7 @@ class _TransporteurFormState extends State<TransporteurForm> {
                 if (valid) {
                   _formKey.currentState!.save();
                   try {
-                    await ApiService.registerUser({
+                    final result = await ApiService.registerUser({
                       'email': _data['email'] ?? '',
                       'password': _data['password'] ?? '',
                       'role': 'Transporteur',
@@ -151,6 +153,7 @@ class _TransporteurFormState extends State<TransporteurForm> {
                       'vehicleType': _selectedVehicleType ?? '',
                       'capacity': _data['capacity'] ?? '',
                     });
+                    await SessionService.saveSession(User.fromJson(result));
                     if (!mounted) return;
                     Navigator.pushReplacement(
                       context,

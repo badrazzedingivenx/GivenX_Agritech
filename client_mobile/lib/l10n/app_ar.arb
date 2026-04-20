@@ -2,8 +2,8 @@
   "appTitle": "أجري فلو",
   "introFarmerTitle": "مزارع",
   "introFarmerDesc": "انشر محاصيلك، استقبل الطلبات، واطلب التمويل.",
-  "introFactoryTitle": "مصنع / مصدر",
-  "introFactoryDesc": "انشر الطلبات، تتبع الشحنات، وادِر سلسلة التوريد الخاصة بك.",
+  "introFactoryTitle": "مشتري",
+  "introFactoryDesc": "تصفح المنتجات، قدم طلبات بالجملة، وادِر سلسلة التوريد الخاصة بك.",
   "introTransporterTitle": "ناقل",
   "introTransporterDesc": "اعرض التوصيلات المخصصة، اقبل مهام جديدة، وحسن مساراتك.",
   "introBankTitle": "بنك",
@@ -41,7 +41,7 @@
   "registerEmail": "البريد الإلكتروني"
   ,
   "roleFarmer": "مزارع",
-  "roleFactory": "مصنع / مصدر",
+  "roleFactory": "مشتري",
   "roleTransporter": "ناقل",
   "roleBanque": "بنك"
   ,

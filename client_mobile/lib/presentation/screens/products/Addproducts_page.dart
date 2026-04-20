@@ -2,10 +2,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import '../../../services/api_service.dart';
+import '../../../services/session_service.dart';
 
 class AddProductPage extends StatefulWidget {
-  final Function(Map<String, dynamic>) onProductAdded;
-  const AddProductPage({super.key, required this.onProductAdded});
+  final Function(Map<String, dynamic>)? onProductAdded;
+  const AddProductPage({super.key, this.onProductAdded});
 
   @override
   State<AddProductPage> createState() => _AddProductPageState();
@@ -180,33 +182,49 @@ class _AddProductPageState extends State<AddProductPage> with SingleTickerProvid
           backgroundColor: const Color(0xFF1B5E20),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         ),
-        onPressed: () {
+        onPressed: () async {
           if (!(_formKey.currentState?.validate() ?? false)) return;
 
-          final productData = {
-            'name': nameController.text.trim(),
-            'price': priceController.text.trim(),
-            'quantity': bulkQtyController.text.trim(),
-            'unit': selectedUnit,
-            'stock': stockController.text.trim(),
-            'description': descController.text.trim(),
-            'images': _imageBytesList,
-            'category': selectedCategory == 'Others'
-                ? otherCategoryController.text.trim()
-                : selectedCategory,
-          };
+          try {
+            final user = await SessionService.getUser();
+            final productData = {
+              'name': nameController.text.trim(),
+              'price': double.tryParse(priceController.text.trim()) ?? 0,
+              'quantity': double.tryParse(stockController.text.trim()) ?? 0,
+              'unit': selectedUnit,
+              'description': descController.text.trim(),
+              'category': (selectedCategory == 'Others'
+                  ? otherCategoryController.text.trim()
+                  : selectedCategory).toLowerCase(),
+              'location': user?.city ?? '',
+              'farmerId': user?.id ?? 0,
+              'farmerName': user?.fullName ?? '',
+              'isOrganic': false,
+              'isUrgent': false,
+              'isAvailable': true,
+              'images': <String>[],
+              'createdAt': DateTime.now().toIso8601String(),
+            };
 
-          widget.onProductAdded(productData);
+            await ApiService.createProduct(productData);
 
-          // ✅ FIX snackbar before pop
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Product added successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+            widget.onProductAdded?.call(productData);
 
-          Navigator.pop(context);
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Product added successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            Navigator.pop(context, true);
+          } catch (e) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to add product: $e'), backgroundColor: Colors.red),
+            );
+          }
         },
         child: const Text(
           "CONFIRM & SAVE",

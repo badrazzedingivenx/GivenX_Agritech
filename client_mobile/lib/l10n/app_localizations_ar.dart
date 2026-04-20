@@ -78,10 +78,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get introFarmerDesc => 'انشر محاصيلك، استقبل الطلبات، واطلب التمويل.';
 
   @override
-  String get introFactoryTitle => 'مصنع / مصدر';
+  String get introFactoryTitle => 'مشتري';
 
   @override
-  String get introFactoryDesc => 'انشر الطلبات، تتبع الشحنات، وادِر سلسلة التوريد الخاصة بك.';
+  String get introFactoryDesc => 'تصفح المنتجات، قدم طلبات بالجملة، وادِر سلسلة التوريد الخاصة بك.';
 
   @override
   String get introTransporterTitle => 'ناقل';
@@ -183,7 +183,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get roleFarmer => 'مزارع';
 
   @override
-  String get roleFactory => 'مصنع / مصدر';
+  String get roleFactory => 'مشتري';
 
   @override
   String get roleTransporter => 'ناقل';

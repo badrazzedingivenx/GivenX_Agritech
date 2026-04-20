@@ -2,8 +2,8 @@
   "appTitle": "AgriFlow",
   "introFarmerTitle": "Agricultor",
   "introFarmerDesc": "Publica tus cosechas, recibe pedidos y solicita financiación.",
-  "introFactoryTitle": "Fábrica / Exportador",
-  "introFactoryDesc": "Publica pedidos, rastrea envíos y gestiona tu cadena de suministro.",
+  "introFactoryTitle": "Comprador",
+  "introFactoryDesc": "Explora productos, realiza pedidos al por mayor y gestiona tu cadena de suministro.",
   "introTransporterTitle": "Transportista",
   "introTransporterDesc": "Ver entregas asignadas, aceptar nuevas misiones y optimizar tus rutas.",
   "introBankTitle": "Banco",
@@ -41,7 +41,7 @@
   "registerEmail": "Correo electrónico"
   ,
   "roleFarmer": "Agricultor",
-  "roleFactory": "Fábrica / Exportador",
+  "roleFactory": "Comprador",
   "roleTransporter": "Transportista",
   "roleBanque": "Banco"
   ,

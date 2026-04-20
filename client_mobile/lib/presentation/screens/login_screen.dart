@@ -1,12 +1,12 @@
 
 
 import 'dart:ui';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 import 'package:agriflow/l10n/app_localizations.dart';
-import '../../services/api_constants.dart';
+import '../../services/api_service.dart';
+import '../../services/session_service.dart';
+import '../../models/user.dart';
 import 'dashboard/farmer_dashboard.dart';
 import 'dashboard/usine_dashboard.dart';
 import 'dashboard/transporteur_dashboard.dart';
@@ -30,27 +30,33 @@ class LoginScreen extends StatelessWidget {
             ),
           ),
           // No gradient overlay, just the image like splash screen
-          Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(32),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: Container(
-                  width: 380,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.10),
-                        blurRadius: 32,
-                        offset: const Offset(0, 12),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                    child: Container(
+                      width: double.infinity,
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.10),
+                            blurRadius: 32,
+                            offset: const Offset(0, 12),
+                          ),
+                        ],
                       ),
-                    ],
+                      child: _LoginForm(),
+                    ),
                   ),
-                  child: _LoginForm(),
                 ),
               ),
             ),
@@ -102,91 +108,96 @@ class _LoginFormState extends State<_LoginForm> {
     setState(() => _isLoading = true);
 
     try {
-      final url = Uri.parse('${ApiConstants.users}?email=$email&password=$password');
-      final response = await http.get(url);
-
+      final result = await ApiService.login(email, password);
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      if (response.statusCode == 200) {
-        final body = jsonDecode(response.body);
-        final List<dynamic> users = (body is Map<String, dynamic> && body.containsKey('data')) ? body['data'] as List<dynamic> : body as List<dynamic>;
-        if (users.isNotEmpty) {
-          final user = users.first;
-          final role = user['role'] as String? ?? '';
-
-          if (role == 'Agriculteur') {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => FarmerDashboard(
-                  fullName: user['fullName'] ?? '',
-                  email: user['email'] ?? '',
-                  phone: user['phone'] ?? '',
-                  city: user['city'] ?? '',
-                  farmingType: user['farmingType'] ?? '',
-                  mainProducts: user['mainProducts'] ?? '',
-                ),
-              ),
-            );
-          } else if (role == 'Usine') {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => UsineDashboard(
-                  fullName: user['fullName'] ?? 'Usine',
-                  email: user['email'] ?? '',
-                  phone: user['phone'] ?? '',
-                  city: user['city'] ?? '',
-                  companyName: user['companyName'] ?? '',
-                  productTypes: user['productTypes'] ?? '',
-                ),
-              ),
-            );
-          } else if (role == 'Transporteur') {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => TransporteurDashboard(
-                  fullName: user['fullName'] ?? 'Transporteur',
-                  email: user['email'] ?? '',
-                  phone: user['phone'] ?? '',
-                  city: user['city'] ?? '',
-                  vehicleType: user['vehicleType'] ?? '',
-                  capacity: user['capacity'] ?? '',
-                ),
-              ),
-            );
-          } else if (role == 'Banque') {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => BanqueDashboard(
-                  bankName: user['bankName'] ?? '',
-                  officialId: user['officialId'] ?? '',
-                  email: user['email'] ?? '',
-                  phone: user['phone'] ?? '',
-                  logoPath: user['logoPath'] ?? '',
-                ),
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(AppLocalizations.of(context)!.loginUnknownRole)),
-            );
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)!.loginInvalidCredentials)),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Server error. Please try again.')),
-        );
+      final userData = result['user'] as Map<String, dynamic>;
+      final token = result['token'] as String?;
+      if (token != null) {
+        userData['token'] = token;
       }
+      final user = User.fromJson(userData);
+
+      // Save session
+      await SessionService.saveSession(user);
+
+      if (!mounted) return;
+      _navigateToDashboard(user);
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Connection error: $e')),
-      );
+      final errorMsg = e.toString();
+      if (errorMsg.contains('401')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.loginInvalidCredentials)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Connection error: $e')),
+        );
+      }
+    }
+  }
+
+  void _navigateToDashboard(User user) {
+    switch (user.role) {
+      case UserRole.farmer:
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => FarmerDashboard(
+              fullName: user.fullName,
+              email: user.email,
+              phone: user.phone,
+              city: user.city,
+              farmingType: user.farmingType ?? '',
+              mainProducts: user.mainProducts ?? '',
+            ),
+          ),
+        );
+      case UserRole.buyer:
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => UsineDashboard(
+              fullName: user.fullName,
+              email: user.email,
+              phone: user.phone,
+              city: user.city,
+              companyName: user.companyName ?? '',
+              productTypes: user.productTypes ?? '',
+              buyerType: user.buyerType?.toJson() ?? 'restaurant',
+            ),
+          ),
+        );
+      case UserRole.transporter:
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => TransporteurDashboard(
+              fullName: user.fullName,
+              email: user.email,
+              phone: user.phone,
+              city: user.city,
+              vehicleType: user.vehicleType ?? '',
+              capacity: user.capacity ?? '',
+            ),
+          ),
+        );
+      case UserRole.bank:
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => BanqueDashboard(
+              bankName: user.bankName ?? '',
+              officialId: user.officialId ?? '',
+              email: user.email,
+              phone: user.phone,
+              logoPath: user.logoPath ?? '',
+            ),
+          ),
+        );
+      case UserRole.admin:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.loginUnknownRole)),
+        );
     }
   }
 
@@ -200,26 +211,26 @@ class _LoginFormState extends State<_LoginForm> {
           child: Text(
             AppLocalizations.of(context)!.loginTitle,
             style: const TextStyle(
-              fontSize: 32,
+              fontSize: 26,
               fontWeight: FontWeight.bold,
               color: Colors.white70,
               letterSpacing: 0.2,
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 6),
         Center(
           child: Text(
             AppLocalizations.of(context)!.loginSubtitle,
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               color: Colors.white70,
               fontWeight: FontWeight.w400,
               letterSpacing: 0.1,
             ),
           ),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 22),
         // Email field
         TextField(
           controller: _usernameController,
@@ -243,7 +254,7 @@ class _LoginFormState extends State<_LoginForm> {
             ),
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
         // Password field
         TextField(
           controller: _passwordController,
@@ -424,7 +435,7 @@ class _LoginFormState extends State<_LoginForm> {
         ),
 
         // Role dropdown removed
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
         Row(
           children: [
             Checkbox(
@@ -444,14 +455,14 @@ class _LoginFormState extends State<_LoginForm> {
             ),
           ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
         // Login button
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: _isLoading ? null : _validateAndLogin,
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 18),
+              padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -478,7 +489,7 @@ class _LoginFormState extends State<_LoginForm> {
             ),
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

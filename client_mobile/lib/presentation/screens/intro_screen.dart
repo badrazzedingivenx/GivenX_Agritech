@@ -89,8 +89,8 @@ class _IntroScreenState extends State<IntroScreen> {
                         final page = pages[index];
                         return LayoutBuilder(
                           builder: (context, constraints) {
-                            final double maxImageHeight = constraints.maxHeight * 0.48;
-                            final double imageCardRadius = 28;
+                            final double maxImageHeight = constraints.maxHeight * 0.38;
+                            final double imageCardRadius = 24;
                             return Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -100,15 +100,15 @@ class _IntroScreenState extends State<IntroScreen> {
                                   children: [
                                     Padding(
                                       padding: Directionality.of(context) == TextDirection.rtl
-                                          ? const EdgeInsets.only(left: 24.0, top: 16)
-                                          : const EdgeInsets.only(right: 24.0, top: 16),
+                                          ? const EdgeInsets.only(left: 20.0, top: 8)
+                                          : const EdgeInsets.only(right: 20.0, top: 8),
                                       child: Material(
                                         color: Colors.transparent,
                                         child: InkWell(
                                           borderRadius: BorderRadius.circular(22),
                                           onTap: () => Navigator.of(context).pushReplacementNamed(LoginScreen.routeName),
                                           child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
                                             decoration: BoxDecoration(
                                               color: Colors.white,
                                               borderRadius: BorderRadius.circular(22),
@@ -125,7 +125,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                               style: TextStyle(
                                                 color: Color(0xFF2E7D32),
                                                 fontWeight: FontWeight.w600,
-                                                fontSize: 16,
+                                                fontSize: 14,
                                                 letterSpacing: 0.2,
                                               ),
                                             ),
@@ -135,7 +135,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 4),
                                 Expanded(
                                   flex: 7,
                                   child: Center(
@@ -144,7 +144,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                       children: [
                                         // Image card with gradient overlay and shadow
                                         Container(
-                                          margin: const EdgeInsets.symmetric(horizontal: 18),
+                                          margin: const EdgeInsets.symmetric(horizontal: 24),
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(imageCardRadius),
                                             boxShadow: [
@@ -162,7 +162,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                                 Image.asset(
                                                   page['image']!,
                                                   height: maxImageHeight,
-                                                  width: MediaQuery.of(context).size.width * 0.8,
+                                                  width: MediaQuery.of(context).size.width * 0.75,
                                                   fit: BoxFit.cover,
                                                 ),
                                                 // Soft white gradient overlay from top
@@ -188,14 +188,14 @@ class _IntroScreenState extends State<IntroScreen> {
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(height: 36),
+                                        const SizedBox(height: 24),
                                         // Title
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                                          padding: const EdgeInsets.symmetric(horizontal: 28),
                                           child: Text(
                                             page['title']!,
                                             style: const TextStyle(
-                                              fontSize: 26,
+                                              fontSize: 22,
                                               fontWeight: FontWeight.bold,
                                               color: Color(0xFF1B5E20),
                                               letterSpacing: 0.2,
@@ -203,14 +203,14 @@ class _IntroScreenState extends State<IntroScreen> {
                                             textAlign: TextAlign.center,
                                           ),
                                         ),
-                                        const SizedBox(height: 18),
+                                        const SizedBox(height: 12),
                                         // Description
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                                          padding: const EdgeInsets.symmetric(horizontal: 28),
                                           child: Text(
                                             page['desc']!,
                                             style: const TextStyle(
-                                              fontSize: 16,
+                                              fontSize: 14,
                                               color: Color(0xFF6D6D6D),
                                               height: 1.5,
                                             ),
@@ -223,7 +223,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                 ),
                                 // Indicators and button
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
@@ -245,14 +245,14 @@ class _IntroScreenState extends State<IntroScreen> {
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: const Color(0xFF2E7D32),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(28),
+                                              borderRadius: BorderRadius.circular(24),
                                             ),
-                                            padding: const EdgeInsets.symmetric(horizontal: 44, vertical: 18),
+                                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                                             elevation: 10,
                                             shadowColor: const Color(0xFF2E7D32).withOpacity(0.22),
                                             textStyle: const TextStyle(
                                               fontWeight: FontWeight.w600,
-                                              fontSize: 18,
+                                              fontSize: 16,
                                               letterSpacing: 0.5,
                                             ),
                                           ),
@@ -261,7 +261,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontWeight: FontWeight.w600,
-                                              fontSize: 18,
+                                              fontSize: 16,
                                               letterSpacing: 0.5,
                                             ),
                                           ),
@@ -277,14 +277,14 @@ class _IntroScreenState extends State<IntroScreen> {
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: const Color(0xFF2E7D32),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(28),
+                                              borderRadius: BorderRadius.circular(24),
                                             ),
-                                            padding: const EdgeInsets.symmetric(horizontal: 44, vertical: 18),
+                                            padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
                                             elevation: 10,
                                             shadowColor: const Color(0xFF2E7D32).withOpacity(0.22),
                                             textStyle: const TextStyle(
                                               fontWeight: FontWeight.w600,
-                                              fontSize: 18,
+                                              fontSize: 16,
                                               letterSpacing: 0.5,
                                             ),
                                           ),
@@ -293,7 +293,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontWeight: FontWeight.w600,
-                                              fontSize: 18,
+                                              fontSize: 16,
                                               letterSpacing: 0.5,
                                             ),
                                           ),
@@ -301,7 +301,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                     ],
                                   ),
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 16),
                               ],
                             );
                           },

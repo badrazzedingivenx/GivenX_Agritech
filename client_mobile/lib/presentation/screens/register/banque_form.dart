@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../services/api_service.dart';
+import '../../../services/session_service.dart';
+import '../../../models/user.dart';
 import '../dashboard/banque_dashboard.dart';
 
 class BanqueForm extends StatefulWidget {
@@ -18,6 +21,17 @@ class _BanqueFormState extends State<BanqueForm> {
   bool _showConfirmPassword = false;
   String? _uploadedLogoPath;
 
+  final List<String> _bankTypeOptions = [
+    'Commercial Bank',
+    'Microfinance',
+    'Cooperative',
+    'Development Bank',
+    'Other',
+  ];
+  String? _selectedBankType;
+
+
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -30,36 +44,47 @@ class _BanqueFormState extends State<BanqueForm> {
             child: Text(
               'Register as Banque',
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Colors.white70,
                 letterSpacing: 0.2,
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           const Center(
             child: Text(
               'Create your bank account',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: Colors.white70,
                 fontWeight: FontWeight.w400,
                 letterSpacing: 0.1,
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
+          _buildTextField('Full Name', 'fullName', required: true, icon: Icons.person),
+          const SizedBox(height: 14),
           _buildTextField('Bank Name', 'bankName', required: true, icon: Icons.account_balance),
-          const SizedBox(height: 18),
-          _buildTextField('Official ID (ex: CAM-001)', 'officialId', required: true, icon: Icons.badge),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
+          _buildTextField('City', 'city', required: true, icon: Icons.location_city),
+          const SizedBox(height: 14),
+          _buildDropdown(
+            label: 'Bank Type',
+            items: _bankTypeOptions,
+            value: _selectedBankType,
+            onChanged: (v) => setState(() => _selectedBankType = v),
+            onSaved: (v) => _data['bankType'] = v,
+            icon: Icons.account_balance_wallet,
+          ),
+          const SizedBox(height: 14),
           _buildTextField('Institutional Email', 'email', required: true, email: true, icon: Icons.email, keyboardType: TextInputType.emailAddress),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           _buildTextField('Phone Number', 'phone', required: true, icon: Icons.phone, keyboardType: TextInputType.phone),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           _buildLogoUploadField(),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           TextFormField(
             controller: _passwordController,
             obscureText: !_showPassword,
@@ -93,7 +118,7 @@ class _BanqueFormState extends State<BanqueForm> {
             },
             onSaved: (value) => _data['password'] = value,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           TextFormField(
             obscureText: !_showConfirmPassword,
             style: const TextStyle(color: Colors.white),
@@ -125,7 +150,7 @@ class _BanqueFormState extends State<BanqueForm> {
               return null;
             },
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 22),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -134,15 +159,18 @@ class _BanqueFormState extends State<BanqueForm> {
                 if (valid) {
                   _formKey.currentState!.save();
                   try {
-                    await ApiService.registerUser({
+                    final result = await ApiService.registerUser({
                       'email': _data['email'] ?? '',
                       'password': _data['password'] ?? '',
                       'role': 'Banque',
+                      'fullName': _data['fullName'] ?? '',
                       'bankName': _data['bankName'] ?? '',
-                      'officialId': _data['officialId'] ?? '',
                       'phone': _data['phone'] ?? '',
+                      'city': _data['city'] ?? '',
+                      'bankType': _data['bankType'] ?? '',
                       'logoPath': _uploadedLogoPath ?? '',
                     });
+                    await SessionService.saveSession(User.fromJson(result));
                     if (!mounted) return;
                     // Simulate admin validation required
                     showDialog(
@@ -159,7 +187,7 @@ class _BanqueFormState extends State<BanqueForm> {
                                 MaterialPageRoute(
                                   builder: (context) => BanqueDashboard(
                                     bankName: _data['bankName'] ?? '',
-                                    officialId: _data['officialId'] ?? '',
+                                    officialId: '',
                                     email: _data['email'] ?? '',
                                     phone: _data['phone'] ?? '',
                                     logoPath: _uploadedLogoPath ?? '',
@@ -208,6 +236,49 @@ class _BanqueFormState extends State<BanqueForm> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String label,
+    required List<String> items,
+    required String? value,
+    required ValueChanged<String?> onChanged,
+    required FormFieldSetter<String> onSaved,
+    required IconData icon,
+    bool required = true,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      items: items
+          .map((type) => DropdownMenuItem(
+                value: type,
+                child: Text(type, style: const TextStyle(color: Colors.white)),
+              ))
+          .toList(),
+      onChanged: onChanged,
+      onSaved: onSaved,
+      validator: required
+          ? (v) => (v == null || v.isEmpty) ? 'Required' : null
+          : null,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.13),
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        prefixIcon: Icon(icon, color: Colors.white70),
+        errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.4)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+        ),
+      ),
+      dropdownColor: const Color(0xFF2E7D32),
+      style: const TextStyle(color: Colors.white),
     );
   }
 
@@ -298,11 +369,14 @@ class _BanqueFormState extends State<BanqueForm> {
             const SizedBox(width: 10),
             ElevatedButton(
               onPressed: () async {
-                // Simulate file picking
-                setState(() {
-                  _uploadedLogoPath = 'assets/images/bank_logo.png';
-                  _logoController.text = 'bank_logo.png';
-                });
+                final picker = ImagePicker();
+                final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                if (pickedFile != null) {
+                  setState(() {
+                    _uploadedLogoPath = pickedFile.path;
+                    _logoController.text = pickedFile.name;
+                  });
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2E7D32),
