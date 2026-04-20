@@ -16,10 +16,15 @@ dependencies:
   provider: ^6.0.5
   smooth_page_indicator: ^1.1.0
   http: ^1.2.1
+  math_expressions: ^2.1.0
+  image_picker: ^0.8.7+6
+  speech_to_text: ^6.6.2
+  google_ml_kit: ^0.8.0
 
   flutter_localizations:
     sdk: flutter
   intl: 0.20.2
+
 
 
 dev_dependencies:

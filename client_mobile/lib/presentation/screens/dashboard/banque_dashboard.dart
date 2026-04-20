@@ -21,6 +21,12 @@ class BanqueDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DashboardScaffold(
+      navItems: const [
+        NavItem(icon: Icons.home_outlined, label: 'Home'),
+        NavItem(icon: Icons.credit_card_outlined, label: 'Loans'),
+        NavItem(icon: Icons.bar_chart_outlined, label: 'Analytics'),
+        NavItem(icon: Icons.person_outline, label: 'Profile'),
+      ],
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(

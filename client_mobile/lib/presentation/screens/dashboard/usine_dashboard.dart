@@ -1,26 +1,28 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../widgets/dashboard_scaffold.dart';
 
 // ─────────────────────────────────────────────────────────
 //  MAIN SHELL — controls which tab is active
 // ─────────────────────────────────────────────────────────
+
 class UsineDashboard extends StatefulWidget {
-  final String? fullName;
-  final String? email;
-  final String? phone;
-  final String? city;
-  final String? companyName;
-  final String? productTypes;
+  final String fullName;
+  final String email;
+  final String phone;
+  final String city;
+  final String companyName;
+  final String productTypes;
 
   const UsineDashboard({
     super.key,
-    this.fullName,
-    this.email,
-    this.phone,
-    this.city,
-    this.companyName,
-    this.productTypes,
+    required this.fullName,
+    required this.email,
+    required this.phone,
+    required this.city,
+    required this.companyName,
+    required this.productTypes,
   });
 
   @override
@@ -34,23 +36,31 @@ class _UsineDashboardState extends State<UsineDashboard> {
   static const Color bgColor = Color(0xFFF4F9F3);
   static const Color textColor = Color(0xFF1A1D1A);
   static const Color textLight = Color(0xFF757575);
-  static const Color navUnselected = Color(0xFF8D9991);
-
-  final List<_NavItem> _navItems = const [
-    _NavItem(icon: Icons.home_outlined, label: 'Home'),
-    _NavItem(icon: Icons.eco_outlined, label: 'Shipments'),
-    _NavItem(icon: Icons.shopping_cart_outlined, label: 'Marketplace'),
-    _NavItem(icon: Icons.person_outline, label: 'Profile'),
-  ];
 
   @override
   Widget build(BuildContext context) {
     final String displayName =
-        widget.fullName?.isNotEmpty == true ? widget.fullName! : 'Alexander';
+      widget.fullName.isNotEmpty ? widget.fullName : 'Alexander';
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: _buildAppBar(context),
+    return DashboardScaffold(
+      currentIndex: _currentIndex,
+      navItems: const [
+        NavItem(icon: Icons.home_outlined, label: 'Home'),
+        NavItem(icon: Icons.eco_outlined, label: 'Shipments'),
+        NavItem(icon: Icons.shopping_cart_outlined, label: 'Marketplace'),
+        NavItem(icon: Icons.person_outline, label: 'Profile'),
+      ],
+      onTabSelected: (i) => setState(() => _currentIndex = i),
+      floatingActionButton: _currentIndex == 1
+          ? FloatingActionButton(
+              onPressed: () => _showCreateShipmentSheet(context),
+              backgroundColor: primaryGreen,
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            )
+          : null,
       body: IndexedStack(
         index: _currentIndex,
         children: [
@@ -85,74 +95,6 @@ class _UsineDashboardState extends State<UsineDashboard> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
-      floatingActionButton: _currentIndex == 1
-          ? FloatingActionButton(
-              onPressed: () => _showCreateShipmentSheet(context),
-              backgroundColor: primaryGreen,
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            )
-          : null,
-    );
-  }
-
-  AppBar _buildAppBar(BuildContext context) {
-    String titleText;
-    switch (_currentIndex) {
-      case 1:
-        titleText = 'My Shipments';
-        break;
-      case 2:
-        titleText = 'Marketplace';
-        break;
-      case 3:
-        titleText = 'My Profile';
-        break;
-      default:
-        titleText = 'AgriFlow';
-    }
-
-    return AppBar(
-      backgroundColor: bgColor,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      toolbarHeight: 70,
-      automaticallyImplyLeading: false,
-      titleSpacing: 20,
-      title: Row(
-        children: [
-          if (_currentIndex == 0) ...[
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: primaryGreen.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child:
-                  const Icon(Icons.eco_outlined, color: primaryGreen, size: 20),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Text(titleText,
-              style: const TextStyle(
-                  color: primaryGreen,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800)),
-        ],
-      ),
-      actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.notifications_outlined,
-              color: primaryGreen, size: 26),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        ),
-        const SizedBox(width: 20),
-      ],
     );
   }
 
@@ -168,70 +110,6 @@ class _UsineDashboardState extends State<UsineDashboard> {
       ),
     );
   }
-
-  Widget _buildBottomNav() {
-    return Container(
-      padding: const EdgeInsets.only(top: 14, bottom: 24, left: 12, right: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(_navItems.length, (i) {
-          final isSelected = i == _currentIndex;
-          final item = _navItems[i];
-          return GestureDetector(
-            onTap: () => setState(() => _currentIndex = i),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              padding: EdgeInsets.symmetric(
-                horizontal: isSelected ? 16 : 10,
-                vertical: 10,
-              ),
-              decoration: BoxDecoration(
-                color: isSelected ? primaryGreen : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(item.icon,
-                      color: isSelected ? Colors.white : navUnselected,
-                      size: 22),
-                  if (isSelected) ...[
-                    const SizedBox(width: 8),
-                    Text(item.label,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13)),
-                  ],
-                ],
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}
-
-class _NavItem {
-  final IconData icon;
-  final String label;
-  const _NavItem({required this.icon, required this.label});
 }
 
 // ─────────────────────────────────────────────────────────
@@ -2369,12 +2247,12 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
 //  TAB 3 — PROFILE
 // ─────────────────────────────────────────────────────────
 class _ProfileTab extends StatelessWidget {
-  final String? fullName;
-  final String? email;
-  final String? phone;
-  final String? city;
-  final String? companyName;
-  final String? productTypes;
+  final String fullName;
+  final String email;
+  final String phone;
+  final String city;
+  final String companyName;
+  final String productTypes;
   final Color primaryGreen;
   final Color textColor;
   final Color textLight;

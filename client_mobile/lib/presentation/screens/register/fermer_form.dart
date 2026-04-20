@@ -1,4 +1,4 @@
-
+﻿
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:agriflow/l10n/app_localizations.dart';
@@ -344,3 +344,4 @@ class _FermerFormState extends State<FermerForm> {
     );
   }
 }
+

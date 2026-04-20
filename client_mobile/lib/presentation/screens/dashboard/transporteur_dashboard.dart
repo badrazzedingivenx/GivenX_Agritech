@@ -14,18 +14,24 @@ class TransporteurDashboard extends StatelessWidget {
   final String city;
 
   const TransporteurDashboard({
-    Key? key,
+    super.key,
     required this.fullName,
     required this.email,
     required this.phone,
     required this.vehicleType,
     required this.capacity,
     required this.city,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return DashboardScaffold(
+      navItems: const [
+        NavItem(icon: Icons.home_outlined, label: 'Home'),
+        NavItem(icon: Icons.route_outlined, label: 'Trips'),
+        NavItem(icon: Icons.inventory_2_outlined, label: 'Deliveries'),
+        NavItem(icon: Icons.person_outline, label: 'Profile'),
+      ],
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(0),
         child: Column(
