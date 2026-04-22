@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import '../../services/api_service.dart';
+import '../../services/session_service.dart';
 
 class ProfileFarmerPage extends StatefulWidget {
   final String fullName;
@@ -27,6 +29,45 @@ class ProfileFarmerPage extends StatefulWidget {
 class _ProfileFarmerPageState extends State<ProfileFarmerPage> {
   File? _image;
   final ImagePicker _picker = ImagePicker();
+  int _productCount = 0;
+  int _orderCount = 0;
+  double _avgRating = 0.0;
+  int _reviewCount = 0;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final user = await SessionService.getUser();
+      final farmerId = user?.id;
+      final results = await Future.wait([
+        ApiService.getProducts(sellerId: farmerId?.toString()),
+        ApiService.getOrders(farmerId: farmerId?.toString()),
+        ApiService.getReviews(targetUserId: farmerId?.toString()),
+      ]);
+      if (mounted) {
+        final reviews = results[2] as List<dynamic>;
+        double avg = 0;
+        if (reviews.isNotEmpty) {
+          avg = reviews.fold<double>(0, (sum, r) => sum + ((r['rating'] as num?)?.toDouble() ?? 0)) / reviews.length;
+        }
+        setState(() {
+          _productCount = results[0].length;
+          _orderCount = results[1].length;
+          _avgRating = avg;
+          _reviewCount = reviews.length;
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
@@ -213,9 +254,9 @@ class _ProfileFarmerPageState extends State<ProfileFarmerPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _stat("Products", "24"),
-                      _stat("Orders", "8"),
-                      _stat("Rating", "4.8"),
+                      _stat("Products", _loading ? "..." : "$_productCount"),
+                      _stat("Orders", _loading ? "..." : "$_orderCount"),
+                      _stat("Rating", _loading ? "..." : _reviewCount > 0 ? _avgRating.toStringAsFixed(1) : "N/A"),
                     ],
                   ),
                 ],

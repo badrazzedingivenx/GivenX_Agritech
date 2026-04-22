@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:math_expressions/math_expressions.dart';
 import '../../../models/product.dart';
@@ -245,6 +246,39 @@ class _ProductsPageState extends State<ProductsPage> {
     );
   }
 
+  Widget _buildProductImage(Product product) {
+    final img = product.image;
+    if (img != null && img.startsWith('data:image')) {
+      // Base64 data URI
+      final base64Str = img.split(',').last;
+      return Image.memory(
+        base64Decode(base64Str),
+        height: 180,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _imagePlaceholder(),
+      );
+    } else if (img != null && img.startsWith('assets/')) {
+      // Local asset
+      return Image.asset(
+        img,
+        height: 180,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _imagePlaceholder(),
+      );
+    }
+    return _imagePlaceholder();
+  }
+
+  Widget _imagePlaceholder() {
+    return Container(
+      height: 180,
+      color: Colors.grey[200],
+      child: const Icon(Icons.image_not_supported, size: 60, color: Colors.grey),
+    );
+  }
+
   Widget _buildLargeProductCard(Product product) {
     bool isOutOfStock = product.quantity <= 0 || !product.isAvailable;
     return Container(
@@ -267,17 +301,7 @@ class _ProductsPageState extends State<ProductsPage> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
             child: Opacity(
               opacity: isOutOfStock ? 0.3 : 1.0,
-              child: Image.asset(
-                product.image ?? 'assets/images/app2.png',
-                height: 180,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  height: 180,
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.image_not_supported, size: 60, color: Colors.grey),
-                ),
-              ),
+              child: _buildProductImage(product),
             ),
           ),
           Padding(

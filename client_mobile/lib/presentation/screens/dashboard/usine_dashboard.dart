@@ -1,7 +1,11 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../../services/api_service.dart';
+import '../../../services/session_service.dart';
 import '../../widgets/dashboard_scaffold.dart';
+import '../chat/conversations_screen.dart';
+import '../register/orders_page.dart';
 
 // ─────────────────────────────────────────────────────────
 //  MAIN SHELL — controls which tab is active
@@ -15,6 +19,7 @@ class UsineDashboard extends StatefulWidget {
   final String companyName;
   final String productTypes;
   final String buyerType; // 'restaurant' or 'industry'
+  final int? userId;
 
   const UsineDashboard({
     super.key,
@@ -25,6 +30,7 @@ class UsineDashboard extends StatefulWidget {
     required this.companyName,
     required this.productTypes,
     this.buyerType = 'restaurant',
+    this.userId,
   });
 
   @override
@@ -32,12 +38,59 @@ class UsineDashboard extends StatefulWidget {
 }
 
 class _UsineDashboardState extends State<UsineDashboard> {
-  int _currentIndex = 0; // 0=Home, 1=Shipments, 2=Marketplace, 3=Profile
+  int _currentIndex = 0; // 0=Home, 1=Shipments, 2=Marketplace, 3=Messages, 4=Profile
+  int _shipmentsVersion = 0;
+  int _unreadMessagesCount = 0;
+  static const Duration _badgePollInterval = Duration(seconds: 10);
+  Timer? _badgeTimer;
 
   static const Color primaryGreen = Color(0xFF23763D);
-  static const Color bgColor = Color(0xFFF4F9F3);
   static const Color textColor = Color(0xFF1A1D1A);
   static const Color textLight = Color(0xFF757575);
+
+  @override
+  void initState() {
+    super.initState();
+    _startUnreadBadgePolling();
+  }
+
+  @override
+  void dispose() {
+    _badgeTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startUnreadBadgePolling() {
+    _loadUnreadMessagesCount();
+    _badgeTimer?.cancel();
+    _badgeTimer = Timer.periodic(_badgePollInterval, (_) {
+      if (!mounted || _currentIndex == 3) return;
+      _loadUnreadMessagesCount();
+    });
+  }
+
+  Future<void> _loadUnreadMessagesCount() async {
+    try {
+      final user = await SessionService.getUser();
+      if (user == null) return;
+      final received = await ApiService.getMessages(receiverId: '${user.id}');
+      final unread = received.where((m) => (m as Map<String, dynamic>)['isRead'] == false).length;
+      if (!mounted) return;
+      setState(() => _unreadMessagesCount = unread);
+    } catch (_) {}
+  }
+
+  void _onTabSelected(int i) {
+    setState(() {
+      _currentIndex = i;
+      if (i == 3) {
+        _unreadMessagesCount = 0;
+      }
+    });
+    if (i != 3) {
+      _loadUnreadMessagesCount();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,13 +99,15 @@ class _UsineDashboardState extends State<UsineDashboard> {
 
     return DashboardScaffold(
       currentIndex: _currentIndex,
+      navBadgeCounts: {3: _unreadMessagesCount},
       navItems: const [
         NavItem(icon: Icons.home_outlined, label: 'Home'),
         NavItem(icon: Icons.eco_outlined, label: 'Shipments'),
         NavItem(icon: Icons.shopping_cart_outlined, label: 'Marketplace'),
+        NavItem(icon: Icons.chat_bubble_outline, label: 'Messages'),
         NavItem(icon: Icons.person_outline, label: 'Profile'),
       ],
-      onTabSelected: (i) => setState(() => _currentIndex = i),
+      onTabSelected: _onTabSelected,
       floatingActionButton: _currentIndex == 1
           ? FloatingActionButton(
               onPressed: () => _showCreateShipmentSheet(context),
@@ -72,18 +127,26 @@ class _UsineDashboardState extends State<UsineDashboard> {
             textColor: textColor,
             textLight: textLight,
             onTabChange: (i) => setState(() => _currentIndex = i),
+            userId: widget.userId,
+            buyerType: widget.buyerType,
           ),
-          const _ShipmentsTab(
+          _ShipmentsTab(
+            key: ValueKey(_shipmentsVersion),
             primaryGreen: primaryGreen,
             textColor: textColor,
             textLight: textLight,
+            userId: widget.userId,
+            buyerType: widget.buyerType,
           ),
           _MarketplaceTab(
             primaryGreen: primaryGreen,
             textColor: textColor,
             textLight: textLight,
             onNavigateToShipments: () => setState(() => _currentIndex = 1),
+            enableBulkSourcing: widget.buyerType.toLowerCase() == 'industry',
+            buyerType: widget.buyerType,
           ),
+          const ConversationsScreen(),
           _ProfileTab(
             fullName: widget.fullName,
             email: widget.email,
@@ -109,6 +172,9 @@ class _UsineDashboardState extends State<UsineDashboard> {
         primaryGreen: primaryGreen,
         textColor: textColor,
         textLight: textLight,
+        buyerId: widget.userId,
+        buyerType: widget.buyerType,
+        onCreated: () => setState(() => _shipmentsVersion++),
       ),
     );
   }
@@ -117,13 +183,15 @@ class _UsineDashboardState extends State<UsineDashboard> {
 // ─────────────────────────────────────────────────────────
 //  TAB 0 — HOME
 // ─────────────────────────────────────────────────────────
-class _HomeTab extends StatelessWidget {
+class _HomeTab extends StatefulWidget {
   final String displayName;
   final Color primaryGreen;
   final Color textColor;
   final Color textLight;
 
   final Function(int)? onTabChange;
+  final int? userId;
+  final String buyerType;
 
   const _HomeTab({
     required this.displayName,
@@ -131,7 +199,101 @@ class _HomeTab extends StatelessWidget {
     required this.textColor,
     required this.textLight,
     this.onTabChange,
+    this.userId,
+    this.buyerType = 'restaurant',
   });
+
+  @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
+  List<Map<String, dynamic>> _shipments = [];
+  List<Map<String, dynamic>> _orders = [];
+  bool _loading = true;
+
+  bool get _isIndustry => widget.buyerType.toLowerCase() == 'industry';
+
+  int _gridColumns(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width >= 1280) return 4;
+    if (width >= 900) return 3;
+    if (width >= 420) return 2;
+    return 1;
+  }
+
+  double _gridAspectRatio(BuildContext context) {
+    final columns = _gridColumns(context);
+    if (columns >= 4) return 0.95;
+    if (columns == 3) return 0.92;
+    if (columns == 2) return 0.98;
+    return 1.16;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final buyerIdStr = widget.userId?.toString();
+      final buyerType = widget.buyerType.toLowerCase();
+      final results = await Future.wait([
+        ApiService.getShipments(),
+        ApiService.getOrders(buyerId: buyerIdStr),
+      ]);
+      final allShipments = results[0].cast<Map<String, dynamic>>();
+      final rawBuyerOrders = results[1].cast<Map<String, dynamic>>();
+      final buyerOrders = rawBuyerOrders.where((order) {
+        final orderBuyerType = (order['buyerType'] ?? '').toString().toLowerCase();
+        return orderBuyerType == buyerType;
+      }).toList();
+      final orderIds = buyerOrders
+          .map((o) => (o['id'] as num?)?.toInt())
+          .whereType<int>()
+          .toSet();
+      final buyerShipments = widget.userId == null
+          ? allShipments
+          : allShipments.where((shipment) {
+              final orderId = (shipment['orderId'] as num?)?.toInt();
+              return orderId != null && orderIds.contains(orderId);
+            }).toList();
+      if (mounted) {
+        setState(() {
+          _shipments = buyerShipments;
+          _orders = buyerOrders;
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  int get _shipmentCount => _shipments.length;
+  int get _inTransitCount => _shipments.where((s) => s['status'] == 'inTransit').length;
+  int get _deliveredCount => _shipments.where((s) => s['status'] == 'delivered').length;
+  int get _recentOrderCount => _orders.where((o) => o['status'] == 'processing' || o['status'] == 'pending').length;
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'delivered': return 'DELIVERED';
+      case 'inTransit': return 'IN TRANSIT';
+      case 'requested': return 'REQUESTED';
+      default: return status.toUpperCase();
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'delivered': return widget.primaryGreen;
+      case 'inTransit': return Colors.orange;
+      case 'requested': return Colors.blue;
+      default: return Colors.grey;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,58 +302,98 @@ class _HomeTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('BUYER DASHBOARD',
+            Text('BUYER DASHBOARD',
               style: TextStyle(
-                  color: primaryGreen,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2)),
+                color: widget.primaryGreen,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2)),
           const SizedBox(height: 6),
-          Text('Hello, $displayName',
+            Text('Hello, ${widget.displayName}',
               style: TextStyle(
                   fontSize: 28,
-                  color: textColor,
+                  color: widget.textColor,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5)),
           const SizedBox(height: 6),
-          Text('Here is the status of your global shipments today.',
-              style: TextStyle(color: textLight, fontSize: 13)),
+          Text(
+              _isIndustry
+                  ? 'Here is your industrial sourcing and shipment status today.'
+                  : 'Here is your restaurant ordering and delivery status today.',
+              style: TextStyle(color: widget.textLight, fontSize: 13)),
           const SizedBox(height: 24),
           Row(
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: () => onTabChange?.call(2),
+                  onTap: () => widget.onTabChange?.call(2),
                   child: _buildActionButton(
-                      'Manage\nProducts', Icons.inventory_2_outlined, false),
+                      _isIndustry ? 'Bulk\nSourcing' : 'Find\nProducts',
+                      Icons.inventory_2_outlined,
+                      false),
                 ),
               ),
               const SizedBox(width: 15),
               Expanded(
                 child: GestureDetector(
-                  onTap: () => onTabChange?.call(1),
-                  child: _buildActionButton('Add\nShipment', Icons.add, true),
+                  onTap: () {
+                    if (_isIndustry) {
+                      widget.onTabChange?.call(1);
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const OrdersPage()),
+                      );
+                    }
+                  },
+                  child: _buildActionButton(
+                    _isIndustry ? 'Track\nShipments' : 'Track\nOrders',
+                    _isIndustry ? Icons.local_shipping_outlined : Icons.receipt_long_outlined,
+                    true,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          _buildStatCard(
-              icon: Icons.local_shipping,
-              iconBgColor: const Color(0xFFDDF1E3),
-              iconColor: primaryGreen,
-              value: '15',
-              title: 'Total Shipments',
-              badge: '+2 new'),
-          const SizedBox(height: 15),
-          _buildStatCard(
-              icon: Icons.public,
-              iconBgColor: const Color(0xFFFCEAE8),
-              iconColor: const Color(0xFFB52B35),
-              value: '4',
-              title: 'Countries Active'),
+          GridView.count(
+            crossAxisCount: _gridColumns(context),
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: _gridAspectRatio(context),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _buildStatCard(
+                  icon: Icons.local_shipping,
+                  iconBgColor: const Color(0xFFDDF1E3),
+                  iconColor: widget.primaryGreen,
+                  value: _loading ? '...' : '$_shipmentCount',
+                  title: _isIndustry ? 'Sourcing Shipments' : 'Delivery Shipments',
+                  badge: _inTransitCount > 0 ? '$_inTransitCount in transit' : null),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const OrdersPage()),
+                  );
+                },
+                child: _buildStatCard(
+                    icon: Icons.shopping_cart,
+                    iconBgColor: const Color(0xFFFCEAE8),
+                    iconColor: const Color(0xFFB52B35),
+                    value: _loading ? '...' : '$_recentOrderCount',
+                    title: _isIndustry ? 'Open Procurement Orders' : 'Pending Orders'),
+              ),
+            ],
+          ),
           const SizedBox(height: 20),
-          const LiveNetworkCard(),
+          LiveNetworkCard(
+            loading: _loading,
+            totalShipments: _shipmentCount,
+            inTransitShipments: _inTransitCount,
+            pendingOrders: _recentOrderCount,
+          ),
           const SizedBox(height: 24),
           _buildMarketplaceSection(),
           const SizedBox(height: 28),
@@ -203,27 +405,40 @@ class _HomeTab extends StatelessWidget {
               Text('Active Batches',
                   style: TextStyle(
                       fontSize: 18,
-                      color: textColor,
+                      color: widget.textColor,
                       fontWeight: FontWeight.w800)),
               GestureDetector(
-                onTap: () => onTabChange?.call(1),
+                onTap: () => widget.onTabChange?.call(1),
                 child: Text('View All',
                     style: TextStyle(
-                        color: primaryGreen,
+                        color: widget.primaryGreen,
                         fontWeight: FontWeight.w700,
                         fontSize: 13)),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          _buildBatchItem(
-            icon: Icons.inventory_2,
-            title: 'Batch #EXP-915',
-            subtitle: 'Destination: Rotterdam, NL',
-            statusText: 'DELIVERED',
-            statusBgColor: primaryGreen,
-            statusTextColor: Colors.white,
-          ),
+          if (_loading)
+            const Center(child: CircularProgressIndicator())
+          else if (_shipments.isEmpty)
+            Center(child: Text('No shipments yet', style: TextStyle(color: widget.textLight)))
+          else
+            GridView.count(
+              crossAxisCount: _gridColumns(context),
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: _gridAspectRatio(context),
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: _shipments.take(4).map((s) => _buildBatchItem(
+                icon: Icons.inventory_2,
+                title: 'Shipment #${s['id']}',
+                subtitle: '${s['pickupLocation'] ?? ''} → ${s['deliveryLocation'] ?? ''}',
+                statusText: _statusLabel(s['status'] ?? ''),
+                statusBgColor: _statusColor(s['status'] ?? ''),
+                statusTextColor: Colors.white,
+              )).toList(),
+            ),
           const SizedBox(height: 15),
           _buildInsightCard(context),
           const SizedBox(height: 40),
@@ -236,7 +451,7 @@ class _HomeTab extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: isPrimary ? primaryGreen : Colors.white,
+        color: isPrimary ? widget.primaryGreen : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: isPrimary
             ? []
@@ -251,12 +466,12 @@ class _HomeTab extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: isPrimary ? Colors.white : textColor, size: 20),
+          Icon(icon, color: isPrimary ? Colors.white : widget.textColor, size: 20),
           const SizedBox(width: 10),
           Text(label,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: isPrimary ? Colors.white : textColor,
+                  color: isPrimary ? Colors.white : widget.textColor,
                   fontSize: 13,
                   fontWeight: FontWeight.w600)),
         ],
@@ -274,7 +489,7 @@ class _HomeTab extends StatelessWidget {
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
@@ -306,18 +521,21 @@ class _HomeTab extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20)),
                   child: Text(badge,
                       style: TextStyle(
-                          color: primaryGreen,
+                          color: widget.primaryGreen,
                           fontSize: 11,
                           fontWeight: FontWeight.w700)),
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Text(value,
               style: TextStyle(
-                  fontSize: 32, color: textColor, fontWeight: FontWeight.w800)),
+                  fontSize: 24, color: widget.textColor, fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
-          Text(title, style: TextStyle(color: textLight, fontSize: 14)),
+          Text(title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: widget.textLight, fontSize: 12)),
         ],
       ),
     );
@@ -330,16 +548,16 @@ class _HomeTab extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Global Marketplace',
+            Text(_isIndustry ? 'Industrial Marketplace' : 'Restaurant Marketplace',
                 style: TextStyle(
                     fontSize: 18,
-                    color: textColor,
+                    color: widget.textColor,
                     fontWeight: FontWeight.w800)),
             GestureDetector(
-              onTap: () => onTabChange?.call(2),
-              child: Text('Explore',
+              onTap: () => widget.onTabChange?.call(2),
+              child: Text('View All',
                   style: TextStyle(
-                      color: primaryGreen,
+                      color: widget.primaryGreen,
                       fontWeight: FontWeight.w700,
                       fontSize: 13)),
             ),
@@ -347,7 +565,7 @@ class _HomeTab extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         GestureDetector(
-          onTap: () => onTabChange?.call(2),
+          onTap: () => widget.onTabChange?.call(2),
           child: Container(
             height: 180,
             width: double.infinity,
@@ -466,12 +684,12 @@ class _HomeTab extends StatelessWidget {
               children: [
                 Text(title,
                     style: TextStyle(
-                        color: textColor,
+                        color: widget.textColor,
                         fontWeight: FontWeight.w800,
                         fontSize: 15)),
                 const SizedBox(height: 4),
                 Text(subtitle,
-                    style: TextStyle(color: textLight, fontSize: 12)),
+                    style: TextStyle(color: widget.textLight, fontSize: 12)),
               ],
             ),
           ),
@@ -495,7 +713,7 @@ class _HomeTab extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: primaryGreen,
+        color: widget.primaryGreen,
         borderRadius: BorderRadius.circular(32),
       ),
       child: Stack(
@@ -518,19 +736,20 @@ class _HomeTab extends StatelessWidget {
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
                 RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
+                  text: TextSpan(
+                    style: const TextStyle(
                         color: Colors.white70, fontSize: 13, height: 1.5),
                     children: [
-                      TextSpan(text: 'Your export volume to '),
+                      TextSpan(text: _isIndustry ? 'You have completed ' : 'You have delivered '),
                       TextSpan(
-                          text: 'Netherlands',
-                          style: TextStyle(
+                          text: '$_deliveredCount delivered',
+                          style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold)),
                       TextSpan(
-                          text:
-                              ' has increased by 22% this quarter. Consider optimizing freight routes for better margins.'),
+                          text: _isIndustry
+                              ? ' sourcing shipments out of $_shipmentCount total. $_inTransitCount currently in transit.'
+                              : ' shipments out of $_shipmentCount total. $_inTransitCount currently in transit.'),
                     ],
                   ),
                 ),
@@ -539,7 +758,7 @@ class _HomeTab extends StatelessWidget {
                   onPressed: () => _showLogisticsReport(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    foregroundColor: primaryGreen,
+                    foregroundColor: widget.primaryGreen,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20)),
@@ -590,11 +809,11 @@ class _HomeTab extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: primaryGreen.withValues(alpha: 0.1),
+                      color: widget.primaryGreen.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(Icons.analytics_outlined,
-                        color: primaryGreen, size: 28),
+                        color: widget.primaryGreen, size: 28),
                   ),
                   const SizedBox(width: 16),
                   const Expanded(
@@ -604,7 +823,7 @@ class _HomeTab extends StatelessWidget {
                         Text('Supply Chain Report',
                             style: TextStyle(
                                 fontSize: 20, fontWeight: FontWeight.w900)),
-                        Text('Q3 2026 Analysis • Netherlands',
+                        Text('Shipment & Order Summary',
                             style: TextStyle(
                                 color: Color(0xFF757575), fontSize: 12)),
                       ],
@@ -613,11 +832,11 @@ class _HomeTab extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 32),
-              _reportItem('Volume Growth', '+22.4%', Icons.trending_up,
+              _reportItem('Total Shipments', '$_shipmentCount', Icons.local_shipping,
                   Colors.green.shade700),
-              _reportItem('Avg. Transit Time', '14.2 Days',
-                  Icons.timer_outlined, Colors.blue.shade700),
-              _reportItem('Cost Optimization', '-\$1,240/batch', Icons.savings,
+              _reportItem('Delivered', '$_deliveredCount',
+                  Icons.check_circle_outline, Colors.blue.shade700),
+              _reportItem('Pending Orders', '$_recentOrderCount', Icons.pending_actions,
                   Colors.orange.shade700),
               const SizedBox(height: 30),
               SizedBox(
@@ -626,7 +845,7 @@ class _HomeTab extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryGreen,
+                    backgroundColor: widget.primaryGreen,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18)),
@@ -681,11 +900,16 @@ class _ShipmentsTab extends StatefulWidget {
   final Color primaryGreen;
   final Color textColor;
   final Color textLight;
+  final int? userId;
+  final String buyerType;
 
   const _ShipmentsTab({
+    super.key,
     required this.primaryGreen,
     required this.textColor,
     required this.textLight,
+    this.userId,
+    this.buyerType = 'restaurant',
   });
 
   @override
@@ -694,87 +918,139 @@ class _ShipmentsTab extends StatefulWidget {
 
 class _ShipmentsTabState extends State<_ShipmentsTab> {
   String _activeFilter = 'All Shipments';
-  final List<String> _filters = ['All Shipments', 'International', 'Local'];
+  final List<String> _filters = ['All Shipments', 'In Transit', 'Delivered'];
   final Set<String> _expandedIds = {};
+  List<Map<String, dynamic>> _shipmentData = [];
+  bool _loading = true;
 
-  final List<Map<String, dynamic>> _shipmentData = [
-    {
-      'id': '#EXP-915',
-      'destination': 'Rotterdam, Netherlands',
-      'weight': '2,450 kg',
-      'date': 'Oct 24, 2026',
-      'status': 'DELIVERED',
-      'statusColor': const Color(0xFFE8F5E9),
-      'statusText': const Color(0xFF2E7D32),
-      'icon': Icons.inventory_2,
-      'isInternational': true,
-    },
-    {
-      'id': '#EXP-884',
-      'destination': 'Singapore Port, SG',
-      'weight': '1,820 kg',
-      'date': 'Oct 29, 2026',
-      'status': 'IN TRANSIT',
-      'statusColor': const Color(0xFFFFF3E0),
-      'statusText': const Color(0xFFEF6C00),
-      'icon': Icons.local_shipping,
-      'isInternational': true,
-    },
-    {
-      'id': '#EXP-872',
-      'destination': 'Hamburg, Germany',
-      'weight': '3,110 kg',
-      'date': 'Oct 30, 2026',
-      'status': 'SHIPPED',
-      'statusColor': const Color(0xFFE3F2FD),
-      'statusText': const Color(0xFF1565C0),
-      'icon': Icons.inventory_2,
-      'isInternational': true,
-    },
-    {
-      'id': '#LOC-442',
-      'destination': 'Casablanca, Morocco',
-      'weight': '4,100 kg',
-      'date': 'Nov 02, 2026',
-      'status': 'PROCESSING',
-      'statusColor': const Color(0xFFF3E5F5),
-      'statusText': const Color(0xFF7B1FA2),
-      'icon': Icons.home_work,
-      'isInternational': false,
-    },
-    {
-      'id': '#LOC-398',
-      'destination': 'Tangier, Morocco',
-      'weight': '12,000 kg',
-      'date': 'Nov 05, 2026',
-      'status': 'IN TRANSIT',
-      'statusColor': const Color(0xFFFFF3E0),
-      'statusText': const Color(0xFFEF6C00),
-      'icon': Icons.local_shipping,
-      'isInternational': false,
-    },
-    {
-      'id': '#LOC-215',
-      'destination': 'Agadir, Morocco',
-      'weight': '8,500 kg',
-      'date': 'Nov 08, 2026',
-      'status': 'DELIVERED',
-      'statusColor': const Color(0xFFE8F5E9),
-      'statusText': const Color(0xFF2E7D32),
-      'icon': Icons.check_circle_outline,
-      'isInternational': false,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadShipments();
+  }
+
+  Future<void> _loadShipments() async {
+    try {
+      final buyerIdStr = widget.userId?.toString();
+      final buyerType = widget.buyerType.toLowerCase();
+
+      final results = await Future.wait([
+        ApiService.getShipments(),
+        if (buyerIdStr != null)
+          ApiService.getOrders(buyerId: buyerIdStr)
+        else
+          Future.value(<dynamic>[]),
+      ]);
+
+      final rawShipments = results[0].cast<Map<String, dynamic>>();
+      final buyerOrders = results[1].cast<dynamic>().map((e) => e as Map<String, dynamic>).where((o) {
+        final orderBuyerType = (o['buyerType'] ?? '').toString().toLowerCase();
+        return orderBuyerType == buyerType;
+      }).toList();
+
+      final orderIds = buyerOrders
+          .map((o) => (o['id'] as num?)?.toInt())
+          .whereType<int>()
+          .toSet();
+
+      final scopedShipments = widget.userId == null
+          ? rawShipments
+          : rawShipments.where((s) {
+              final shipmentBuyerId = (s['buyerId'] as num?)?.toInt();
+              final shipmentBuyerType = (s['buyerType'] ?? '').toString().toLowerCase();
+              final shipmentOrderId = (s['orderId'] as num?)?.toInt();
+
+              final matchesBuyer = shipmentBuyerId != null && shipmentBuyerId == widget.userId;
+              final matchesOrder = shipmentOrderId != null && orderIds.contains(shipmentOrderId);
+              final matchesType = shipmentBuyerType.isEmpty || shipmentBuyerType == buyerType;
+              return (matchesBuyer || matchesOrder) && matchesType;
+            }).toList();
+
+      final shipments = scopedShipments.map((s) {
+        final status = (s['status'] ?? 'requested').toString();
+        final weightKg = (s['weight'] as num?)?.toDouble() ?? 0;
+        final statusLabel = _statusLabel(status);
+        final colors = _statusColors(status);
+        return {
+          'id': '#SHP-${s['id']}',
+          'destination': s['deliveryLocation'] ?? '',
+          'weight': '${weightKg.toInt().toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} kg',
+          'weightKg': weightKg,
+          'date': s['estimatedDeliveryDate'] != null
+              ? _formatDate(DateTime.parse(s['estimatedDeliveryDate']))
+              : 'TBD',
+          'status': statusLabel,
+          'statusColor': colors['bg'],
+          'statusText': colors['text'],
+          'icon': _statusIcon(status),
+          'rawStatus': status,
+        };
+      }).toList();
+      if (mounted) setState(() { _shipmentData = shipments; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  String _formatDate(DateTime d) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${months[d.month - 1]} ${d.day.toString().padLeft(2, '0')}, ${d.year}';
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'delivered': return 'DELIVERED';
+      case 'inTransit': return 'IN TRANSIT';
+      case 'pickedUp': return 'PICKED UP';
+      case 'accepted': return 'ACCEPTED';
+      case 'cancelled': return 'CANCELLED';
+      default: return 'PROCESSING';
+    }
+  }
+
+  Map<String, Color> _statusColors(String status) {
+    switch (status) {
+      case 'delivered':
+        return {'bg': const Color(0xFFE8F5E9), 'text': const Color(0xFF2E7D32)};
+      case 'inTransit':
+        return {'bg': const Color(0xFFFFF3E0), 'text': const Color(0xFFEF6C00)};
+      case 'pickedUp':
+        return {'bg': const Color(0xFFE3F2FD), 'text': const Color(0xFF1565C0)};
+      default:
+        return {'bg': const Color(0xFFF3E5F5), 'text': const Color(0xFF7B1FA2)};
+    }
+  }
+
+  IconData _statusIcon(String status) {
+    switch (status) {
+      case 'delivered': return Icons.check_circle_outline;
+      case 'inTransit': return Icons.local_shipping;
+      case 'pickedUp': return Icons.inventory_2;
+      default: return Icons.home_work;
+    }
+  }
 
   List<Map<String, dynamic>> get _filteredShipments {
     if (_activeFilter == 'All Shipments') return _shipmentData;
-    if (_activeFilter == 'International') {
-      return _shipmentData.where((s) => s['isInternational'] == true).toList();
+    return _shipmentData.where((s) => s['status'] == _activeFilter.toUpperCase()).toList();
+  }
+
+  double get _totalWeightKg =>
+      _shipmentData.fold<double>(0, (sum, s) => sum + ((s['weightKg'] as num?)?.toDouble() ?? 0));
+
+  int get _deliveredCount =>
+      _shipmentData.where((s) => s['status'] == 'DELIVERED').length;
+
+  double get _deliveredRate {
+    if (_shipmentData.isEmpty) return 0;
+    return (_deliveredCount / _shipmentData.length) * 100;
+  }
+
+  String _formatWeight(double kg) {
+    if (kg >= 1000) {
+      return '${(kg / 1000).toStringAsFixed(1)} tons';
     }
-    if (_activeFilter == 'Local') {
-      return _shipmentData.where((s) => s['isInternational'] == false).toList();
-    }
-    return _shipmentData;
+    return '${kg.toStringAsFixed(0)} kg';
   }
 
   @override
@@ -807,8 +1083,8 @@ class _ShipmentsTabState extends State<_ShipmentsTab> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text('124',
-                        style: TextStyle(
+                    Text(_loading ? '...' : '${_shipmentData.length}',
+                        style: const TextStyle(
                             color: Colors.white,
                             fontSize: 42,
                             fontWeight: FontWeight.w900)),
@@ -820,8 +1096,8 @@ class _ShipmentsTabState extends State<_ShipmentsTab> {
                         color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text('+12%',
-                          style: TextStyle(
+                      child: Text(_loading ? '...' : '${_deliveredRate.toStringAsFixed(0)}% delivered',
+                          style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
                               fontWeight: FontWeight.bold)),
@@ -829,8 +1105,9 @@ class _ShipmentsTabState extends State<_ShipmentsTab> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                const Text('Total weight: 1.5M tons',
-                    style: TextStyle(color: Colors.white70, fontSize: 12)),
+                Text(
+                    _loading ? 'Total weight: ...' : 'Total weight: ${_formatWeight(_totalWeightKg)}',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
               ],
             ),
           ),
@@ -840,7 +1117,7 @@ class _ShipmentsTabState extends State<_ShipmentsTab> {
               Expanded(
                   child: _smallStats(
                       'Delivered',
-                      '82',
+                      _loading ? '...' : '${_shipmentData.where((s) => s['status'] == 'DELIVERED').length}',
                       Icons.check_circle_outline,
                       const Color(0xFFE8F5E9),
                       const Color(0xFF2E7D32))),
@@ -848,7 +1125,7 @@ class _ShipmentsTabState extends State<_ShipmentsTab> {
               Expanded(
                   child: _smallStats(
                       'In Transit',
-                      '42',
+                      _loading ? '...' : '${_shipmentData.where((s) => s['status'] == 'IN TRANSIT').length}',
                       Icons.local_shipping_outlined,
                       const Color(0xFFFCE4EC),
                       const Color(0xFFC2185B))),
@@ -1105,14 +1382,17 @@ class _MarketplaceTab extends StatefulWidget {
   final Color primaryGreen;
   final Color textColor;
   final Color textLight;
-
   final VoidCallback? onNavigateToShipments;
+  final bool enableBulkSourcing;
+  final String buyerType;
 
   const _MarketplaceTab({
     required this.primaryGreen,
     required this.textColor,
     required this.textLight,
     this.onNavigateToShipments,
+    this.enableBulkSourcing = false,
+    this.buyerType = 'restaurant',
   });
 
   @override
@@ -1120,535 +1400,236 @@ class _MarketplaceTab extends StatefulWidget {
 }
 
 class _MarketplaceTabState extends State<_MarketplaceTab> {
+  int _activeSection = 0;
+  static const Duration _bulkPollInterval = Duration(seconds: 8);
+  Timer? _bulkTimer;
+
   String _selectedCategory = 'All';
   bool _urgentOnly = false;
   bool _organicOnly = false;
   double _maxPrice = 5000;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _loading = true;
+  bool _ordersLoading = true;
 
-  final List<String> _categories = [
-    'All',
-    'Stock',
-    'Seeds',
-    'Machines',
-    'Tools',
-    'Fruits',
-    'Vegetables'
-  ];
+  List<String> _categories = ['All'];
+  List<Map<String, dynamic>> _allProducts = [];
+  List<Map<String, dynamic>> _buyerOrders = [];
+  final Set<int> _escrowPaidOrderIds = <int>{};
+  List<Map<String, dynamic>> _bulkRequests = [];
+  Map<int, List<Map<String, dynamic>>> _offersByRequest = {};
+  bool _bulkLoading = false;
 
-  final List<Map<String, dynamic>> _allProducts = [
-    // --- STOCK (10) ---
-    {
-      'name': 'Horse',
-      'origin': 'Tanger, Morocco',
-      'price': '\$1,850',
-      'priceValue': 1850.0,
-      'category': 'Stock',
-      'isUrgent': true,
-      'isOrganic': false,
-      'image': 'assets/images/usine/horse.jpg',
-    },
-    {
-      'name': 'Holstein Dairy Cow',
-      'origin': 'El Jadida, Morocco',
-      'price': '\$1,400',
-      'priceValue': 1400.0,
-      'category': 'Stock',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/dairy_cow.jpg',
-    },
-    {
-      'name': 'Sardi Sheep (Pack of 5)',
-      'origin': 'Settat, Morocco',
-      'price': '\$1,200',
-      'priceValue': 1200.0,
-      'category': 'Stock',
-      'isUrgent': true,
-      'isOrganic': true,
-      'image': 'assets/images/usine/sardi_sheep.jpg',
-    },
-    {
-      'name': 'Alpine Goat',
-      'origin': 'Chefchaouen, Morocco',
-      'price': '\$250',
-      'priceValue': 250.0,
-      'category': 'Stock',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/alpine_goat.jpg',
-    },
-    {
-      'name': 'Rhode Island Red Chickens (20)',
-      'origin': 'Benslimane, Morocco',
-      'price': '\$180',
-      'priceValue': 180.0,
-      'category': 'Stock',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/red_chickens.jpg',
-    },
-    {
-      'name': 'Dromedary Camel (Young)',
-      'origin': 'Laâyoune, Morocco',
-      'price': '\$3,200',
-      'priceValue': 3200.0,
-      'category': 'Stock',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/dromedary_camel.jpg',
-    },
-    {
-      'name': 'Limousin Beef Cattle',
-      'origin': 'Fès, Morocco',
-      'price': '\$1,650',
-      'priceValue': 1650.0,
-      'category': 'Stock',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/limousin_beef_cattle.jpg',
-    },
-    {
-      'name': 'Boer Goat Buck',
-      'origin': 'Taroudant, Morocco',
-      'price': '\$320',
-      'priceValue': 320.0,
-      'category': 'Stock',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/boer_goat_buck.jpg',
-    },
-    {
-      'name': 'Merino Ewe Lambs (10)',
-      'origin': 'Ifrane, Morocco',
-      'price': '\$950',
-      'priceValue': 950.0,
-      'category': 'Stock',
-      'isUrgent': true,
-      'isOrganic': true,
-      'image': 'assets/images/usine/merino_ewe.jpg',
-    },
-    {
-      'name': 'duck',
-      'origin': 'Kenitra, Morocco',
-      'price': '\$2,100',
-      'priceValue': 2100.0,
-      'category': 'Stock',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/duck.jpg',
-    },
-    // --- TOOLS (10) ---
-    {
-      'name': 'Pruning Shears',
-      'origin': 'Marrakech, Morocco',
-      'price': '\$25',
-      'priceValue': 25.0,
-      'category': 'Tools',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/shears.jpg',
-    },
-    {
-      'name': 'Traditional Hoe (Atala)',
-      'origin': 'Taza, Morocco',
-      'price': '\$15',
-      'priceValue': 15.0,
-      'category': 'Tools',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/hoe.jpg',
-    },
-    {
-      'name': 'Garden Spade',
-      'origin': 'Tanger, Morocco',
-      'price': '\$20',
-      'priceValue': 20.0,
-      'category': 'Tools',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/spade.jpg',
-    },
-    {
-      'name': 'Farm Sickle (Klas)',
-      'origin': 'Chefchaouen, Morocco',
-      'price': '\$10',
-      'priceValue': 10.0,
-      'category': 'Tools',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/sickle.jpg',
-    },
-    {
-      'name': 'Wheelbarrow (Metal)',
-      'origin': 'Casablanca, Morocco',
-      'price': '\$75',
-      'priceValue': 75.0,
-      'category': 'Tools',
-      'isUrgent': true,
-      'isOrganic': false,
-      'image': 'assets/images/usine/wheelbarrow.jpg',
-    },
-    {
-      'name': 'Backpack Sprayer',
-      'origin': 'El Jadida, Morocco',
-      'price': '\$55',
-      'priceValue': 55.0,
-      'category': 'Tools',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/sprayer.jpg',
-    },
-    {
-      'name': 'Leather Gloves',
-      'origin': 'Nador, Morocco',
-      'price': '\$12',
-      'priceValue': 12.0,
-      'category': 'Tools',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/gloves.jpg',
-    },
-    {
-      'name': 'Garden Fork',
-      'origin': 'Bouznika, Morocco',
-      'price': '\$30',
-      'priceValue': 30.0,
-      'category': 'Tools',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/fork.jpg',
-    },
-    {
-      'name': 'Hand Rake',
-      'origin': 'Salé, Morocco',
-      'price': '\$18',
-      'priceValue': 18.0,
-      'category': 'Tools',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/rake.jpg',
-    },
-    {
-      'name': 'Tree Lopper',
-      'origin': 'Azrou, Morocco',
-      'price': '\$40',
-      'priceValue': 40.0,
-      'category': 'Tools',
-      'isUrgent': true,
-      'isOrganic': false,
-      'image': 'assets/images/usine/lopper.jpg',
-    },
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+    if (widget.enableBulkSourcing) {
+      _loadBuyerOrders();
+      _loadBulkMarketplaceData();
+      _startBulkPolling();
+    } else {
+      _ordersLoading = false;
+    }
+  }
 
-    // --- SEEDS (10) ---
-    {
-      'name': 'Durum Wheat Seeds',
-      'origin': 'Meknès, Morocco',
-      'price': '\$0.45/kg',
-      'priceValue': 0.45,
-      'category': 'Seeds',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/durum_wheat.jpg',
-    },
-    {
-      'name': 'Hybrid Maize Seeds',
-      'origin': 'Beni Mellal, Morocco',
-      'price': '\$1.20/kg',
-      'priceValue': 1.20,
-      'category': 'Seeds',
-      'isUrgent': true,
-      'isOrganic': false,
-      'image': 'assets/images/usine/hybrid_maize_seeds.jpg',
-    },
-    {
-      'name': 'Barley Seeds',
-      'origin': 'Berrechid, Morocco',
-      'price': '\$0.38/kg',
-      'priceValue': 0.38,
-      'category': 'Seeds',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/barley.jpg',
-    },
-    {
-      'name': 'Tomato Seeds',
-      'origin': 'Agadir, Morocco',
-      'price': '\$15.00/pack',
-      'priceValue': 15.0,
-      'category': 'Seeds',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/tomato_seeds.jpg',
-    },
-    {
-      'name': 'Coriander Seeds (9zbor)',
-      'origin': 'Gharb, Morocco',
-      'price': '\$5.50/kg',
-      'priceValue': 5.50,
-      'category': 'Seeds',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/coriander_seeds.jpg',
-    },
-    {
-      'name': 'White Beans (L-lobya)',
-      'origin': 'Doukkala, Morocco',
-      'price': '\$1.30/kg',
-      'priceValue': 1.30,
-      'category': 'Seeds',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/white_beans.jpg',
-    },
-    {
-      'name': 'Cumin Seeds (Kamoun)',
-      'origin': 'Alnif, Morocco',
-      'price': '\$22.00/kg',
-      'priceValue': 22.0,
-      'category': 'Seeds',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/cumin_seeds.jpg',
-    },
-    {
-      'name': 'Chickpea Seeds',
-      'origin': 'Sidi Kacem, Morocco',
-      'price': '\$1.15/kg',
-      'priceValue': 1.15,
-      'category': 'Seeds',
-      'isUrgent': true,
-      'isOrganic': false,
-      'image': 'assets/images/usine/chickpeas.jpg',
-    },
-    {
-      'name': 'Lentil Seeds',
-      'origin': 'Zaer, Morocco',
-      'price': '\$1.40/kg',
-      'priceValue': 1.40,
-      'category': 'Seeds',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/lentils.jpg',
-    },
-    {
-      'name': 'Sunflower Seeds',
-      'origin': 'Gharb, Morocco',
-      'price': '\$1.05/kg',
-      'priceValue': 1.05,
-      'category': 'Seeds',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/sunflower_seeds.jpg',
-    },
+  @override
+  void dispose() {
+    _bulkTimer?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
 
-    // --- MACHINES (10) ---
-    {
-      'name': 'Solar Water Pump System',
-      'origin': 'Ouarzazate, Morocco',
-      'price': '\$1,200',
-      'priceValue': 1200.0,
-      'category': 'Machines',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/solar_pump.jpg',
-    },
-    {
-      'name': 'Drip Irrigation Controller',
-      'origin': 'Agadir, Morocco',
-      'price': '\$450',
-      'priceValue': 450.0,
-      'category': 'Machines',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/irrigation_kit.jpg',
-    },
-    {
-      'name': 'Modern Olive Oil Press',
-      'origin': 'Ouazzane, Morocco',
-      'price': '\$3,800',
-      'priceValue': 3800.0,
-      'category': 'Machines',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/olive_press.jpg',
-    },
-    {
-      'name': 'Grain Sifter Machine',
-      'origin': 'Fès, Morocco',
-      'price': '\$1,100',
-      'priceValue': 1100.0,
-      'category': 'Machines',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/grain_sifter.jpg',
-    },
-    {
-      'name': 'Electric Milking Machine',
-      'origin': 'Kenitra, Morocco',
-      'price': '\$850',
-      'priceValue': 850.0,
-      'category': 'Machines',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/milker.jpg',
-    },
-    {
-      'name': 'Automatic Seeder Machine',
-      'origin': 'Larache, Morocco',
-      'price': '\$2,400',
-      'priceValue': 2400.0,
-      'category': 'Machines',
-      'isUrgent': true,
-      'isOrganic': false,
-      'image': 'assets/images/usine/seeder.jpg',
-    },
-    {
-      'name': 'Digital Soil pH Tester',
-      'origin': 'Rabat, Morocco',
-      'price': '\$150',
-      'priceValue': 150.0,
-      'category': 'Machines',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/ph_tester.jpg',
-    },
-    {
-      'name': 'Digital Egg Incubator',
-      'origin': 'Fès, Morocco',
-      'price': '\$320',
-      'priceValue': 320.0,
-      'category': 'Machines',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/egg_incubator.jpg',
-    },
-    {
-      'name': 'Combine Harvester  ',
-      'origin': 'Gharb, Morocco',
-      'price': '\$85,000',
-      'priceValue': 85000.0,
-      'category': 'Machines',
-      'isUrgent': true,
-      'isOrganic': false,
-      'image': 'assets/images/usine/harvester.jpg',
-    },
-    {
-      'name': 'Compact Utility Tractor',
-      'origin': 'Casablanca, Morocco',
-      'price': '\$14,500',
-      'priceValue': 14500.0,
-      'category': 'Machines',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/tractor.jpg',
-    },
+  void _startBulkPolling() {
+    _bulkTimer?.cancel();
+    _bulkTimer = Timer.periodic(_bulkPollInterval, (_) {
+      if (!mounted || !widget.enableBulkSourcing || _activeSection != 1) return;
+      _loadBulkMarketplaceData(silent: true);
+    });
+  }
 
-    // --- FRUITS (5) ---
-    {
-      'name': 'Navel Oranges',
-      'origin': 'Berkane, Morocco',
-      'price': '\$0.65/kg',
-      'priceValue': 0.65,
-      'category': 'Fruits',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/oranges.jpg',
-    },
-    {
-      'name': 'Watermelon (Dalla7)',
-      'origin': 'Zagora, Morocco',
-      'price': '\$0.40/kg',
-      'priceValue': 0.40,
-      'category': 'Fruits',
-      'isUrgent': true,
-      'isOrganic': false,
-      'image': 'assets/images/usine/watermelon.jpg',
-    },
-    {
-      'name': 'Sweet Strawberries',
-      'origin': 'Larache, Morocco',
-      'price': '\$2.50/kg',
-      'priceValue': 2.50,
-      'category': 'Fruits',
-      'isUrgent': true,
-      'isOrganic': true,
-      'image': 'assets/images/usine/strawberries.jpg',
-    },
-    {
-      'name': 'Red Apples',
-      'origin': 'Midelt, Morocco',
-      'price': '\$1.10/kg',
-      'priceValue': 1.10,
-      'category': 'Fruits',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/apples.jpg',
-    },
-    {
-      'name': 'Avocado (Hass)',
-      'origin': 'Gharb, Morocco',
-      'price': '\$3.50/kg',
-      'priceValue': 3.50,
-      'category': 'Fruits',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/avocado.jpg',
-    },
+  Future<void> _loadProducts() async {
+    try {
+      final data = await ApiService.getProducts();
+      final products = data.map((e) {
+        final p = e as Map<String, dynamic>;
+        final catRaw = p['category'] is Map ? (p['category']['name'] ?? 'other') : (p['category'] ?? 'other');
+        final catName = catRaw.toString().trim();
+        final normalizedCategory = catName.isEmpty ? 'other' : catName;
+        final catLabel = normalizedCategory[0].toUpperCase() + normalizedCategory.substring(1);
+        return {
+          'id': p['id'],
+          'name': p['name'] ?? '',
+          'origin': p['location'] ?? '',
+          'price': '${(p['price'] as num?)?.toDouble() ?? 0} MAD',
+          'priceValue': (p['price'] as num?)?.toDouble() ?? 0,
+          'category': catLabel,
+          'isUrgent': p['isUrgent'] ?? false,
+          'isOrganic': p['isOrganic'] ?? false,
+          'isAvailable': p['isAvailable'] ?? true,
+          'quantity': (p['quantity'] as num?)?.toDouble() ?? 0,
+          'image': p['image'] ?? '',
+          'farmerId': p['sellerId'] ?? p['farmerId'],
+          'farmerName': p['sellerName'] ?? p['farmerName'] ?? 'Farmer',
+          'unit': p['unit'] ?? 'Kg',
+        };
+      }).toList();
 
-    // --- VEGETABLES (5) ---
-    {
-      'name': 'Red Tomatoes',
-      'origin': 'Agadir, Morocco',
-      'price': '\$0.80/kg',
-      'priceValue': 0.80,
-      'category': 'Vegetables',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/tomatoes.jpg',
-    },
-    {
-      'name': 'Red Onions',
-      'origin': 'Hajeb, Morocco',
-      'price': '\$0.60/kg',
-      'priceValue': 0.60,
-      'category': 'Vegetables',
-      'isUrgent': true,
-      'isOrganic': false,
-      'image': 'assets/images/usine/onions.jpg',
-    },
-    {
-      'name': 'Fresh Carrots',
-      'origin': 'Berkane, Morocco',
-      'price': '\$0.50/kg',
-      'priceValue': 0.50,
-      'category': 'Vegetables',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/carrots.jpg',
-    },
-    {
-      'name': 'Potatoes (Spunta)',
-      'origin': 'Berrechid, Morocco',
-      'price': '\$0.70/kg',
-      'priceValue': 0.70,
-      'category': 'Vegetables',
-      'isUrgent': false,
-      'isOrganic': false,
-      'image': 'assets/images/usine/potatoes.jpg',
-    },
-    {
-      'name': 'Fresh Garlic',
-      'origin': 'Taza, Morocco',
-      'price': '\$4.00/kg',
-      'priceValue': 4.0,
-      'category': 'Vegetables',
-      'isUrgent': false,
-      'isOrganic': true,
-      'image': 'assets/images/usine/garlic.jpg',
-    },
-  ];
+      final cats = <String>{'All'};
+      for (final p in products) {
+        cats.add(p['category'] as String);
+      }
+
+      if (mounted) {
+        setState(() {
+          _allProducts = products;
+          _categories = cats.toList();
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _loadBuyerOrders() async {
+    if (!widget.enableBulkSourcing) {
+      if (mounted) {
+        setState(() {
+          _buyerOrders = [];
+          _ordersLoading = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final user = await SessionService.getUser();
+      if (user == null) {
+        if (mounted) {
+          setState(() {
+            _buyerOrders = [];
+            _ordersLoading = false;
+          });
+        }
+        return;
+      }
+
+      final orders = await ApiService.getOrders(buyerId: '${user.id}');
+      final buyerType = widget.buyerType.toLowerCase();
+      final filteredOrders = orders.where((entry) {
+        final map = entry as Map<String, dynamic>;
+        final orderBuyerType = (map['buyerType'] ?? '').toString().toLowerCase();
+        return orderBuyerType == buyerType;
+      }).toList();
+      if (!mounted) return;
+      setState(() {
+        _buyerOrders = filteredOrders.cast<Map<String, dynamic>>();
+        _ordersLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _ordersLoading = false);
+    }
+  }
+
+  int? _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '');
+  }
+
+  Future<void> _loadBulkMarketplaceData({bool silent = false}) async {
+    if (!widget.enableBulkSourcing) return;
+
+    if (mounted && !silent) {
+      setState(() => _bulkLoading = true);
+    }
+
+    try {
+      final user = await SessionService.getUser();
+      if (user == null) {
+        if (!mounted) return;
+        setState(() {
+          _bulkRequests = [];
+          _offersByRequest = {};
+          _bulkLoading = false;
+        });
+        return;
+      }
+
+      final requestsRaw = await ApiService.getBulkRequests(
+        buyerId: '${user.id}',
+        buyerType: widget.buyerType.toLowerCase(),
+      );
+
+      final requests = requestsRaw
+          .map((e) => (e as Map<String, dynamic>))
+          .where((r) {
+            final status = (r['status'] ?? '').toString().toLowerCase();
+            final acceptedOfferId = _asInt(r['acceptedOfferId']);
+            return status == 'open' && acceptedOfferId == null;
+          })
+          .toList()
+        ..sort((a, b) {
+          final aDate = DateTime.tryParse((a['createdAt'] ?? '').toString()) ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final bDate = DateTime.tryParse((b['createdAt'] ?? '').toString()) ?? DateTime.fromMillisecondsSinceEpoch(0);
+          return bDate.compareTo(aDate);
+        });
+
+      final offersRaw = await ApiService.getBulkOffers();
+      final offers = offersRaw.map((e) => (e as Map<String, dynamic>)).toList();
+
+      final grouped = <int, List<Map<String, dynamic>>>{};
+      for (final offer in offers) {
+        final requestId = _asInt(offer['requestId']);
+        if (requestId == null) continue;
+        grouped.putIfAbsent(requestId, () => []).add(offer);
+      }
+
+      for (final reqOffers in grouped.values) {
+        reqOffers.sort((a, b) {
+          final aPrice = (a['pricePerUnit'] as num?)?.toDouble() ?? double.infinity;
+          final bPrice = (b['pricePerUnit'] as num?)?.toDouble() ?? double.infinity;
+          return aPrice.compareTo(bPrice);
+        });
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _bulkRequests = requests;
+        _offersByRequest = grouped;
+        _bulkLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      if (!silent) {
+        setState(() => _bulkLoading = false);
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> _offersForRequest(Map<String, dynamic> request) {
+    final requestId = _asInt(request['id']);
+    if (requestId == null) return const [];
+    final requestCreatedAt = DateTime.tryParse((request['createdAt'] ?? '').toString());
+
+    final offers = List<Map<String, dynamic>>.from(_offersByRequest[requestId] ?? const [])
+        .where((offer) {
+          if (requestCreatedAt == null) return true;
+          final offerCreatedAt = DateTime.tryParse((offer['createdAt'] ?? '').toString());
+          if (offerCreatedAt == null) return false;
+          return !offerCreatedAt.isBefore(requestCreatedAt);
+        })
+        .toList();
+
+    offers.sort((a, b) {
+      final aPrice = (a['pricePerUnit'] as num?)?.toDouble() ?? double.infinity;
+      final bPrice = (b['pricePerUnit'] as num?)?.toDouble() ?? double.infinity;
+      return aPrice.compareTo(bPrice);
+    });
+    return offers;
+  }
 
   List<Map<String, dynamic>> get _filteredProducts {
     return _allProducts.where((p) {
@@ -1656,27 +1637,472 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
           _selectedCategory == 'All' || p['category'] == _selectedCategory;
       bool urgentMatch = !_urgentOnly || p['isUrgent'] == true;
       bool organicMatch = !_organicOnly || p['isOrganic'] == true;
+      bool availabilityMatch = (p['isAvailable'] == true) && ((p['quantity'] as double? ?? 0) > 0);
       bool priceMatch = (p['priceValue'] as double) <= _maxPrice;
-      bool searchMatch = _searchQuery.isEmpty ||
-          p['name']
-              .toString()
-              .toLowerCase()
-              .contains(_searchQuery.toLowerCase());
+      final query = _searchQuery.trim().toLowerCase();
+      bool searchMatch = query.isEmpty ||
+        p['name'].toString().toLowerCase().contains(query) ||
+        p['farmerName'].toString().toLowerCase().contains(query) ||
+        p['origin'].toString().toLowerCase().contains(query);
 
       return categoryMatch &&
           urgentMatch &&
           organicMatch &&
+          availabilityMatch &&
           priceMatch &&
           searchMatch;
     }).toList();
   }
 
+  int _gridColumns(double width) {
+    if (width >= 1024) return 3;
+    if (width >= 700) return 2;
+    return 1;
+  }
+
+  Future<void> _payToEscrow(Map<String, dynamic> order) async {
+    final orderId = (order['id'] as num?)?.toInt();
+    if (orderId == null) return;
+
+    final user = await SessionService.getUser();
+    if (user == null) return;
+
+    final amount = (order['totalAmount'] as num?)?.toDouble() ?? 0;
+
+    try {
+      await ApiService.createPayment({
+        'orderId': orderId,
+        'userId': user.id,
+        'amount': amount,
+        'method': 'bank_transfer',
+        'status': 'held_in_escrow',
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+
+      await ApiService.updateOrder(orderId, {
+        'status': 'requested',
+      });
+
+      if (!mounted) return;
+      setState(() => _escrowPaidOrderIds.add(orderId));
+      _loadBuyerOrders();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Escrow funded successfully'),
+          backgroundColor: widget.primaryGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to create escrow payment')),
+      );
+    }
+  }
+
+  void _openCreateBulkRequestSheet() {
+    if (!widget.enableBulkSourcing) return;
+
+    final formKey = GlobalKey<FormState>();
+    final productCtrl = TextEditingController();
+    final qtyCtrl = TextEditingController();
+    final budgetCtrl = TextEditingController();
+    String selectedUnit = 'Kg';
+    DateTime deadline = DateTime.now().add(const Duration(days: 7));
+
+    // Capture outer scaffold messenger before async context changes
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) {
+        bool submitting = false;
+        return StatefulBuilder(
+          builder: (modalContext, modalSetState) {
+            return Container(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                20 + MediaQuery.of(modalContext).viewInsets.bottom,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'New Bulk Sourcing Request',
+                      style: TextStyle(
+                        color: widget.textColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: productCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Product',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (v) =>
+                          (v == null || v.trim().isEmpty) ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: qtyCtrl,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: const InputDecoration(
+                              labelText: 'Quantity',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (v) {
+                              final qty = double.tryParse(v ?? '');
+                              if (qty == null || qty <= 0) return 'Invalid quantity';
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: selectedUnit,
+                            items: const [
+                              DropdownMenuItem(value: 'Kg', child: Text('Kg')),
+                              DropdownMenuItem(value: 'Ton', child: Text('Ton')),
+                              DropdownMenuItem(value: 'Box', child: Text('Box')),
+                            ],
+                            onChanged: (v) {
+                              if (v == null) return;
+                              modalSetState(() => selectedUnit = v);
+                            },
+                            decoration: const InputDecoration(
+                              labelText: 'Unit',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: budgetCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Max Budget / Unit (MAD)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: modalContext,
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now().add(const Duration(days: 180)),
+                          initialDate: deadline,
+                        );
+                        if (picked != null) {
+                          modalSetState(() => deadline = picked);
+                        }
+                      },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Deadline',
+                          border: OutlineInputBorder(),
+                        ),
+                        child: Text(
+                          '${deadline.day}/${deadline.month}/${deadline.year}',
+                          style: TextStyle(color: widget.textColor, fontSize: 14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: submitting ? null : () async {
+                          if (!(formKey.currentState?.validate() ?? false)) return;
+
+                          modalSetState(() => submitting = true);
+
+                          try {
+                            final user = await SessionService.getUser();
+                            if (user == null) {
+                              modalSetState(() => submitting = false);
+                              scaffoldMessenger.showSnackBar(
+                                const SnackBar(content: Text('Session expired — please log in again')),
+                              );
+                              return;
+                            }
+
+                            final qty = double.parse(qtyCtrl.text.trim());
+                            final budget = double.tryParse(budgetCtrl.text.trim()) ?? 0;
+
+                            final createdRequest = await ApiService.createBulkRequest({
+                              'buyerId': user.id,
+                              'buyerName': user.fullName,
+                              'buyerType': widget.buyerType.toLowerCase(),
+                              'productName': productCtrl.text.trim(),
+                              'quantity': qty,
+                              'unit': selectedUnit,
+                              'budget': budget,
+                              'deadline': deadline.toIso8601String(),
+                              'status': 'open',
+                              'acceptedOfferId': null,
+                              'createdAt': DateTime.now().toIso8601String(),
+                            });
+
+                            Navigator.pop(modalContext);
+                            await _loadBulkMarketplaceData();
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: const Text('Bulk request published. Waiting for farmer offers.'),
+                                backgroundColor: widget.primaryGreen,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          } catch (e) {
+                            modalSetState(() => submitting = false);
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: Text('Failed: ${e.toString().replaceFirst('Exception: ', '')}'),
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: widget.primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: submitting
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text('Publish Request'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _acceptOffer(int requestId, int offerId) async {
+    if (!widget.enableBulkSourcing) return;
+
+    try {
+      if (mounted) {
+        setState(() => _bulkLoading = true);
+      }
+
+      final request = _bulkRequests.where((r) => _asInt(r['id']) == requestId).cast<Map<String, dynamic>>().toList();
+      if (request.isEmpty) {
+        if (mounted) setState(() => _bulkLoading = false);
+        return;
+      }
+
+      final offers = _offersForRequest(request.first);
+      final selectedOffer = offers.where((o) => _asInt(o['id']) == offerId).cast<Map<String, dynamic>>().toList();
+      for (final offer in offers) {
+        final currentId = _asInt(offer['id']);
+        if (currentId == null) continue;
+        final nextStatus = currentId == offerId ? 'accepted' : 'rejected';
+        await ApiService.updateBulkOffer(currentId, {
+          'status': nextStatus,
+          'updatedAt': DateTime.now().toIso8601String(),
+        });
+      }
+
+      await ApiService.updateBulkRequest(requestId, {
+        'status': 'in_progress',
+        'acceptedOfferId': offerId,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+
+      final buyer = await SessionService.getUser();
+      final farmerId = selectedOffer.isNotEmpty ? _asInt(selectedOffer.first['farmerId']) : null;
+      final farmerName = selectedOffer.isNotEmpty ? (selectedOffer.first['farmerName'] ?? 'Farmer').toString() : 'Farmer';
+      final productName = request.isNotEmpty ? (request.first['productName'] ?? 'your request').toString() : 'your request';
+
+      if (buyer != null && farmerId != null) {
+        await ApiService.sendMessage({
+          'senderId': buyer.id,
+          'senderName': buyer.fullName,
+          'receiverId': farmerId,
+          'receiverName': farmerName,
+          'content': 'Your bulk offer for $productName was accepted. Please continue in chat.',
+          'isRead': false,
+          'createdAt': DateTime.now().toIso8601String(),
+        });
+      }
+
+      await _loadBulkMarketplaceData();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Offer accepted and request updated'),
+          backgroundColor: widget.primaryGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _bulkLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to accept offer')),
+      );
+    }
+  }
+
+  void _openOfferSelectionSheet(int requestId, List<Map<String, dynamic>> offers) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Choose supplier offer',
+                style: TextStyle(
+                  color: widget.textColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: offers.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (_, i) {
+                  final offer = offers[i];
+                  final offerId = _asInt(offer['id']);
+                  final farmerName = (offer['farmerName'] ?? 'Farmer').toString();
+                  final price = (offer['pricePerUnit'] as num?)?.toDouble() ?? 0;
+                  final qty = (offer['proposedQuantity'] as num?)?.toDouble() ?? 0;
+                  return Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.withValues(alpha: 0.25)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                farmerName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: widget.textColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${price.toStringAsFixed(2)} MAD/unit • Qty ${qty.toStringAsFixed(0)}',
+                                style: TextStyle(color: widget.textLight, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: offerId == null
+                              ? null
+                              : () {
+                                  Navigator.pop(sheetContext);
+                                  _acceptOffer(requestId, offerId);
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: widget.primaryGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          child: const Text('Accept'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final crossAxisCount = _gridColumns(width);
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (widget.enableBulkSourcing)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+            child: Row(
+              children: [
+                _sectionPill('Products', 0),
+                const SizedBox(width: 8),
+                _sectionPill('Bulk Sourcing', 1),
+              ],
+            ),
+          ),
+          if (!widget.enableBulkSourcing || _activeSection == 0) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
             child: Container(
@@ -1700,7 +2126,7 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                       controller: _searchController,
                       onChanged: (val) => setState(() => _searchQuery = val),
                       decoration: InputDecoration(
-                        hintText: 'Search for seeds, stock, machines...',
+                        hintText: 'Search products, farmer, or origin...',
                         hintStyle:
                             TextStyle(color: widget.textLight, fontSize: 13),
                         border: InputBorder.none,
@@ -1810,6 +2236,17 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
             ),
           ),
           const SizedBox(height: 10),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.all(40),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_filteredProducts.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(40),
+              child: Center(child: Text('No products found')),
+            )
+          else
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: ListView.separated(
@@ -1821,8 +2258,264 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                   _buildProductCard(_filteredProducts[i]),
             ),
           ),
+          ] else if (widget.enableBulkSourcing && _activeSection == 1)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Bulk Requests',
+                        style: TextStyle(
+                          color: widget.textColor,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: _openCreateBulkRequestSheet,
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('New Request'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: widget.primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (_bulkLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 32),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_bulkRequests.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 32),
+                      child: Center(child: Text('No bulk requests yet')),
+                    )
+                  else
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _bulkRequests.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: width < 480 ? 2 : crossAxisCount,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: width < 480 ? 1.55 : (width < 900 ? 1.22 : 1.05),
+                      ),
+                      itemBuilder: (context, index) {
+                        final request = _bulkRequests[index];
+                        final requestId = _asInt(request['id']) ?? -1;
+                        final offers = requestId == -1
+                            ? <Map<String, dynamic>>[]
+                          : _offersForRequest(request);
+                        final actionableOffers = offers
+                          .where((o) => (o['status'] ?? 'pending').toString().toLowerCase() == 'pending')
+                          .toList();
+                        final bestOfferId = actionableOffers.isEmpty ? -1 : (_asInt(actionableOffers.first['id']) ?? -1);
+                        final bestFarmerName = actionableOffers.isEmpty
+                          ? 'supplier'
+                          : (actionableOffers.first['farmerName'] ?? 'supplier').toString();
+
+                        final accepted = offers.where((o) => (o['status'] ?? '').toString().toLowerCase() == 'accepted').toList();
+                        final status = (request['status'] ?? 'open').toString();
+                        final isOpen = status.toLowerCase() == 'open';
+
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.inventory_2_outlined, size: 14, color: widget.primaryGreen),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      request['productName'].toString(),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: widget.textColor,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              RichText(
+                                text: TextSpan(
+                                  style: TextStyle(color: widget.textLight, fontSize: 12),
+                                  children: [
+                                    TextSpan(text: '${request['quantity']} ${request['unit']} • '),
+                                    TextSpan(
+                                      text: status.replaceAll('_', ' '),
+                                      style: TextStyle(
+                                        color: isOpen ? widget.primaryGreen : widget.textLight,
+                                        fontWeight: isOpen ? FontWeight.w700 : FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              if (actionableOffers.isNotEmpty)
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.trending_down, size: 14, color: widget.primaryGreen),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        'Best: ${actionableOffers.first['pricePerUnit']} MAD from $bestFarmerName',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: widget.primaryGreen,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              const Spacer(),
+                              if (accepted.isNotEmpty)
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                  decoration: BoxDecoration(
+                                    color: widget.primaryGreen.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.verified_outlined, size: 14, color: widget.primaryGreen),
+                                      const SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          'Accepted: ${accepted.first['farmerName']}',
+                                          textAlign: TextAlign.center,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: widget.primaryGreen,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              if (accepted.isEmpty && actionableOffers.isEmpty)
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.hourglass_top_rounded, size: 14, color: widget.textLight),
+                                      const SizedBox(width: 6),
+                                      const Text(
+                                        'Waiting for farmer offers',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              if (accepted.isEmpty && actionableOffers.isNotEmpty)
+                                ElevatedButton(
+                                  onPressed: actionableOffers.isEmpty || requestId == -1 || bestOfferId == -1
+                                      ? null
+                                      : () {
+                                          if (actionableOffers.length == 1) {
+                                            _acceptOffer(requestId, bestOfferId);
+                                            return;
+                                          }
+                                          _openOfferSelectionSheet(requestId, actionableOffers);
+                                        },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: widget.primaryGreen,
+                                    foregroundColor: Colors.white,
+                                    minimumSize: const Size(double.infinity, 38),
+                                  ),
+                                  child: Text(
+                                    actionableOffers.length <= 1
+                                        ? 'Accept $bestFarmerName'
+                                        : 'Choose Offer (${actionableOffers.length})',
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            )
+          else
+            const SizedBox.shrink(),
           const SizedBox(height: 30),
         ],
+      ),
+    );
+  }
+
+  Widget _sectionPill(String label, int section) {
+    final selected = _activeSection == section;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _activeSection = section),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? widget.primaryGreen : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? widget.primaryGreen : Colors.grey.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: selected ? Colors.white : widget.textColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1834,7 +2527,10 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(product: p),
+            builder: (context) => ProductDetailScreen(
+              product: p,
+              buyerType: widget.buyerType,
+            ),
           ),
         );
       },
@@ -1859,6 +2555,21 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                       const BorderRadius.vertical(top: Radius.circular(28)),
                   child: Builder(builder: (context) {
                     final img = p['image'] as String;
+                    if (img.startsWith('data:image')) {
+                      final base64Str = img.split(',').last;
+                      return Image.memory(
+                        base64Decode(base64Str),
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          height: 200,
+                          color: const Color(0xFFF1F4F1),
+                          child: const Icon(Icons.image_not_supported_outlined,
+                              size: 40, color: Colors.grey),
+                        ),
+                      );
+                    }
                     if (img.startsWith('http')) {
                       return Image.network(
                         img,
@@ -1990,8 +2701,10 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      ProductDetailScreen(product: p),
+                                  builder: (context) => ProductDetailScreen(
+                                    product: p,
+                                    buyerType: widget.buyerType,
+                                  ),
                                 ),
                               );
                             },
@@ -2094,12 +2807,12 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('\$0',
+                      Text('0 MAD',
                           style: TextStyle(
                               color: widget.textLight,
                               fontSize: 12,
                               fontWeight: FontWeight.w600)),
-                      Text('Up to \$${_maxPrice.toInt()}',
+                      Text('Up to ${_maxPrice.toInt()} MAD',
                           style: TextStyle(
                               color: widget.primaryGreen,
                               fontSize: 14,
@@ -2158,7 +2871,7 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                             setModalState(() => _organicOnly = val);
                             setState(() => _organicOnly = val);
                           },
-                          activeColor: widget.primaryGreen,
+                          activeThumbColor: widget.primaryGreen,
                         ),
                       ],
                     ),
@@ -2191,7 +2904,7 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
     );
   }
 
-  void _handleOrder(Map<String, dynamic> product) {
+  void _handleOrder(Map<String, dynamic> product) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -2201,13 +2914,60 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
       ),
     );
 
-    // Simulate network delay
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      final user = await SessionService.getUser();
+      if (user == null) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Session expired. Please log in again.')),
+          );
+        }
+        return;
+      }
+
+      final availableQty = (product['quantity'] as num?)?.toInt() ?? 0;
+      if (availableQty <= 0) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('This product is out of stock.')),
+          );
+        }
+        return;
+      }
+
+      await ApiService.createOrder({
+        'buyerId': user.id,
+        'buyerName': user.fullName,
+        'buyerType': widget.buyerType.toLowerCase(),
+        'farmerId': product['farmerId'],
+        'farmerName': product['farmerName'] ?? '',
+        'items': [
+          {
+            'productId': product['id'],
+            'productName': product['name'],
+            'unitPrice': product['priceValue'] ?? product['price'],
+            'quantity': 1,
+            'unit': product['unit'] ?? 'Kg',
+          }
+        ],
+        'totalAmount': (product['priceValue'] ?? product['price'] ?? 0) as num,
+        'status': 'pending',
+        'createdAt': DateTime.now().toIso8601String(),
+      });
       if (mounted) {
-        Navigator.pop(context); // Close processing dialog
+        Navigator.pop(context);
         _showSuccessSheet(product);
       }
-    });
+    } catch (_) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to place order')),
+        );
+      }
+    }
   }
 
   void _showSuccessSheet(Map<String, dynamic> product) {
@@ -2220,29 +2980,10 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
         primaryGreen: widget.primaryGreen,
         textColor: widget.textColor,
         textLight: widget.textLight,
-        onTrackOrder: () {
-          Navigator.pop(context); // Close sheet
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OrderTrackingScreen(
-                product: product,
-                primaryGreen: widget.primaryGreen,
-                textColor: widget.textColor,
-                textLight: widget.textLight,
-              ),
-            ),
-          );
-        },
       ),
     );
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
 }
 
 // ─────────────────────────────────────────────────────────
@@ -2274,8 +3015,8 @@ class _ProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String name =
-        fullName?.isNotEmpty == true ? fullName! : 'Marcus Thorne';
-    final String subtitle = companyName?.isNotEmpty == true
+        fullName.isNotEmpty ? fullName : 'Marcus Thorne';
+    final String subtitle = companyName.isNotEmpty
         ? 'CHIEF SUPPLY OFFICER • $companyName'
         : 'CHIEF SUPPLY OFFICER • AGRIFLOW PRO';
 
@@ -2346,13 +3087,17 @@ class _ProfileTab extends StatelessWidget {
                   fontSize: 17, color: textColor, fontWeight: FontWeight.w800)),
           const SizedBox(height: 16),
           _infoTile(Icons.email_outlined, 'EMAIL',
-              email ?? 'marcus.thorne@agriflow.io'),
+              email.isNotEmpty ? email : 'marcus.thorne@agriflow.io'),
           _infoTile(
-              Icons.phone_outlined, 'PHONE', phone ?? '+1 (555) 234-8901'),
+              Icons.phone_outlined,
+              'PHONE',
+              phone.isNotEmpty ? phone : '+1 (555) 234-8901'),
           _infoTile(
-              Icons.location_on_outlined, 'CITY', city ?? 'Des Moines, IA'),
+              Icons.location_on_outlined,
+              'CITY',
+              city.isNotEmpty ? city : 'Des Moines, IA'),
           _infoTile(Icons.inventory_2_outlined, 'PRODUCT TYPES',
-              productTypes ?? 'Grains, Legumes, Soy'),
+              productTypes.isNotEmpty ? productTypes : 'Grains, Legumes, Soy'),
           const SizedBox(height: 32),
 
           // 3. Settings Section
@@ -2510,7 +3255,18 @@ class _ProfileTab extends StatelessWidget {
 //  ANIMATED LIVE NETWORK CARD
 // ─────────────────────────────────────────────────────────
 class LiveNetworkCard extends StatefulWidget {
-  const LiveNetworkCard({super.key});
+  final bool loading;
+  final int totalShipments;
+  final int inTransitShipments;
+  final int pendingOrders;
+
+  const LiveNetworkCard({
+    super.key,
+    required this.loading,
+    required this.totalShipments,
+    required this.inTransitShipments,
+    required this.pendingOrders,
+  });
 
   @override
   State<LiveNetworkCard> createState() => _LiveNetworkCardState();
@@ -2520,8 +3276,6 @@ class _LiveNetworkCardState extends State<LiveNetworkCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-  int _activeNodes = 12450;
-  Timer? _timer;
 
   @override
   void initState() {
@@ -2536,22 +3290,17 @@ class _LiveNetworkCardState extends State<LiveNetworkCard>
       parent: _pulseController,
       curve: Curves.easeInOut,
     ));
-
-    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (mounted) {
-        setState(() {
-          int change = (DateTime.now().millisecond % 15) - 5;
-          _activeNodes += change;
-        });
-      }
-    });
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
-    _timer?.cancel();
     super.dispose();
+  }
+
+  int get _liveScore {
+    if (widget.loading) return 0;
+    return widget.inTransitShipments + widget.pendingOrders;
   }
 
   @override
@@ -2602,7 +3351,7 @@ class _LiveNetworkCardState extends State<LiveNetworkCard>
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800)),
                           SizedBox(height: 4),
-                          Text('Tracking global logistics...',
+                              Text('Real data snapshot for your buyer activity',
                               style: TextStyle(
                                   color: Colors.white70, fontSize: 12)),
                         ],
@@ -2619,7 +3368,7 @@ class _LiveNetworkCardState extends State<LiveNetworkCard>
                                   color: Color(0xFFFF5252), size: 10),
                             ),
                             const SizedBox(width: 5),
-                            const Text('LIVE',
+                            const Text('SNAPSHOT',
                                 style: TextStyle(
                                     color: Color(0xFFFF5252),
                                     fontSize: 11,
@@ -2642,13 +3391,24 @@ class _LiveNetworkCardState extends State<LiveNetworkCard>
                             );
                           },
                           child: Text(
-                            '$_activeNodes',
-                            key: ValueKey<int>(_activeNodes),
+                            widget.loading ? '...' : '$_liveScore',
+                            key: ValueKey<int>(_liveScore),
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
                                 fontFamily: 'monospace'),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.loading
+                              ? 'Loading real data...'
+                              : '${widget.pendingOrders} pending orders • ${widget.inTransitShipments} in transit • ${widget.totalShipments} total shipments',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -2688,16 +3448,124 @@ class _LiveNetworkCardState extends State<LiveNetworkCard>
 //  MODAL & DIALOG COMPONENTS
 // ─────────────────────────────────────────────────────────
 
-class _CreateShipmentSheet extends StatelessWidget {
+class _CreateShipmentSheet extends StatefulWidget {
+  final int? buyerId;
+  final String buyerType;
+  final VoidCallback? onCreated;
   final Color primaryGreen;
   final Color textColor;
   final Color textLight;
 
   const _CreateShipmentSheet({
+    super.key,
     required this.primaryGreen,
     required this.textColor,
     required this.textLight,
+    this.buyerId,
+    this.buyerType = 'restaurant',
+    this.onCreated,
   });
+
+  @override
+  State<_CreateShipmentSheet> createState() => _CreateShipmentSheetState();
+}
+
+class _CreateShipmentSheetState extends State<_CreateShipmentSheet> {
+  late final TextEditingController _weightCtrl;
+  String? _selectedOrigin;
+  String? _selectedDestination;
+  int _packageCount = 1;
+  bool _submitting = false;
+
+  static const List<String> _locations = [
+    'Agadir',
+    'Casablanca',
+    'Rabat',
+    'Marrakech',
+    'Fes',
+    'Meknes',
+    'Tangier',
+    'Oujda',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _weightCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _weightCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final origin = _selectedOrigin;
+    final destination = _selectedDestination;
+    final weight = double.tryParse(_weightCtrl.text.trim());
+
+    if (origin == null || destination == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select pickup and delivery locations')),
+      );
+      return;
+    }
+
+    if (origin == destination) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pickup and delivery locations must be different')),
+      );
+      return;
+    }
+
+    if (weight == null || weight <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Weight must be greater than 0')),
+      );
+      return;
+    }
+
+    if (_packageCount < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Packages must be at least 1')),
+      );
+      return;
+    }
+
+    setState(() => _submitting = true);
+    try {
+      await ApiService.createShipment({
+        'orderId': null,
+        'buyerId': widget.buyerId,
+        'buyerType': widget.buyerType.toLowerCase(),
+        'pickupLocation': origin,
+        'deliveryLocation': destination,
+        'weight': weight,
+        'containerCount': _packageCount,
+        'status': 'requested',
+        'estimatedDeliveryDate': DateTime.now().add(const Duration(days: 3)).toIso8601String(),
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onCreated?.call();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Shipment initiated successfully!'),
+          backgroundColor: widget.primaryGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to create shipment')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2727,51 +3595,119 @@ class _CreateShipmentSheet extends StatelessWidget {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w900,
-              color: textColor,
+              color: widget.textColor,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             "Enter the shipment details to initiate the logistics flow.",
-            style: TextStyle(fontSize: 14, color: textLight),
+            style: TextStyle(fontSize: 14, color: widget.textLight),
           ),
           const SizedBox(height: 32),
-          _textField("Origin / Port of Loading"),
+          _sectionTitle('Location', Icons.place_outlined),
+          const SizedBox(height: 12),
+          _locationDropdown(
+            label: 'Origin / Port of Loading',
+            hint: 'Select pickup location',
+            icon: Icons.location_on_outlined,
+            value: _selectedOrigin,
+            onChanged: (value) => setState(() => _selectedOrigin = value),
+          ),
+          const SizedBox(height: 12),
+          _locationDropdown(
+            label: 'Destination / Port of Discharge',
+            hint: 'Select delivery location',
+            icon: Icons.flag_outlined,
+            value: _selectedDestination,
+            onChanged: (value) => setState(() => _selectedDestination = value),
+          ),
           const SizedBox(height: 20),
-          _textField("Destination / Port of Discharge"),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(child: _textField("Total Weight (kg)")),
-              const SizedBox(width: 16),
-              Expanded(child: _textField("Container Count")),
-            ],
+          _sectionTitle('Cargo Details', Icons.inventory_2_outlined),
+          const SizedBox(height: 12),
+          _inputShell(
+            child: TextField(
+              controller: _weightCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: 'Total Weight',
+                hintText: 'Enter weight in kg',
+                prefixIcon: const Icon(Icons.scale_outlined),
+                suffixText: 'kg',
+                filled: false,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                hintStyle: TextStyle(color: widget.textLight, fontSize: 13),
+                labelStyle: TextStyle(color: widget.textLight, fontSize: 13),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _inputShell(
+            child: Row(
+              children: [
+                Icon(Icons.inventory_2_outlined, color: widget.textLight),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Number of Packages',
+                    style: TextStyle(
+                      color: widget.textColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                _stepperButton(
+                  icon: Icons.remove,
+                  onTap: () {
+                    if (_packageCount > 1) {
+                      setState(() => _packageCount--);
+                    }
+                  },
+                ),
+                Container(
+                  width: 36,
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$_packageCount',
+                    style: TextStyle(
+                      color: widget.textColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                _stepperButton(
+                  icon: Icons.add,
+                  onTap: () => setState(() => _packageCount++),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 40),
           SizedBox(
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text("Shipment initiated successfully!"),
-                    backgroundColor: primaryGreen,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
+              onPressed: _submitting ? null : _submit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: primaryGreen,
+                backgroundColor: widget.primaryGreen,
                 foregroundColor: Colors.white,
                 elevation: 8,
-                shadowColor: primaryGreen.withValues(alpha: 0.4),
+                shadowColor: widget.primaryGreen.withValues(alpha: 0.4),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18)),
               ),
-              child: const Text("Initiate Shipment",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+              child: _submitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text("Initiate Shipment",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
             ),
           ),
         ],
@@ -2779,7 +3715,24 @@ class _CreateShipmentSheet extends StatelessWidget {
     );
   }
 
-  Widget _textField(String hint) {
+  Widget _sectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: widget.primaryGreen),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            color: widget.textColor,
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _inputShell({required Widget child}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
@@ -2787,12 +3740,90 @@ class _CreateShipmentSheet extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
       ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: textLight, fontSize: 14),
-          border: InputBorder.none,
+      child: child,
+    );
+  }
+
+  Widget _locationDropdown({
+    required String label,
+    required String hint,
+    required IconData icon,
+    required String? value,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        canvasColor: const Color(0xFFF2F7F3),
+      ),
+      child: _inputShell(
+        child: DropdownButtonFormField<String>(
+          value: value,
+          isExpanded: true,
+          menuMaxHeight: 280,
+          dropdownColor: const Color(0xFFF2F7F3),
+          borderRadius: BorderRadius.circular(16),
+          style: TextStyle(
+            color: widget.textColor,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+          iconEnabledColor: widget.primaryGreen,
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: hint,
+            prefixIcon: Icon(icon, color: widget.primaryGreen),
+            filled: false,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            disabledBorder: InputBorder.none,
+            hintStyle: TextStyle(color: widget.textLight, fontSize: 13),
+            labelStyle: TextStyle(color: widget.textLight, fontSize: 13),
+          ),
+          items: _locations
+              .map(
+                (loc) => DropdownMenuItem<String>(
+                  value: loc,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 16,
+                        color: widget.primaryGreen,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        loc,
+                        style: TextStyle(
+                          color: widget.textColor,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: onChanged,
         ),
+      ),
+    );
+  }
+
+  Widget _stepperButton({required IconData icon, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+        ),
+        child: Icon(icon, size: 16, color: widget.textColor),
       ),
     );
   }
@@ -2856,14 +3887,12 @@ class _OrderSuccessSheet extends StatelessWidget {
   final Color primaryGreen;
   final Color textColor;
   final Color textLight;
-  final VoidCallback? onTrackOrder;
 
   const _OrderSuccessSheet({
     required this.product,
     required this.primaryGreen,
     required this.textColor,
     required this.textLight,
-    this.onTrackOrder,
   });
 
   @override
@@ -2914,42 +3943,22 @@ class _OrderSuccessSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    side: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
-                  ),
-                  child: Text("Continue Shopping",
-                      style: TextStyle(
-                          color: textColor,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14)),
-                ),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                side: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: onTrackOrder ?? () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryGreen,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                  ),
-                  child: const Text("Track Order",
-                      style:
-                          TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                ),
-              ),
-            ],
+              child: Text("Continue Shopping",
+                  style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14)),
+            ),
           ),
         ],
       ),
@@ -2963,8 +3972,13 @@ class _OrderSuccessSheet extends StatelessWidget {
 
 class ProductDetailScreen extends StatefulWidget {
   final Map<String, dynamic> product;
+  final String buyerType;
 
-  const ProductDetailScreen({super.key, required this.product});
+  const ProductDetailScreen({
+    super.key,
+    required this.product,
+    this.buyerType = 'restaurant',
+  });
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -3039,7 +4053,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   borderRadius: BorderRadius.circular(35),
                   boxShadow: [
                     BoxShadow(
-                      color: primaryGreen.withOpacity(0.15),
+                      color: primaryGreen.withValues(alpha: 0.15),
                       blurRadius: 30,
                       offset: const Offset(0, 15),
                     ),
@@ -3061,9 +4075,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.black.withOpacity(0.05),
+                                Colors.black.withValues(alpha: 0.05),
                                 Colors.transparent,
-                                Colors.black.withOpacity(0.2),
+                                Colors.black.withValues(alpha: 0.2),
                               ],
                             ),
                           ),
@@ -3077,11 +4091,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 10),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.95),
+                              color: Colors.white.withValues(alpha: 0.95),
                               borderRadius: BorderRadius.circular(15),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -3140,7 +4154,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: _isFavorite
-                                ? Colors.red.withOpacity(0.1)
+                                ? Colors.red.withValues(alpha: 0.1)
                                 : const Color(0xFFEFF5ED),
                             shape: BoxShape.circle,
                           ),
@@ -3183,7 +4197,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           color: const Color(0xFFE8F5E9),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: primaryGreen.withOpacity(0.1)),
+                              color: primaryGreen.withValues(alpha: 0.1)),
                         ),
                         child: const Row(
                           children: [
@@ -3224,7 +4238,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withValues(alpha: 0.03),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -3233,7 +4247,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: Text(
                       'Hand-picked from the sun-drenched hills of the Central Coast. These premium items are buttery, rich in healthy fats, and grown without synthetic pesticides. Perfect for artisanal toast or a nutrient-dense snack.',
                       style: TextStyle(
-                        color: textColor.withOpacity(0.8),
+                        color: textColor.withValues(alpha: 0.8),
                         fontSize: 16,
                         height: 1.7,
                         fontWeight: FontWeight.w500,
@@ -3249,7 +4263,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       color: const Color(0xFFEFF5ED),
                       borderRadius: BorderRadius.circular(28),
                       border: Border.all(
-                          color: primaryGreen.withOpacity(0.05)),
+                          color: primaryGreen.withValues(alpha: 0.05)),
                     ),
                     child: Row(
                       children: [
@@ -3359,7 +4373,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Divider(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: Colors.grey.withValues(alpha: 0.2),
                           thickness: 1,
                         ),
                       ),
@@ -3392,7 +4406,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -3436,7 +4450,58 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             const SizedBox(width: 20),
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () async {
+                  final p = widget.product;
+                  final user = await SessionService.getUser();
+                  if (user == null) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Session expired. Please log in again.')),
+                    );
+                    return;
+                  }
+
+                  final availableQty = (p['quantity'] as num?)?.toInt() ?? 0;
+                  if (availableQty <= 0 || _quantity > availableQty) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Requested quantity is not available.')),
+                    );
+                    return;
+                  }
+
+                  try {
+                    await ApiService.createOrder({
+                      'buyerId': user.id,
+                      'buyerName': user.fullName,
+                      'buyerType': widget.buyerType.toLowerCase(),
+                      'farmerId': p['farmerId'],
+                      'farmerName': p['farmerName'] ?? '',
+                      'items': [
+                        {
+                          'productId': p['id'],
+                          'productName': p['name'],
+                          'unitPrice': p['priceValue'] ?? p['price'],
+                          'quantity': _quantity,
+                          'unit': p['unit'] ?? 'Kg',
+                        }
+                      ],
+                      'totalAmount': ((p['priceValue'] ?? p['price'] ?? 0) as num) * _quantity,
+                      'status': 'pending',
+                      'createdAt': DateTime.now().toIso8601String(),
+                    });
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Order placed successfully!')),
+                    );
+                    Navigator.pop(context);
+                  } catch (_) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to place order')),
+                    );
+                  }
+                },
                 icon: const Icon(Icons.shopping_cart_outlined),
                 label: const Text('PLACE ORDER'),
                 style: ElevatedButton.styleFrom(
@@ -3540,20 +4605,99 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  void _openFarmerChat(BuildContext context) {
+  void _openFarmerChat(BuildContext context) async {
+    final user = await SessionService.getUser();
+    if (!context.mounted) return;
+    final product = widget.product;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _IntegratedFarmerChatSheet(farmerName: 'Green Valley Estates'),
+      builder: (context) => _IntegratedFarmerChatSheet(
+        farmerName: product['farmerName'] ?? 'Farmer',
+        farmerId: product['farmerId'] ?? 1,
+        currentUserId: user?.id ?? 0,
+        currentUserName: user?.fullName ?? '',
+      ),
     );
   }
 }
 
-class _IntegratedFarmerChatSheet extends StatelessWidget {
+class _IntegratedFarmerChatSheet extends StatefulWidget {
   final String farmerName;
+  final int farmerId;
+  final int currentUserId;
+  final String currentUserName;
 
-  const _IntegratedFarmerChatSheet({required this.farmerName});
+  const _IntegratedFarmerChatSheet({
+    required this.farmerName,
+    required this.farmerId,
+    required this.currentUserId,
+    required this.currentUserName,
+  });
+
+  @override
+  State<_IntegratedFarmerChatSheet> createState() => _IntegratedFarmerChatSheetState();
+}
+
+class _IntegratedFarmerChatSheetState extends State<_IntegratedFarmerChatSheet> {
+  final TextEditingController _messageController = TextEditingController();
+  List<Map<String, dynamic>> _messages = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMessages();
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMessages() async {
+    try {
+      final all = await ApiService.getMessages(
+        senderId: '${widget.currentUserId}',
+        receiverId: '${widget.farmerId}',
+      );
+      // Also get reverse direction
+      final reverse = await ApiService.getMessages(
+        senderId: '${widget.farmerId}',
+        receiverId: '${widget.currentUserId}',
+      );
+      final combined = [...all.cast<Map<String, dynamic>>(), ...reverse.cast<Map<String, dynamic>>()];
+      combined.sort((a, b) => (a['createdAt'] ?? '').compareTo(b['createdAt'] ?? ''));
+      if (mounted) {
+        setState(() {
+          _messages = combined;
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _sendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+    _messageController.clear();
+    try {
+      await ApiService.sendMessage({
+        'senderId': widget.currentUserId,
+        'senderName': widget.currentUserName,
+        'receiverId': widget.farmerId,
+        'receiverName': widget.farmerName,
+        'content': text,
+        'isRead': false,
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+      _loadMessages();
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -3579,10 +4723,13 @@ class _IntegratedFarmerChatSheet extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 20,
-                  backgroundImage: NetworkImage(
-                      'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=100&auto=format&fit=crop'),
+                  backgroundColor: const Color(0xFF23763D),
+                  child: Text(
+                    widget.farmerName.isNotEmpty ? widget.farmerName[0] : 'F',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -3590,14 +4737,14 @@ class _IntegratedFarmerChatSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        farmerName,
+                        widget.farmerName,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                       const Text(
-                        'Online • Typically responds in 5m',
+                        'Online',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.green,
@@ -3616,27 +4763,19 @@ class _IntegratedFarmerChatSheet extends StatelessWidget {
           ),
           const Divider(height: 32),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              children: [
-                _buildMessage(
-                  'Hello! I\'m interested in your Organic Avocados. Are they available for bulk shipping?',
-                  isMe: true,
-                ),
-                _buildMessage(
-                  'Hello! Yes, they are. We just harvested a fresh batch this morning. How many units are you looking for?',
-                  isMe: false,
-                ),
-                _buildMessage(
-                  'I need around 500 units for our factory next week.',
-                  isMe: true,
-                ),
-                _buildMessage(
-                  'That shouldn\'t be a problem. I can offer you a wholesale discount for that quantity. Would you like me to send a formal quote?',
-                  isMe: false,
-                ),
-              ],
-            ),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _messages.isEmpty
+                    ? const Center(child: Text('No messages yet. Say hello!'))
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        itemCount: _messages.length,
+                        itemBuilder: (context, index) {
+                          final msg = _messages[index];
+                          final isMe = msg['senderId'] == widget.currentUserId;
+                          return _buildMessage(msg['content'] ?? '', isMe: isMe);
+                        },
+                      ),
           ),
           Container(
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
@@ -3644,7 +4783,7 @@ class _IntegratedFarmerChatSheet extends StatelessWidget {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
@@ -3659,8 +4798,10 @@ class _IntegratedFarmerChatSheet extends StatelessWidget {
                       color: const Color(0xFFF4F6F4),
                       borderRadius: BorderRadius.circular(25),
                     ),
-                    child: const TextField(
-                      decoration: InputDecoration(
+                    child: TextField(
+                      controller: _messageController,
+                      onSubmitted: (_) => _sendMessage(),
+                      decoration: const InputDecoration(
                         hintText: 'Type a message...',
                         border: InputBorder.none,
                         hintStyle: TextStyle(fontSize: 14),
@@ -3669,13 +4810,16 @@ class _IntegratedFarmerChatSheet extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF23763D),
-                    shape: BoxShape.circle,
+                GestureDetector(
+                  onTap: _sendMessage,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF23763D),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.send, color: Colors.white, size: 20),
                   ),
-                  child: const Icon(Icons.send, color: Colors.white, size: 20),
                 ),
               ],
             ),
@@ -3773,7 +4917,7 @@ class OrderTrackingScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(35),
                 boxShadow: [
                   BoxShadow(
-                    color: primaryGreen.withOpacity(0.05),
+                    color: primaryGreen.withValues(alpha: 0.05),
                     blurRadius: 30,
                     offset: const Offset(0, 15),
                   ),
@@ -3890,7 +5034,7 @@ class OrderTrackingScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(40),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 40,
                     offset: const Offset(0, 20),
                   ),
@@ -3974,7 +5118,7 @@ class OrderTrackingScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
+                                      color: Colors.black.withValues(alpha: 0.1),
                                       blurRadius: 10,
                                     ),
                                   ],
@@ -4068,11 +5212,11 @@ class OrderTrackingScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
-                color: primaryGreen.withOpacity(0.08),
+                color: primaryGreen.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(35),
       
                 border:
-                    Border.all(color: primaryGreen.withOpacity(0.1)),
+                    Border.all(color: primaryGreen.withValues(alpha: 0.1)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -4163,7 +5307,7 @@ class OrderTrackingScreen extends StatelessWidget {
                 boxShadow: isActive
                     ? [
                         BoxShadow(
-                          color: Colors.green.withOpacity(0.3),
+                          color: Colors.green.withValues(alpha: 0.3),
                           blurRadius: 15,
                           offset: const Offset(0, 5),
                         )
@@ -4178,7 +5322,7 @@ class OrderTrackingScreen extends StatelessWidget {
                 height: isActive ? 260 : 40,
                 decoration: BoxDecoration(
                   color: isCompleted
-                      ? const Color(0xFF2E7D32).withOpacity(0.2)
+                      ? const Color(0xFF2E7D32).withValues(alpha: 0.2)
                       : const Color(0xFFF1F1F1),
                   borderRadius: BorderRadius.circular(1),
                 ),
@@ -4230,7 +5374,7 @@ class OrderTrackingScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.02), blurRadius: 20),
+              color: Colors.black.withValues(alpha: 0.02), blurRadius: 20),
         ],
       ),
       child: Row(
@@ -4325,7 +5469,7 @@ class _MapPainter extends CustomPainter {
     canvas.drawCircle(
         Offset(size.width * 0.5, size.height * 0.5), 8, dotPaint);
     final dotOuterPaint = Paint()
-      ..color = const Color(0xFF1B5E20).withOpacity(0.2)
+      ..color = const Color(0xFF1B5E20).withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(
         Offset(size.width * 0.5, size.height * 0.5), 16, dotOuterPaint);
@@ -4335,74 +5479,3 @@ class _MapPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ── Bottom Nav Widget ───────────────────────────────────────
-class _TrackingBottomNav extends StatelessWidget {
-  final Color primaryGreen;
-  const _TrackingBottomNav({required this.primaryGreen});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 100,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(35)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _navItem(Icons.storefront_outlined, 'MARKET', false),
-          _navItem(Icons.local_shipping_rounded, 'ORDERS', true),
-          _navItem(Icons.agriculture_outlined, 'FLEET', false),
-          _navItem(Icons.person_outline, 'ACCOUNT', false),
-        ],
-      ),
-    );
-  }
-
-  Widget _navItem(IconData icon, String label, bool active) {
-    if (active) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1B5E20),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: Colors.white, size: 24),
-          ),
-          const SizedBox(height: 4),
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF1B5E20),
-                  letterSpacing: 0.5)),
-        ],
-      );
-    }
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: const Color(0xFF757575), size: 26),
-        const SizedBox(height: 6),
-        Text(label,
-            style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF757575),
-                letterSpacing: 0.5)),
-      ],
-    );
-  }
-}

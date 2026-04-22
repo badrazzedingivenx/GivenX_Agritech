@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -187,6 +188,13 @@ class _AddProductPageState extends State<AddProductPage> with SingleTickerProvid
 
           try {
             final user = await SessionService.getUser();
+
+            // Encode first picked image as base64
+            String? imageBase64;
+            if (_imageBytesList.isNotEmpty) {
+              imageBase64 = 'data:image/png;base64,${base64Encode(_imageBytesList.first)}';
+            }
+
             final productData = {
               'name': nameController.text.trim(),
               'price': double.tryParse(priceController.text.trim()) ?? 0,
@@ -202,6 +210,7 @@ class _AddProductPageState extends State<AddProductPage> with SingleTickerProvid
               'isOrganic': false,
               'isUrgent': false,
               'isAvailable': true,
+              if (imageBase64 != null) 'image': imageBase64,
               'images': <String>[],
               'createdAt': DateTime.now().toIso8601String(),
             };

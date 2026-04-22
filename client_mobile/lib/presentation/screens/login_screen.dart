@@ -11,6 +11,7 @@ import 'dashboard/farmer_dashboard.dart';
 import 'dashboard/usine_dashboard.dart';
 import 'dashboard/transporteur_dashboard.dart';
 import 'dashboard/banque_dashboard.dart';
+import 'dashboard/admin_dashboard.dart';
 
 class LoginScreen extends StatelessWidget {
   static const routeName = '/login';
@@ -166,6 +167,7 @@ class _LoginFormState extends State<_LoginForm> {
               companyName: user.companyName ?? '',
               productTypes: user.productTypes ?? '',
               buyerType: user.buyerType?.toJson() ?? 'restaurant',
+              userId: user.id,
             ),
           ),
         );
@@ -195,8 +197,10 @@ class _LoginFormState extends State<_LoginForm> {
           ),
         );
       case UserRole.admin:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.loginUnknownRole)),
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const AdminDashboard(),
+          ),
         );
     }
   }

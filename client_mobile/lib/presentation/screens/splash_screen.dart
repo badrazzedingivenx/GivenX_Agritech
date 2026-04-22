@@ -68,6 +68,7 @@ class _SplashScreenState extends State<SplashScreen>
           companyName: user.companyName ?? '',
           productTypes: user.productTypes ?? '',
           buyerType: user.buyerType?.toJson() ?? 'restaurant',
+          userId: user.id,
         );
       case UserRole.transporter:
         dashboard = TransporteurDashboard(

@@ -273,6 +273,7 @@ class _UsineFormState extends State<UsineForm> {
                             productTypes: '',  
                             email: _data['email'] ?? '',
                             buyerType: widget.buyerType,
+                            userId: (result['id'] as num?)?.toInt(),
                           ),
                         ),
                       );

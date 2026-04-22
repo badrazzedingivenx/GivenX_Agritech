@@ -17,6 +17,9 @@ class DashboardScaffold extends StatelessWidget {
   /// Custom nav items. Defaults to Home / Products / Orders / Profile.
   final List<NavItem>? navItems;
 
+  /// Optional unread badge counts per nav item index.
+  final Map<int, int>? navBadgeCounts;
+
   static const Color _primaryGreen = Color(0xFF23763D);
   static const Color _bgColor = Color(0xFFF4F9F3);
   static const Color _navUnselected = Color(0xFF8D9991);
@@ -36,6 +39,7 @@ class DashboardScaffold extends StatelessWidget {
     this.appBar,
     this.floatingActionButton,
     this.navItems,
+    this.navBadgeCounts,
   });
 
   List<NavItem> get _items => navItems ?? _defaultNavItems;
@@ -123,6 +127,27 @@ class DashboardScaffold extends StatelessWidget {
                   Icon(item.icon,
                       color: isSelected ? Colors.white : _navUnselected,
                       size: 22),
+                  if ((navBadgeCounts?[i] ?? 0) > 0)
+                    Transform.translate(
+                      offset: const Offset(-6, -8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          (navBadgeCounts?[i] ?? 0) > 99 ? '99+' : '${navBadgeCounts?[i]}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
                   if (isSelected) ...[
                     const SizedBox(width: 8),
                     Text(item.label,

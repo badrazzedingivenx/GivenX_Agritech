@@ -100,11 +100,11 @@ class ApiService {
 
   // ─── Orders ────────────────────────────────────────────
 
-  static Future<List<dynamic>> getOrders({String? buyerId, String? sellerId}) async {
+  static Future<List<dynamic>> getOrders({String? buyerId, String? farmerId}) async {
     String url = ApiConstants.orders;
     final params = <String>[];
     if (buyerId != null) params.add('buyerId=$buyerId');
-    if (sellerId != null) params.add('sellerId=$sellerId');
+    if (farmerId != null) params.add('farmerId=$farmerId');
     if (params.isNotEmpty) url += '?${params.join('&')}';
     return _getList(url);
   }
@@ -151,6 +151,10 @@ class ApiService {
     return _post(ApiConstants.messages, data);
   }
 
+  static Future<Map<String, dynamic>> updateMessage(int id, Map<String, dynamic> data) async {
+    return _patch('${ApiConstants.messages}/$id', data);
+  }
+
   // ─── Payments ──────────────────────────────────────────
 
   static Future<List<dynamic>> getPayments({String? orderId, String? userId}) async {
@@ -168,5 +172,68 @@ class ApiService {
 
   static Future<Map<String, dynamic>> updatePayment(int id, Map<String, dynamic> data) async {
     return _patch('${ApiConstants.payments}/$id', data);
+  }
+
+  // ─── Bulk sourcing ────────────────────────────────────
+
+  static Future<List<dynamic>> getBulkRequests({
+    String? buyerId,
+    String? buyerType,
+    String? status,
+  }) async {
+    String url = ApiConstants.bulkRequests;
+    final params = <String>[];
+    if (buyerId != null) params.add('buyerId=$buyerId');
+    if (buyerType != null) params.add('buyerType=$buyerType');
+    if (status != null) params.add('status=$status');
+    if (params.isNotEmpty) url += '?${params.join('&')}';
+    return _getList(url);
+  }
+
+  static Future<Map<String, dynamic>> createBulkRequest(Map<String, dynamic> data) async {
+    return _post(ApiConstants.bulkRequests, data);
+  }
+
+  static Future<Map<String, dynamic>> updateBulkRequest(int id, Map<String, dynamic> data) async {
+    return _patch('${ApiConstants.bulkRequests}/$id', data);
+  }
+
+  static Future<List<dynamic>> getBulkOffers({
+    String? requestId,
+    String? status,
+  }) async {
+    String url = ApiConstants.bulkOffers;
+    final params = <String>[];
+    if (requestId != null) params.add('requestId=$requestId');
+    if (status != null) params.add('status=$status');
+    if (params.isNotEmpty) url += '?${params.join('&')}';
+    return _getList(url);
+  }
+
+  static Future<Map<String, dynamic>> createBulkOffer(Map<String, dynamic> data) async {
+    return _post(ApiConstants.bulkOffers, data);
+  }
+
+  static Future<Map<String, dynamic>> updateBulkOffer(int id, Map<String, dynamic> data) async {
+    return _patch('${ApiConstants.bulkOffers}/$id', data);
+  }
+
+  // ─── Reviews ───────────────────────────────────────────
+
+  static Future<List<dynamic>> getReviews({String? targetUserId, String? reviewerId}) async {
+    String url = ApiConstants.reviews;
+    final params = <String>[];
+    if (targetUserId != null) params.add('targetUserId=$targetUserId');
+    if (reviewerId != null) params.add('reviewerId=$reviewerId');
+    if (params.isNotEmpty) url += '?${params.join('&')}';
+    return _getList(url);
+  }
+
+  static Future<Map<String, dynamic>> createReview(Map<String, dynamic> data) async {
+    return _post(ApiConstants.reviews, data);
+  }
+
+  static Future<void> deleteReview(int id) async {
+    return _delete('${ApiConstants.reviews}/$id');
   }
 }
