@@ -76,4 +76,7 @@ class ApiConstants {
 
   // Reviews
   static final String reviews = '$baseUrl/reviews';
+
+  // Finance Requests
+  static final String financeRequests = '$baseUrl/financeRequests';
 }

@@ -46,7 +46,7 @@ class ApiService {
 
   static Future<void> _delete(String url) async {
     final response = await http.delete(Uri.parse(url));
-    if (response.statusCode != 200) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('DELETE $url failed (${response.statusCode})');
     }
   }
@@ -68,6 +68,22 @@ class ApiService {
   static Future<Map<String, dynamic>> registerUser(Map<String, dynamic> userData) async {
     print('[RegisterUser] Payload: $userData');
     return _post(ApiConstants.users, userData);
+  }
+
+  static Future<Map<String, dynamic>> updateUser(int id, Map<String, dynamic> data) async {
+    return _patch('${ApiConstants.users}/$id', data);
+  }
+
+  static Future<Map<String, dynamic>> getUserById(int id) async {
+    final response = await http.get(Uri.parse('${ApiConstants.users}/$id'));
+    if (response.statusCode == 200) {
+      return _unwrap(jsonDecode(response.body)) as Map<String, dynamic>;
+    }
+    throw Exception('GET user/$id failed (${response.statusCode})');
+  }
+
+  static Future<Map<String, dynamic>> createSupportTicket(Map<String, dynamic> data) async {
+    return _post('${ApiConstants.baseUrl}/supportTickets', data);
   }
 
   static Future<List<dynamic>> getRoles() async {
@@ -235,5 +251,28 @@ class ApiService {
 
   static Future<void> deleteReview(int id) async {
     return _delete('${ApiConstants.reviews}/$id');
+  }
+
+  // ─── Finance Requests ─────────────────────────────────────────────
+
+  static Future<List<dynamic>> getFinanceRequests({String? farmerId, String? status}) async {
+    String url = ApiConstants.financeRequests;
+    final params = <String>[];
+    if (farmerId != null) params.add('farmerId=$farmerId');
+    if (status != null) params.add('status=$status');
+    if (params.isNotEmpty) url += '?${params.join('&')}';
+    return _getList(url);
+  }
+
+  static Future<Map<String, dynamic>> createFinanceRequest(Map<String, dynamic> data) async {
+    return _post(ApiConstants.financeRequests, data);
+  }
+
+  static Future<Map<String, dynamic>> updateFinanceRequest(int id, Map<String, dynamic> data) async {
+    return _patch('${ApiConstants.financeRequests}/$id', data);
+  }
+
+  static Future<void> deleteFinanceRequest(int id) async {
+    return _delete('${ApiConstants.financeRequests}/$id');
   }
 }

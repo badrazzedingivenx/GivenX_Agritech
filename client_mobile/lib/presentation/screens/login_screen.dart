@@ -246,6 +246,7 @@ class _LoginFormState extends State<_LoginForm> {
             hintText: AppLocalizations.of(context)!.loginEmailHint,
             hintStyle: const TextStyle(color: Colors.white70),
             prefixIcon: const Icon(Icons.email, color: Colors.white70),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             errorText: _emailError,
             errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
             enabledBorder: OutlineInputBorder(
@@ -270,6 +271,7 @@ class _LoginFormState extends State<_LoginForm> {
             hintText: AppLocalizations.of(context)!.loginPasswordHint,
             hintStyle: const TextStyle(color: Colors.white70),
             prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             suffixIcon: IconButton(
               icon: Icon(
                 _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -468,13 +470,13 @@ class _LoginFormState extends State<_LoginForm> {
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
               ),
               elevation: 8,
               shadowColor: const Color(0xFF2E7D32).withOpacity(0.22),
               textStyle: const TextStyle(
                 fontWeight: FontWeight.w600,
-                fontSize: 18,
+                fontSize: 16,
                 letterSpacing: 0.5,
               ),
               backgroundColor: const Color(0xFF2E7D32),
@@ -487,7 +489,7 @@ class _LoginFormState extends State<_LoginForm> {
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
-                fontSize: 18,
+                fontSize: 16,
                 letterSpacing: 0.5,
               ),
             ),

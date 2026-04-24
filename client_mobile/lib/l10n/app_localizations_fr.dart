@@ -72,31 +72,34 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appTitle => 'AgriFlow';
 
   @override
-  String get introFarmerTitle => 'Agriculteur';
+  String get introFarmerTitle => 'Cultivez mieux, vendez plus vite';
 
   @override
-  String get introFarmerDesc => 'Publiez vos récoltes, recevez des commandes et demandez un financement.';
+  String get introFarmerDesc => 'Gérez vos cultures, suivez votre production et gardez le contrôle de votre ferme.\nConnectez-vous avec des acheteurs, publiez vos produits et recevez des offres بسهولة.';
 
   @override
-  String get introFactoryTitle => 'Acheteur';
+  String get introFactoryTitle => 'Achetez frais, directement chez les agriculteurs';
 
   @override
-  String get introFactoryDesc => 'Parcourez les produits, passez des commandes en gros et gérez votre chaîne d\'approvisionnement.';
+  String get introFactoryDesc => 'Explorez une variété de produits frais directement à la source.\nComparez les offres, contactez les agriculteurs et commandez facilement.';
 
   @override
-  String get introTransporterTitle => 'Transporteur';
+  String get introTransporterTitle => 'Livrez mieux, gagnez plus';
 
   @override
-  String get introTransporterDesc => 'Consultez les livraisons assignées, acceptez de nouvelles missions et optimisez vos itinéraires.';
+  String get introTransporterDesc => 'Accédez aux demandes de livraison et planifiez vos trajets efficacement.\nRéduisez les trajets à vide, optimisez vos routes et augmentez vos revenus.';
 
   @override
-  String get introBankTitle => 'Banque';
+  String get introBankTitle => 'Propulsez la croissance avec une finance intelligente';
 
   @override
-  String get introBankDesc => 'Financez des projets agricoles, gérez les transactions et soutenez l\'écosystème.';
+  String get introBankDesc => 'Soutenez les agriculteurs avec des services financiers adaptés et des paiements sécurisés.\nContribuez à la croissance de l\'ecosystem agricole tout en atteignant de nouveaux clients.';
 
   @override
   String get chooseLanguage => 'Choisir la langue';
+
+  @override
+  String get skip => 'Passer';
 
   @override
   String get getStarted => 'Commencer';

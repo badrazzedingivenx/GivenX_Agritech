@@ -72,31 +72,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'AgriFlow';
 
   @override
-  String get introFarmerTitle => 'Farmer';
+  String get introFarmerTitle => 'Grow smarter, sell faster';
 
   @override
-  String get introFarmerDesc => 'Publish your harvests, receive orders, and request financing.';
+  String get introFarmerDesc => 'Manage your crops, track your production, and stay in control of your farm.\nConnect with buyers, publish your products, and receive offers easily.';
 
   @override
-  String get introFactoryTitle => 'Buyer';
+  String get introFactoryTitle => 'Buy fresh, directly from farmers';
 
   @override
-  String get introFactoryDesc => 'Browse products, place bulk orders, and manage your supply chain.';
+  String get introFactoryDesc => 'Explore a variety of fresh products straight from the source.\nCompare offers, connect with farmers, and order with ease.';
 
   @override
-  String get introTransporterTitle => 'Transporter';
+  String get introTransporterTitle => 'Deliver smarter, earn more';
 
   @override
-  String get introTransporterDesc => 'View assigned deliveries, accept new missions, and optimize your routes.';
+  String get introTransporterDesc => 'Access delivery requests and plan your trips efficiently.\nReduce empty runs, optimize routes, and increase your earnings.';
 
   @override
-  String get introBankTitle => 'Bank';
+  String get introBankTitle => 'Power growth with smart finance';
 
   @override
-  String get introBankDesc => 'Finance agricultural projects, manage transactions, and support the ecosystem.';
+  String get introBankDesc => 'Support farmers with tailored financial services and secure payments.\nHelp grow the agricultural ecosystem while reaching new clients.';
 
   @override
   String get chooseLanguage => 'Choose Language';
+
+  @override
+  String get skip => 'Skip';
 
   @override
   String get getStarted => 'Get Started';

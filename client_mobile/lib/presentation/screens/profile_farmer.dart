@@ -199,11 +199,13 @@ class _ProfileFarmerPageState extends State<ProfileFarmerPage> {
                         ),
                         child: CircleAvatar(
                           radius: 55,
-                          backgroundImage: _image != null
-                              ? FileImage(_image!)
-                              : const NetworkImage(
-                                      "https://i.pravatar.cc/300?img=12")
-                                  as ImageProvider,
+                          backgroundColor: const Color(0xFF1B5E20).withValues(alpha: 0.15),
+                          backgroundImage:
+                              _image != null ? FileImage(_image!) : null,
+                          child: _image == null
+                              ? const Icon(Icons.person,
+                                  size: 55, color: Color(0xFF1B5E20))
+                              : null,
                         ),
                       ),
 

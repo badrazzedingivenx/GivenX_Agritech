@@ -72,31 +72,34 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'أجري فلو';
 
   @override
-  String get introFarmerTitle => 'مزارع';
+  String get introFarmerTitle => 'ازرع بذكاء، بع بسرعة';
 
   @override
-  String get introFarmerDesc => 'انشر محاصيلك، استقبل الطلبات، واطلب التمويل.';
+  String get introFarmerDesc => 'أدر محاصيلك، تتبع إنتاجك، وابقَ في السيطرة على مزرعتك.\nتواصل مع المشترين، انشر منتجاتك، واستقبل العروض بسهولة.';
 
   @override
-  String get introFactoryTitle => 'مشتري';
+  String get introFactoryTitle => 'اشترِ طازجاً، مباشرة من المزارعين';
 
   @override
-  String get introFactoryDesc => 'تصفح المنتجات، قدم طلبات بالجملة، وادِر سلسلة التوريد الخاصة بك.';
+  String get introFactoryDesc => 'اكتشف مجموعة متنوعة من المنتجات الطازجة مباشرة من المصدر.\nقارن العروض، تواصل مع المزارعين، واطلب بكل سهولة.';
 
   @override
-  String get introTransporterTitle => 'ناقل';
+  String get introTransporterTitle => 'اشحن بذكاء، اكسب أكثر';
 
   @override
-  String get introTransporterDesc => 'اعرض التوصيلات المخصصة، اقبل مهام جديدة، وحسن مساراتك.';
+  String get introTransporterDesc => 'استفد من طلبات التسليم وخطط لرحلاتك بكفاءة.\nقلل من الرحلات الفارغة، حسّن مساراتك، وزد أرباحك.';
 
   @override
-  String get introBankTitle => 'بنك';
+  String get introBankTitle => 'عزز النمو بتمويل ذكي';
 
   @override
-  String get introBankDesc => 'مول المشاريع الزراعية، ادِر المعاملات، وادعم النظام البيئي.';
+  String get introBankDesc => 'ادعم المزارعين بخدمات مالية مخصصة ومدفوعات آمنة.\nساعد في نمو المنظومة الزراعية مع الوصول إلى عملاء جدد.';
 
   @override
   String get chooseLanguage => 'اختر اللغة';
+
+  @override
+  String get skip => 'تخطي';
 
   @override
   String get getStarted => 'ابدأ';

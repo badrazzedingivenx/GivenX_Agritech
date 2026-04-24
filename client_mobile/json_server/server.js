@@ -57,6 +57,30 @@ router.render = (req, res) => {
 };
 
 /* =========================
+   EXPLICIT DELETE ROUTES
+   (prevent router.render conflict on DELETE)
+========================= */
+function explicitDelete(collection) {
+  return (req, res) => {
+    const id = Number(req.params.id);
+    const col = router.db.get(collection);
+    const item = col.find({ id }).value();
+    if (!item) {
+      return res.status(404).json({ success: false, message: `${collection} not found`, data: null });
+    }
+    col.remove({ id }).write();
+    res.json({ success: true, message: 'Deleted', data: {} });
+  };
+}
+
+server.delete('/api/products/:id',        explicitDelete('products'));
+server.delete('/api/orders/:id',          explicitDelete('orders'));
+server.delete('/api/shipments/:id',       explicitDelete('shipments'));
+server.delete('/api/messages/:id',        explicitDelete('messages'));
+server.delete('/api/users/:id',           explicitDelete('users'));
+server.delete('/api/financeRequests/:id', explicitDelete('financeRequests'));
+
+/* =========================
    USE API PREFIX
 ========================= */
 server.use('/api', router);

@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../models/payment.dart';
 import '../../../services/api_service.dart';
+import '../../../services/session_service.dart';
 import '../../widgets/dashboard_scaffold.dart';
+import '../../widgets/shared_profile_tab.dart';
+import '../chat/chat_screen.dart';
+import '../chat/conversations_screen.dart';
 
 class BanqueDashboard extends StatefulWidget {
   final String bankName;
@@ -32,6 +36,9 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
   int _currentIndex = 0;
   List<Payment> _payments = [];
   bool _loading = true;
+  int? _currentUserId;
+  List<Map<String, dynamic>> _financeRequests = [];
+  bool _financeLoading = true;
 
   int _gridColumns(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
@@ -53,10 +60,34 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
   void initState() {
     super.initState();
     _loadPayments();
+    _loadFinanceRequests();
+  }
+
+  Future<void> _loadFinanceRequests() async {
+    try {
+      final data = await ApiService.getFinanceRequests();
+      if (mounted) {
+        setState(() {
+          _financeRequests = data.cast<Map<String, dynamic>>();
+          _financeRequests.sort((a, b) {
+            final aDate = DateTime.tryParse((a['createdAt'] ?? '').toString()) ??
+                DateTime.fromMillisecondsSinceEpoch(0);
+            final bDate = DateTime.tryParse((b['createdAt'] ?? '').toString()) ??
+                DateTime.fromMillisecondsSinceEpoch(0);
+            return bDate.compareTo(aDate);
+          });
+          _financeLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _financeLoading = false);
+    }
   }
 
   Future<void> _loadPayments() async {
     try {
+      final user = await SessionService.getUser();
+      _currentUserId = user?.id;
       final data = await ApiService.getPayments();
       if (mounted) {
         setState(() {
@@ -71,104 +102,55 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
     }
   }
 
-  double get _totalPortfolio =>
-      _payments.fold<double>(0, (sum, p) => sum + p.amount);
+  // ── Finance-request based metrics ────────────────────────────────
 
-  int get _activeCount => _payments
-      .where((p) =>
-          p.status != PaymentStatus.released && p.status != PaymentStatus.failed)
-      .length;
+  double get _portfolioValue => _financeRequests
+      .where((r) => r['status'] == 'approved')
+      .fold<double>(0, (sum, r) => sum + (r['amount'] as num? ?? 0).toDouble());
 
-  int get _releasedCount =>
-      _payments.where((p) => p.status == PaymentStatus.released).length;
-
-  int get _failedCount =>
-      _payments.where((p) => p.status == PaymentStatus.failed).length;
-
-  int get _refundedCount =>
-      _payments.where((p) => p.status == PaymentStatus.refunded).length;
-
-  int get _settledCount => _releasedCount + _failedCount + _refundedCount;
-
-  double get _repaymentRate {
-    if (_settledCount == 0) return 0;
-    return (_releasedCount / _settledCount) * 100;
-  }
-
-  double get _nplRatio {
-    if (_settledCount == 0) return 0;
-    return (_failedCount / _settledCount) * 100;
-  }
-
-  double get _liquidityRatio {
-    if (_totalPortfolio == 0) return 0;
-    return (_releasedTotal / _totalPortfolio) * 100;
-  }
-
-  double _sumAmountInWindow(DateTime from, DateTime to) {
-    return _payments
-        .where((p) => !p.createdAt.isBefore(from) && p.createdAt.isBefore(to))
-        .fold<double>(0, (sum, p) => sum + p.amount);
+  double _financeAmountInWindow(DateTime from, DateTime to) {
+    return _financeRequests
+        .where((r) => r['status'] == 'approved')
+        .where((r) {
+          final d = DateTime.tryParse(r['createdAt']?.toString() ?? '');
+          if (d == null) return false;
+          return !d.isBefore(from) && d.isBefore(to);
+        })
+        .fold<double>(0, (sum, r) => sum + (r['amount'] as num? ?? 0).toDouble());
   }
 
   double get _portfolioTrendPercent {
     final now = DateTime.now();
     final currentStart = now.subtract(const Duration(days: 30));
     final previousStart = now.subtract(const Duration(days: 60));
-    final current = _sumAmountInWindow(currentStart, now);
-    final previous = _sumAmountInWindow(previousStart, currentStart);
+    final current = _financeAmountInWindow(currentStart, now);
+    final previous = _financeAmountInWindow(previousStart, currentStart);
     if (previous == 0) return current > 0 ? 100 : 0;
     return ((current - previous) / previous) * 100;
   }
 
-  String get _riskGrade {
-    final npl = _nplRatio;
-    if (npl <= 2) return 'AAA';
-    if (npl <= 5) return 'AA';
-    if (npl <= 8) return 'A';
-    return 'BBB';
+  double get _repaymentRate {
+    final approved = _financeRequests.where((r) => r['status'] == 'approved').length;
+    final settled = _financeRequests
+        .where((r) => r['status'] == 'approved' || r['status'] == 'rejected')
+        .length;
+    if (settled == 0) return 0;
+    return (approved / settled) * 100;
   }
 
-  int get _stabilityDots {
-    if (_repaymentRate >= 90) return 4;
-    if (_repaymentRate >= 75) return 3;
-    if (_repaymentRate >= 60) return 2;
-    return 1;
-  }
-
-  String get _nplInsight {
-    if (_nplRatio <= 2) return 'Within target';
-    if (_nplRatio <= 5) return 'Watch closely';
-    return 'Above target';
-  }
-
-  double get _releasedTotal => _payments
-      .where((p) => p.status == PaymentStatus.released)
-      .fold<double>(0, (sum, p) => sum + p.amount);
-
-  double get _heldTotal => _payments
-      .where((p) => p.status == PaymentStatus.held)
-      .fold<double>(0, (sum, p) => sum + p.amount);
-
-  String _paymentMethodLabel(PaymentMethod method) {
-    switch (method) {
-      case PaymentMethod.online:
-        return 'Online';
-      case PaymentMethod.bankTransfer:
-        return 'Bank Transfer';
-      case PaymentMethod.cashOnDelivery:
-        return 'Cash On Delivery';
-    }
-  }
+  int get _activeCreditCount =>
+      _financeRequests.where((r) => r['status'] == 'approved').length;
 
   @override
   Widget build(BuildContext context) {
     return DashboardScaffold(
       currentIndex: _currentIndex,
+      userRole: 'Banque',
+      userId: _currentUserId,
       navItems: const [
         NavItem(icon: Icons.home_outlined, label: 'Home'),
-        NavItem(icon: Icons.credit_card_outlined, label: 'Loans'),
-        NavItem(icon: Icons.bar_chart_outlined, label: 'Analytics'),
+        NavItem(icon: Icons.request_page_outlined, label: 'Requests'),
+        NavItem(icon: Icons.chat_bubble_outline, label: 'Messages'),
         NavItem(icon: Icons.person_outline, label: 'Profile'),
       ],
       onTabSelected: (index) => setState(() => _currentIndex = index),
@@ -176,8 +158,8 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
         index: _currentIndex,
         children: [
           _buildHomeTab(),
-          _buildLoansTab(),
-          _buildAnalyticsTab(),
+          _buildFinanceRequestsTab(),
+          const ConversationsScreen(),
           _buildProfileTab(),
         ],
       ),
@@ -214,45 +196,34 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
             'Here is the status of your financial pipeline today.',
             style: TextStyle(color: _textLight, fontSize: 13),
           ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              widget.logoPath.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(widget.logoPath, height: 60),
-                    )
-                  : const Icon(
-                      Icons.account_balance,
-                      size: 60,
-                      color: Colors.green,
-                    ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.bankName,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2E7D32),
-                      ),
-                    ),
-                    Text(
-                      'ID: ${widget.officialId}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
+          const SizedBox(height: 24),
+          GestureDetector(
+            onTap: () => setState(() => _currentIndex = 1),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: _primaryGreen,
+                borderRadius: BorderRadius.circular(20),
               ),
-            ],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.request_page_outlined, color: Colors.white, size: 20),
+                  SizedBox(width: 10),
+                  Text(
+                    'View Requests',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           GridView.count(
             crossAxisCount: _gridColumns(context),
             crossAxisSpacing: 12,
@@ -263,28 +234,28 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
             children: [
               _metricSquareCard(
                 title: 'Portfolio Value',
-                value: _loading ? '...' : '${_totalPortfolio.toStringAsFixed(0)} MAD',
+                value: _financeLoading ? '...' : '${_portfolioValue.toStringAsFixed(0)} MAD',
                 accent: _primaryGreen,
                 icon: Icons.account_balance_wallet_outlined,
               ),
               _metricSquareCard(
                 title: 'Trend',
-                value: _loading
+                value: _financeLoading
                     ? '...'
                     : '${_portfolioTrendPercent >= 0 ? '+' : ''}${_portfolioTrendPercent.toStringAsFixed(1)}%',
                 accent: const Color(0xFF2E7D32),
                 icon: Icons.trending_up,
               ),
               _metricSquareCard(
-                title: 'Repayment Rate',
-                value: _loading ? '...' : '${_repaymentRate.toStringAsFixed(1)}%',
+                title: 'Approval Rate',
+                value: _financeLoading ? '...' : '${_repaymentRate.toStringAsFixed(1)}%',
                 accent: const Color(0xFF2E7D32),
                 icon: Icons.check_circle_outline,
               ),
               _metricSquareCard(
                 title: 'Active Credit',
-                value: _loading ? '...' : '$_activeCount',
-                subtitle: 'Farmers & Exporters',
+                value: _financeLoading ? '...' : '$_activeCreditCount',
+                subtitle: 'Approved Requests',
                 accent: const Color(0xFF2E7D32),
                 icon: Icons.groups_outlined,
               ),
@@ -310,9 +281,9 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
           ),
           const SizedBox(height: 12),
           Column(
-            children: _loading
+            children: _financeLoading
                 ? [const Center(child: CircularProgressIndicator())]
-                : _payments.isEmpty
+                : _financeRequests.isEmpty
                     ? [const Center(child: Text('No activity yet'))]
                     : [
                         GridView.count(
@@ -322,14 +293,16 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                           childAspectRatio: _gridAspectRatio(context),
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          children: _payments.take(6).map((p) {
-                            final isReleased = p.status == PaymentStatus.released;
+                          children: _financeRequests.take(6).map((req) {
+                            final status = (req['status'] ?? 'pending').toString();
+                            final amount = (req['amount'] as num? ?? 0).toDouble();
+                            final statusColor = _requestStatusColor(status);
                             return _activityTile(
-                              'Order #${p.orderId}',
-                              '${p.method == PaymentMethod.bankTransfer ? 'Bank Transfer' : 'Online'} - ${p.status.label}',
-                              '${isReleased ? '+' : '-'}${p.amount.toStringAsFixed(0)} MAD',
-                              p.status.label.toUpperCase(),
-                              isReleased ? Colors.green : Colors.orange,
+                              req['farmerName']?.toString() ?? 'Farmer',
+                              req['title']?.toString() ?? '',
+                              '${amount.toStringAsFixed(0)} MAD',
+                              _requestStatusLabel(status),
+                              statusColor,
                             );
                           }).toList(),
                         )
@@ -340,340 +313,756 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
     );
   }
 
-  Widget _buildLoansTab() {
-    final openCredits = _payments
-        .where((p) =>
-            p.status != PaymentStatus.released && p.status != PaymentStatus.failed)
-        .toList();
+  static const _purposeLabels = {
+    'equipment': 'Equipment / Machinery',
+    'seeds': 'Seeds & Inputs',
+    'infrastructure': 'Infrastructure',
+    'land': 'Land Purchase',
+    'other': 'Other',
+  };
+  static const _purposeIcons = {
+    'equipment': Icons.agriculture,
+    'seeds': Icons.grass,
+    'infrastructure': Icons.construction,
+    'land': Icons.landscape,
+    'other': Icons.more_horiz,
+  };
+  static const _purposeColors = {
+    'equipment': Color(0xFF1565C0),
+    'seeds': Color(0xFF2E7D32),
+    'infrastructure': Color(0xFFE65100),
+    'land': Color(0xFF6D4C41),
+    'other': Color(0xFF6A1B9A),
+  };
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'BANK DASHBOARD',
-            style: TextStyle(
-              color: _primaryGreen,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Hello, ${widget.bankName}',
-            style: TextStyle(
-              fontSize: 28,
-              color: _textColor,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Here are your open credit operations and pending releases.',
-            style: TextStyle(color: _textLight, fontSize: 13),
-          ),
-          const SizedBox(height: 18),
-          if (_loading)
-            const Center(child: CircularProgressIndicator())
-          else if (openCredits.isEmpty)
-            const Center(child: Text('No activity yet'))
-          else
-            GridView.count(
-              crossAxisCount: _gridColumns(context),
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: _gridAspectRatio(context),
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: openCredits.map((p) => _activityTile(
-                    'Order #${p.orderId}',
-                    '${_paymentMethodLabel(p.method)} - ${p.status.label}',
-                    '${p.amount.toStringAsFixed(0)} MAD',
-                    p.status.label.toUpperCase(),
-                    Colors.orange,
-                  )).toList(),
-            ),
-        ],
-      ),
-    );
+  Color _requestStatusColor(String status) {
+    switch (status) {
+      case 'approved':
+        return const Color(0xFF2E7D32);
+      case 'reviewing':
+        return const Color(0xFF1565C0);
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.orange;
+    }
   }
 
-  Widget _buildAnalyticsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'BANK DASHBOARD',
-            style: TextStyle(
-              color: _primaryGreen,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
-            ),
+  String _requestStatusLabel(String status) {
+    switch (status) {
+      case 'approved':
+        return 'APPROVED';
+      case 'reviewing':
+        return 'REVIEWING';
+      case 'rejected':
+        return 'REJECTED';
+      default:
+        return 'PENDING';
+    }
+  }
+
+  void _openRequestDetail(Map<String, dynamic> req) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final status = (req['status'] ?? 'pending').toString();
+        final purpose = (req['purpose'] ?? 'other').toString();
+        final purposeColor = _purposeColors[purpose] ?? _primaryGreen;
+        final purposeIcon = _purposeIcons[purpose] ?? Icons.more_horiz;
+        final amount = req['amount'];
+        final amountStr =
+            amount != null ? '${(amount as num).toStringAsFixed(0)} MAD' : '—';
+        final farmerId = req['farmerId'];
+        final farmerName = req['farmerName']?.toString() ?? 'Farmer';
+        final farmerCity = req['farmerCity']?.toString() ?? '';
+        final farmerPhone = req['farmerPhone']?.toString() ?? '';
+        final dateStr = req['createdAt'] != null
+            ? DateTime.tryParse(req['createdAt'].toString())
+                    ?.toLocal()
+                    .toString()
+                    .split(' ')
+                    .first ??
+                ''
+            : '';
+
+        return Container(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Hello, ${widget.bankName}',
-            style: TextStyle(
-              fontSize: 28,
-              color: _textColor,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Performance and risk indicators.',
-            style: TextStyle(color: _textLight, fontSize: 13),
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.02),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'NPL Ratio',
-                          style: TextStyle(fontSize: 14, color: Colors.red),
-                        ),
-                        Text(
-                          _loading ? '...' : '${_nplRatio.toStringAsFixed(1)}%',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red,
-                          ),
-                        ),
-                        Text(
-                          _loading ? '' : _nplInsight,
-                          style: const TextStyle(fontSize: 12, color: Colors.red),
-                        ),
-                      ],
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
+                const SizedBox(height: 20),
+                Row(
                   children: [
                     Container(
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.02),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
+                        color: purposeColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(purposeIcon, color: purposeColor, size: 24),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            req['title']?.toString() ?? '',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: _textColor,
+                            ),
+                          ),
+                          Text(
+                            _purposeLabels[purpose] ?? purpose,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: purposeColor,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            const Text(
-                              'Risk Grade',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            Text(
-                              _loading ? '...' : _riskGrade,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2E7D32),
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
                     Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.02),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
+                        color:
+                            _requestStatusColor(status).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            const Text(
-                              'Stability',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                4,
-                                (index) => Icon(
-                                  Icons.circle,
-                                  size: 10,
-                                  color: index < _stabilityDots
-                                      ? const Color(0xFF2E7D32)
-                                      : Colors.grey.shade300,
-                                ),
-                              ),
-                            ),
-                          ],
+                      child: Text(
+                        _requestStatusLabel(status),
+                        style: TextStyle(
+                          color: _requestStatusColor(status),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Total Deposits',
-                    style: TextStyle(fontSize: 14, color: Colors.black54),
+                const SizedBox(height: 20),
+                // Amount
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4F9F3),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  Text(
-                    _loading ? '...' : '${_releasedTotal.toStringAsFixed(0)} MAD',
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E7D32),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.payments_outlined,
+                          color: Color(0xFF1565C0), size: 28),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Requested Amount',
+                            style: TextStyle(
+                                fontSize: 12, color: Color(0xFF757575)),
+                          ),
+                          Text(
+                            amountStr,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1565C0),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Farmer info
+                Text(
+                  'FARMER DETAILS',
+                  style: TextStyle(
+                    color: _primaryGreen,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _detailRow(Icons.person_outline, const Color(0xFF6A1B9A),
+                    'Name', farmerName),
+                if (farmerCity.isNotEmpty)
+                  _detailRow(Icons.location_on_outlined, const Color(0xFFE65100),
+                      'City', farmerCity),
+                if (farmerPhone.isNotEmpty)
+                  _detailRow(Icons.phone_outlined, const Color(0xFFAD1457),
+                      'Phone', farmerPhone),
+                if (dateStr.isNotEmpty)
+                  _detailRow(Icons.calendar_today_outlined,
+                      const Color(0xFF1565C0), 'Posted', dateStr),
+                const SizedBox(height: 16),
+                // Description
+                Text(
+                  'DESCRIPTION',
+                  style: TextStyle(
+                    color: _primaryGreen,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  req['description']?.toString() ?? '',
+                  style: TextStyle(
+                      fontSize: 14, color: _textColor, height: 1.5),
+                ),
+                const SizedBox(height: 24),
+                // Status update
+                Text(
+                  'UPDATE STATUS',
+                  style: TextStyle(
+                    color: _primaryGreen,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _statusActionBtn(
+                        'Reviewing',
+                        Icons.visibility_outlined,
+                        const Color(0xFF1565C0),
+                        status == 'reviewing',
+                        () async {
+                          final id = req['id'];
+                          if (id == null) return;
+                          await ApiService.updateFinanceRequest(
+                            id is int ? id : int.parse(id.toString()),
+                            {'status': 'reviewing'},
+                          );
+                          if (!ctx.mounted) return;
+                          Navigator.pop(ctx);
+                          await _loadFinanceRequests();
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _statusActionBtn(
+                        'Approve',
+                        Icons.check_circle_outline,
+                        const Color(0xFF2E7D32),
+                        status == 'approved',
+                        () async {
+                          final id = req['id'];
+                          if (id == null) return;
+                          await ApiService.updateFinanceRequest(
+                            id is int ? id : int.parse(id.toString()),
+                            {'status': 'approved'},
+                          );
+                          if (!ctx.mounted) return;
+                          Navigator.pop(ctx);
+                          await _loadFinanceRequests();
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _statusActionBtn(
+                        'Reject',
+                        Icons.cancel_outlined,
+                        Colors.red,
+                        status == 'rejected',
+                        () async {
+                          final id = req['id'];
+                          if (id == null) return;
+                          await ApiService.updateFinanceRequest(
+                            id is int ? id : int.parse(id.toString()),
+                            {'status': 'rejected'},
+                          );
+                          if (!ctx.mounted) return;
+                          Navigator.pop(ctx);
+                          await _loadFinanceRequests();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Contact farmer button
+                if (farmerId != null)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        if (_currentUserId == null) return;
+                        Navigator.pop(ctx);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChatScreen(
+                              partnerId: farmerId is int
+                                  ? farmerId
+                                  : int.parse(farmerId.toString()),
+                              partnerName: farmerName,
+                              currentUserId: _currentUserId!,
+                              currentUserName: widget.bankName,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.chat_bubble_outline),
+                      label: const Text('Contact Farmer'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primaryGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'In Escrow',
-                    style: TextStyle(fontSize: 14, color: Colors.black54),
-                  ),
-                  Text(
-                    _loading ? '...' : '${_heldTotal.toStringAsFixed(0)} MAD',
-                    style: const TextStyle(fontSize: 16, color: Color(0xFF2E7D32)),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Liquidity Ratio',
-                    style: TextStyle(fontSize: 14, color: Colors.black54),
-                  ),
-                  Text(
-                    _loading ? '...' : '${_liquidityRatio.toStringAsFixed(1)}%',
-                    style: const TextStyle(fontSize: 16, color: Color(0xFF2E7D32)),
-                  ),
-                ],
-              ),
+              ],
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _detailRow(
+      IconData icon, Color iconColor, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 11, color: Color(0xFF757575))),
+              Text(value,
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: _textColor)),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProfileTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'BANK DASHBOARD',
-            style: TextStyle(
-              color: _primaryGreen,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
-            ),
+  Widget _statusActionBtn(
+    String label,
+    IconData icon,
+    Color color,
+    bool isActive,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: isActive ? null : onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive ? color.withValues(alpha: 0.15) : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive ? color : Colors.grey.shade300,
+            width: isActive ? 2 : 1,
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Hello, ${widget.bankName}',
-            style: TextStyle(
-              fontSize: 28,
-              color: _textColor,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Bank: ${widget.bankName}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  Text('Official ID: ${widget.officialId}', style: const TextStyle(fontSize: 14)),
-                  const SizedBox(height: 8),
-                  Text('Email: ${widget.email}', style: const TextStyle(fontSize: 14)),
-                  const SizedBox(height: 8),
-                  Text('Phone: ${widget.phone}', style: const TextStyle(fontSize: 14)),
-                ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: isActive ? color : Colors.grey, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? color : Colors.grey,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildFinanceRequestsTab() {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F9F3),
+      body: _financeLoading
+          ? const Center(child: CircularProgressIndicator())
+          : CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'BANK DASHBOARD',
+                          style: TextStyle(
+                            color: _primaryGreen,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Finance Requests',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            color: _textColor,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Review farmer loan requests. Tap a request to view details and contact the farmer.',
+                          style: TextStyle(fontSize: 13, color: _textLight),
+                        ),
+                        const SizedBox(height: 16),
+                        // Summary chips
+                        Row(
+                          children: [
+                            _summaryChip(
+                              '${_financeRequests.where((r) => r['status'] == 'pending').length}',
+                              'Pending',
+                              Colors.orange,
+                              Icons.hourglass_empty,
+                            ),
+                            const SizedBox(width: 8),
+                            _summaryChip(
+                              '${_financeRequests.where((r) => r['status'] == 'reviewing').length}',
+                              'Reviewing',
+                              const Color(0xFF1565C0),
+                              Icons.visibility_outlined,
+                            ),
+                            const SizedBox(width: 8),
+                            _summaryChip(
+                              '${_financeRequests.where((r) => r['status'] == 'approved').length}',
+                              'Approved',
+                              const Color(0xFF2E7D32),
+                              Icons.check_circle_outline,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (_financeRequests.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 48),
+                      child: Column(
+                        children: [
+                          Icon(Icons.inbox_outlined,
+                              size: 64, color: _textLight),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No finance requests yet',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: _textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Farmers will post requests here when they need financing.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontSize: 13, color: _textLight),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (ctx, i) {
+                          final req = _financeRequests[i];
+                          final status =
+                              (req['status'] ?? 'pending').toString();
+                          final purpose =
+                              (req['purpose'] ?? 'other').toString();
+                          final purposeColor =
+                              _purposeColors[purpose] ?? _primaryGreen;
+                          final purposeIcon =
+                              _purposeIcons[purpose] ?? Icons.more_horiz;
+                          final amount = req['amount'];
+                          final amountStr = amount != null
+                              ? '${(amount as num).toStringAsFixed(0)} MAD'
+                              : '—';
+                          final farmerName =
+                              req['farmerName']?.toString() ?? 'Farmer';
+                          final farmerCity =
+                              req['farmerCity']?.toString() ?? '';
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: GestureDetector(
+                              onTap: () => _openRequestDetail(req),
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(24),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.03),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: purposeColor
+                                                .withValues(alpha: 0.12),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(purposeIcon,
+                                              color: purposeColor, size: 20),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                req['title']?.toString() ?? '',
+                                                maxLines: 1,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w800,
+                                                  fontSize: 15,
+                                                  color: _textColor,
+                                                ),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                      Icons.person_outline,
+                                                      size: 12,
+                                                      color: Color(0xFF757575)),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    farmerName,
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: _textLight),
+                                                  ),
+                                                  if (farmerCity.isNotEmpty)
+                                                    Text(
+                                                      ' • $farmerCity',
+                                                      style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: _textLight),
+                                                    ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 5),
+                                          decoration: BoxDecoration(
+                                            color: _requestStatusColor(status)
+                                                .withValues(alpha: 0.12),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            _requestStatusLabel(status),
+                                            style: TextStyle(
+                                              color:
+                                                  _requestStatusColor(status),
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      req['description']?.toString() ?? '',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                          fontSize: 13, color: _textLight),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.payments_outlined,
+                                            size: 16,
+                                            color: Color(0xFF1565C0)),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          amountStr,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF1565C0),
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Text(
+                                          'Tap to review →',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: _primaryGreen,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        childCount: _financeRequests.length,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+    );
+  }
+
+  Widget _summaryChip(
+      String count, String label, Color color, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(height: 6),
+            Text(
+              count,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(fontSize: 11, color: _textLight),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileTab() {
+    return SharedProfileTab(
+      fullName: widget.bankName,
+      subtitle: 'BANK • ${widget.officialId}',
+      primaryGreen: _primaryGreen,
+      textColor: _textColor,
+      textLight: _textLight,
+      infoItems: [
+        ProfileInfoItem(
+          icon: Icons.account_balance_outlined,
+          iconColor: const Color(0xFF1565C0),
+          label: 'BANK NAME',
+          value: widget.bankName,
+        ),
+        ProfileInfoItem(
+          icon: Icons.badge_outlined,
+          iconColor: const Color(0xFF6A1B9A),
+          label: 'OFFICIAL ID',
+          value: widget.officialId,
+        ),
+        ProfileInfoItem(
+          icon: Icons.email_outlined,
+          iconColor: const Color(0xFFE65100),
+          label: 'EMAIL',
+          value: widget.email,
+        ),
+        ProfileInfoItem(
+          icon: Icons.phone_outlined,
+          iconColor: const Color(0xFFAD1457),
+          label: 'PHONE',
+          value: widget.phone,
+        ),
+      ],
     );
   }
 

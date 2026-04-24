@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../services/api_service.dart';
 import '../../../services/session_service.dart';
 import '../../widgets/dashboard_scaffold.dart';
+import '../../widgets/shared_profile_tab.dart';
 import '../chat/conversations_screen.dart';
 import '../register/orders_page.dart';
 
@@ -99,6 +100,8 @@ class _UsineDashboardState extends State<UsineDashboard> {
 
     return DashboardScaffold(
       currentIndex: _currentIndex,
+      userRole: 'Buyer',
+      userId: widget.userId,
       navBadgeCounts: {3: _unreadMessagesCount},
       navItems: const [
         NavItem(icon: Icons.home_outlined, label: 'Home'),
@@ -147,16 +150,44 @@ class _UsineDashboardState extends State<UsineDashboard> {
             buyerType: widget.buyerType,
           ),
           const ConversationsScreen(),
-          _ProfileTab(
+          SharedProfileTab(
             fullName: widget.fullName,
-            email: widget.email,
-            phone: widget.phone,
-            city: widget.city,
-            companyName: widget.companyName,
-            productTypes: widget.productTypes,
+            subtitle: '${widget.buyerType == "industry" ? "INDUSTRY BUYER" : "RESTAURANT BUYER"} • ${widget.companyName}',
             primaryGreen: primaryGreen,
             textColor: textColor,
             textLight: textLight,
+            infoItems: [
+              ProfileInfoItem(
+                icon: Icons.email_outlined,
+                iconColor: const Color(0xFF1565C0),
+                label: 'EMAIL',
+                value: widget.email,
+              ),
+              ProfileInfoItem(
+                icon: Icons.phone_outlined,
+                iconColor: const Color(0xFFE65100),
+                label: 'PHONE',
+                value: widget.phone,
+              ),
+              ProfileInfoItem(
+                icon: Icons.location_on_outlined,
+                iconColor: const Color(0xFFAD1457),
+                label: 'CITY',
+                value: widget.city,
+              ),
+              ProfileInfoItem(
+                icon: Icons.business_outlined,
+                iconColor: const Color(0xFF00695C),
+                label: 'COMPANY',
+                value: widget.companyName,
+              ),
+              ProfileInfoItem(
+                icon: Icons.inventory_2_outlined,
+                iconColor: const Color(0xFF6A1B9A),
+                label: 'PRODUCT TYPES',
+                value: widget.productTypes,
+              ),
+            ],
           ),
         ],
       ),
@@ -328,8 +359,8 @@ class _HomeTabState extends State<_HomeTab> {
                 child: GestureDetector(
                   onTap: () => widget.onTabChange?.call(2),
                   child: _buildActionButton(
-                      _isIndustry ? 'Bulk\nSourcing' : 'Find\nProducts',
-                      Icons.inventory_2_outlined,
+                      'Marketplace',
+                      Icons.shopping_cart_outlined,
                       false),
                 ),
               ),
@@ -2130,6 +2161,10 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                         hintStyle:
                             TextStyle(color: widget.textLight, fontSize: 13),
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        filled: true,
+                        fillColor: Colors.transparent,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
                       ),
@@ -2307,7 +2342,7 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                         crossAxisCount: width < 480 ? 2 : crossAxisCount,
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
-                        childAspectRatio: width < 480 ? 1.55 : (width < 900 ? 1.22 : 1.05),
+                        childAspectRatio: width < 480 ? 1.0 : (width < 900 ? 1.0 : 0.95),
                       ),
                       itemBuilder: (context, index) {
                         final request = _bulkRequests[index];
@@ -2442,13 +2477,17 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                                     children: [
                                       Icon(Icons.hourglass_top_rounded, size: 14, color: widget.textLight),
                                       const SizedBox(width: 6),
-                                      const Text(
-                                        'Waiting for farmer offers',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
+                                      const Flexible(
+                                        child: Text(
+                                          'Waiting for farmer offers',
+                                          textAlign: TextAlign.center,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -2474,6 +2513,8 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                                     actionableOffers.length <= 1
                                         ? 'Accept $bestFarmerName'
                                         : 'Choose Offer (${actionableOffers.length})',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                             ],
@@ -2559,11 +2600,11 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                       final base64Str = img.split(',').last;
                       return Image.memory(
                         base64Decode(base64Str),
-                        height: 200,
+                        height: 130,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
-                          height: 200,
+                          height: 130,
                           color: const Color(0xFFF1F4F1),
                           child: const Icon(Icons.image_not_supported_outlined,
                               size: 40, color: Colors.grey),
@@ -2573,11 +2614,11 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                     if (img.startsWith('http')) {
                       return Image.network(
                         img,
-                        height: 200,
+                        height: 130,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
-                          height: 200,
+                          height: 130,
                           color: const Color(0xFFF1F4F1),
                           child: const Icon(Icons.image_not_supported_outlined,
                               size: 40, color: Colors.grey),
@@ -2586,11 +2627,11 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
                     }
                     return Image.asset(
                       img,
-                      height: 200,
+                      height: 130,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
-                        height: 200,
+                        height: 130,
                         color: const Color(0xFFF1F4F1),
                         child: const Icon(Icons.image_not_supported_outlined,
                             size: 40, color: Colors.grey),
@@ -2987,271 +3028,6 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
 }
 
 // ─────────────────────────────────────────────────────────
-//  TAB 3 — PROFILE
-// ─────────────────────────────────────────────────────────
-class _ProfileTab extends StatelessWidget {
-  final String fullName;
-  final String email;
-  final String phone;
-  final String city;
-  final String companyName;
-  final String productTypes;
-  final Color primaryGreen;
-  final Color textColor;
-  final Color textLight;
-
-  const _ProfileTab({
-    required this.fullName,
-    required this.email,
-    required this.phone,
-    required this.city,
-    required this.companyName,
-    required this.productTypes,
-    required this.primaryGreen,
-    required this.textColor,
-    required this.textLight,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final String name =
-        fullName.isNotEmpty ? fullName : 'Marcus Thorne';
-    final String subtitle = companyName.isNotEmpty
-        ? 'CHIEF SUPPLY OFFICER • $companyName'
-        : 'CHIEF SUPPLY OFFICER • AGRIFLOW PRO';
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Avatar Section
-          Center(
-            child: Column(
-              children: [
-                Stack(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: primaryGreen, width: 2),
-                      ),
-                      child: const CircleAvatar(
-                        radius: 55,
-                        backgroundImage: NetworkImage(
-                            'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop'),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 5,
-                      right: 5,
-                      child: GestureDetector(
-                        onTap: () => debugPrint('Edit Profile Picture'),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: primaryGreen,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: const Icon(Icons.edit,
-                              color: Colors.white, size: 16),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(name,
-                    style: TextStyle(
-                        fontSize: 24,
-                        color: textColor,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5)),
-                const SizedBox(height: 4),
-                Text(subtitle,
-                    style: TextStyle(
-                        color: textLight,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // 2. Account Information
-          Text('Account Information',
-              style: TextStyle(
-                  fontSize: 17, color: textColor, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 16),
-          _infoTile(Icons.email_outlined, 'EMAIL',
-              email.isNotEmpty ? email : 'marcus.thorne@agriflow.io'),
-          _infoTile(
-              Icons.phone_outlined,
-              'PHONE',
-              phone.isNotEmpty ? phone : '+1 (555) 234-8901'),
-          _infoTile(
-              Icons.location_on_outlined,
-              'CITY',
-              city.isNotEmpty ? city : 'Des Moines, IA'),
-          _infoTile(Icons.inventory_2_outlined, 'PRODUCT TYPES',
-              productTypes.isNotEmpty ? productTypes : 'Grains, Legumes, Soy'),
-          const SizedBox(height: 32),
-
-          // 3. Settings Section
-          Text('Settings',
-              style: TextStyle(
-                  fontSize: 17, color: textColor, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 16),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8))
-              ],
-            ),
-            child: Column(
-              children: [
-                _settingsTile(Icons.notifications_outlined, 'Notifications',
-                    onTap: () => debugPrint('Notifications Settings')),
-                const Divider(height: 1, indent: 60, endIndent: 20),
-                _settingsTile(Icons.security_outlined, 'Security & Privacy',
-                    onTap: () => debugPrint('Security Settings')),
-                const Divider(height: 1, indent: 60, endIndent: 20),
-                _settingsTile(Icons.language_outlined, 'Language',
-                    trailing: 'ENGLISH (US)',
-                    onTap: () => debugPrint('Language Settings')),
-                const Divider(height: 1, indent: 60, endIndent: 20),
-                _settingsTile(Icons.help_outline, 'Help & Support',
-                    onTap: () => debugPrint('Help Center')),
-              ],
-            ),
-          ),
-          const SizedBox(height: 40),
-
-          // 4. Sign Out Button
-          SizedBox(
-            width: double.infinity,
-            height: 60,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                if (Navigator.of(context).canPop()) {
-                  Navigator.of(context).pop();
-                }
-              },
-              icon: const Icon(Icons.logout, size: 20),
-              label: const Text('SIGN OUT',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryGreen,
-                foregroundColor: Colors.white,
-                elevation: 4,
-                shadowColor: primaryGreen.withValues(alpha: 0.4),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 40),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoTile(IconData icon, String label, String value) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: primaryGreen.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: primaryGreen, size: 22),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: TextStyle(
-                        color: primaryGreen,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.0)),
-                const SizedBox(height: 6),
-                Text(value,
-                    style: TextStyle(
-                        color: textColor,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _settingsTile(IconData icon, String label,
-      {String? trailing, VoidCallback? onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                  color: Color(0xFFF4F6F4), shape: BoxShape.circle),
-              child: Icon(icon, color: primaryGreen, size: 20),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(label,
-                  style: TextStyle(
-                      color: textColor,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700)),
-            ),
-            if (trailing != null)
-              Text(trailing,
-                  style: TextStyle(
-                      color: textLight,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold)),
-            const SizedBox(width: 8),
-            Icon(Icons.chevron_right,
-                color: textLight.withValues(alpha: 0.5), size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────
 //  ANIMATED LIVE NETWORK CARD
 // ─────────────────────────────────────────────────────────
 class LiveNetworkCard extends StatefulWidget {
@@ -3311,12 +3087,7 @@ class _LiveNetworkCardState extends State<LiveNetworkCard>
       decoration: BoxDecoration(
           color: const Color(0xFF0F3628),
           borderRadius: BorderRadius.circular(28),
-          image: const DecorationImage(
-            image: NetworkImage(
-                'https://www.transparenttextures.com/patterns/world-map.png'),
-            fit: BoxFit.cover,
-            opacity: 0.3,
-          ),
+
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF0F3628).withValues(alpha: 0.3),
@@ -3985,8 +3756,8 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  int _quantity = 1;
   bool _isFavorite = false;
+  Map<String, dynamic>? _farmer;
 
   static const Color primaryGreen = Color(0xFF23763D);
   static const Color bgColor = Color(0xFFF1F8F1);
@@ -3995,13 +3766,39 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   static const Color textLight = Color(0xFF757575);
 
   @override
+  void initState() {
+    super.initState();
+    _loadFarmer();
+  }
+
+  Future<void> _loadFarmer() async {
+    try {
+      final farmerId = widget.product['farmerId'];
+      if (farmerId != null) {
+        final data = await ApiService.getUserById(farmerId is int ? farmerId : int.parse(farmerId.toString()));
+        if (mounted) setState(() => _farmer = data);
+      }
+    } catch (_) {}
+  }
+
+  @override
   Widget build(BuildContext context) {
     final p = widget.product;
+    final String farmerName = _farmer?['fullName']?.toString() ??
+        p['farmerName']?.toString() ?? 'Farmer';
+    final String farmerCity = _farmer?['city']?.toString() ?? '';
+    final String farmerType = _farmer?['farmingType']?.toString() ?? '';
+    final String farmerPhone = _farmer?['phone']?.toString() ?? '';
     final String name = p['name'] ?? 'Organic Product';
-    final String price = p['price'] ?? '\$0.00';
+    final String priceDisplay =
+        '${p['price'] ?? 0} MAD';
+    final String unit = p['unit']?.toString() ?? 'unit';
     final String image = p['image'] ?? 'assets/images/usine/avocado.jpg';
-    final String origin = p['origin'] ?? 'Local Farm';
-    final bool isOrganic = p['isOrganic'] ?? true;
+    final String origin = p['location']?.toString() ?? p['origin']?.toString() ?? 'Local Farm';
+    final bool isOrganic = p['isOrganic'] == true;
+    final bool isAvailable = p['isAvailable'] != false;
+    final int quantity = (p['quantity'] as num?)?.toInt() ?? 0;
+    final bool inStock = isAvailable && quantity > 0;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -4022,22 +3819,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share_outlined, color: primaryGreen),
-            onPressed: () {},
-          ),
-          const CircleAvatar(
-            radius: 17,
-            backgroundColor: primaryGreen,
-            child: CircleAvatar(
-              radius: 15,
-              backgroundImage: NetworkImage(
-                  'https://images.unsplash.com/photo-1535711603865-0a7197029837?q=80&w=100&auto=format&fit=crop'),
-            ),
-          ),
-          const SizedBox(width: 16),
-        ],
+        actions: const [],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -4045,22 +3827,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           children: [
             // Product Image Section with Gradient Overlay
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Container(
-                height: 380,
+                height: 220,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(35),
+                  borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: primaryGreen.withValues(alpha: 0.15),
-                      blurRadius: 30,
-                      offset: const Offset(0, 15),
+                      color: primaryGreen.withValues(alpha: 0.12),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(35),
+                  borderRadius: BorderRadius.circular(24),
                   child: Stack(
                     children: [
                       Positioned.fill(
@@ -4140,10 +3922,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         child: Text(
                           name,
                           style: const TextStyle(
-                            fontSize: 34,
+                            fontSize: 22,
                             fontWeight: FontWeight.w900,
                             color: textColor,
-                            letterSpacing: -0.8,
+                            letterSpacing: -0.4,
                           ),
                         ),
                       ),
@@ -4173,17 +3955,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Row(
                     children: [
                       Text(
-                        price.split('/')[0],
+                        priceDisplay,
                         style: const TextStyle(
-                          fontSize: 28,
+                          fontSize: 20,
                           fontWeight: FontWeight.w900,
                           color: primaryGreen,
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Text(
-                        '/ unit',
-                        style: TextStyle(
+                      Text(
+                        '/ $unit',
+                        style: const TextStyle(
                           fontSize: 15,
                           color: textLight,
                           fontWeight: FontWeight.w600,
@@ -4194,20 +3976,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5E9),
+                          color: inStock
+                              ? const Color(0xFFE8F5E9)
+                              : const Color(0xFFFCE4EC),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: primaryGreen.withValues(alpha: 0.1)),
+                              color: (inStock ? primaryGreen : Colors.red)
+                                  .withValues(alpha: 0.15)),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.bolt_rounded,
-                                size: 16, color: primaryGreen),
-                            SizedBox(width: 4),
+                            Icon(
+                              inStock
+                                  ? Icons.bolt_rounded
+                                  : Icons.remove_circle_outline,
+                              size: 16,
+                              color: inStock ? primaryGreen : Colors.red,
+                            ),
+                            const SizedBox(width: 4),
                             Text(
-                              'IN STOCK',
+                              inStock ? 'IN STOCK' : 'OUT OF STOCK',
                               style: TextStyle(
-                                color: primaryGreen,
+                                color: inStock ? primaryGreen : Colors.red,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 0.5,
@@ -4232,24 +4022,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                   const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: cardColor,
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: Text(
-                      'Hand-picked from the sun-drenched hills of the Central Coast. These premium items are buttery, rich in healthy fats, and grown without synthetic pesticides. Perfect for artisanal toast or a nutrient-dense snack.',
+                      p['description']?.toString().isNotEmpty == true
+                          ? p['description'].toString()
+                          : 'Hand-picked fresh produce directly from the farm. Grown with care and delivered to your door.',
                       style: TextStyle(
-                        color: textColor.withValues(alpha: 0.8),
-                        fontSize: 16,
-                        height: 1.7,
+                        color: textColor.withValues(alpha: 0.75),
+                        fontSize: 13,
+                        height: 1.55,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -4273,18 +4065,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: const CircleAvatar(
+                          child: CircleAvatar(
                             radius: 28,
-                            backgroundImage: NetworkImage(
-                                'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=100&auto=format&fit=crop'),
+                            backgroundColor:
+                                primaryGreen.withValues(alpha: 0.15),
+                            child: const Icon(Icons.person,
+                                size: 28, color: primaryGreen),
                           ),
                         ),
                         const SizedBox(width: 16),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 'PRODUCED BY',
                                 style: TextStyle(
                                   fontSize: 10,
@@ -4293,15 +4087,38 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   letterSpacing: 0.8,
                                 ),
                               ),
-                              SizedBox(height: 2),
+                              const SizedBox(height: 2),
                               Text(
-                                'Green Valley Estates',
-                                style: TextStyle(
+                                farmerName,
+                                style: const TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w900,
                                   color: textColor,
                                 ),
                               ),
+                              if (farmerCity.isNotEmpty || farmerType.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Text(
+                                    [if (farmerType.isNotEmpty) farmerType, if (farmerCity.isNotEmpty) farmerCity].join(' • '),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: textLight,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              if (farmerPhone.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Text(
+                                    farmerPhone,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: textLight,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -4312,14 +4129,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFDDE8DB),
+                              color: const Color(0xFF1565C0).withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(Icons.chat_bubble_rounded,
-                                    size: 18, color: textColor),
+                                    size: 18, color: Color(0xFF1565C0)),
                                 SizedBox(height: 4),
                                 Text(
                                   'Contact\nFarmer',
@@ -4327,7 +4144,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w800,
-                                    color: textColor,
+                                    color: Color(0xFF1565C0),
                                     height: 1.1,
                                   ),
                                 ),
@@ -4347,12 +4164,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         child: _buildInfoCard(
                             Icons.local_shipping_rounded,
                             'EST. DELIVERY',
-                            '24 – 48 Hours'),
+                            '24 – 48 Hours',
+                            color: const Color(0xFFE65100)),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildInfoCard(
-                            Icons.location_on_rounded, 'ORIGIN', origin),
+                            Icons.location_on_rounded, 'ORIGIN', origin,
+                            color: const Color(0xFF1565C0)),
                       ),
                     ],
                   ),
@@ -4380,143 +4199,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  _buildStatCard('92%', 'OIL CONTENT',
-                      'Exceptional creaminess and stability for culinary use.',
-                      accentColor: const Color(0xFF1B5E20)),
-                  const SizedBox(height: 16),
-                  _buildStatCard('320g', 'AVG. WEIGHT',
-                      'Large size fruits with minimal stone-to-flesh ratio.',
-                      accentColor: const Color(0xFF880E4F)),
-                  const SizedBox(height: 16),
-                  _buildStatCard('A++', 'SUSTAINABILITY',
-                      'Carbon-negative orchard practices with water recycling.',
-                      accentColor: const Color(0xFF006064)),
+                  _buildStatCards(),
                   const SizedBox(height: 120),
                 ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomSheet: Container(
-        height: 100,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF5ED),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.remove, size: 20),
-                    onPressed: () {
-                      if (_quantity > 1) setState(() => _quantity--);
-                    },
-                  ),
-                  SizedBox(
-                    width: 30,
-                    child: Text(
-                      '$_quantity',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: textColor,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add, size: 20),
-                    onPressed: () => setState(() => _quantity++),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final p = widget.product;
-                  final user = await SessionService.getUser();
-                  if (user == null) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Session expired. Please log in again.')),
-                    );
-                    return;
-                  }
-
-                  final availableQty = (p['quantity'] as num?)?.toInt() ?? 0;
-                  if (availableQty <= 0 || _quantity > availableQty) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Requested quantity is not available.')),
-                    );
-                    return;
-                  }
-
-                  try {
-                    await ApiService.createOrder({
-                      'buyerId': user.id,
-                      'buyerName': user.fullName,
-                      'buyerType': widget.buyerType.toLowerCase(),
-                      'farmerId': p['farmerId'],
-                      'farmerName': p['farmerName'] ?? '',
-                      'items': [
-                        {
-                          'productId': p['id'],
-                          'productName': p['name'],
-                          'unitPrice': p['priceValue'] ?? p['price'],
-                          'quantity': _quantity,
-                          'unit': p['unit'] ?? 'Kg',
-                        }
-                      ],
-                      'totalAmount': ((p['priceValue'] ?? p['price'] ?? 0) as num) * _quantity,
-                      'status': 'pending',
-                      'createdAt': DateTime.now().toIso8601String(),
-                    });
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Order placed successfully!')),
-                    );
-                    Navigator.pop(context);
-                  } catch (_) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Failed to place order')),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.shopping_cart_outlined),
-                label: const Text('PLACE ORDER'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryGreen,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                  ),
-                ),
               ),
             ),
           ],
@@ -4525,17 +4210,64 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildInfoCard(IconData icon, String label, String value) {
+  Widget _buildStatCards() {
+    final p = widget.product;
+    final qty = p['quantity']?.toString() ?? 'N/A';
+    final unit = p['unit']?.toString() ?? '';
+    final bool isOrganic = p['isOrganic'] == true;
+    final bool isUrgent = p['isUrgent'] == true;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: _buildStatCard(
+            qty,
+            'QUANTITY',
+            '$qty $unit available',
+            accentColor: const Color(0xFF1B5E20),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildStatCard(
+            isOrganic ? 'YES' : 'NO',
+            'ORGANIC',
+            isOrganic ? 'Certified organic' : 'Conventional',
+            accentColor: const Color(0xFF880E4F),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildStatCard(
+            isUrgent ? 'HOT' : 'STD',
+            'DEMAND',
+            isUrgent ? 'High demand' : 'Standard',
+            accentColor: const Color(0xFF006064),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard(IconData icon, String label, String value,
+      {Color color = primaryGreen}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF5ED),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: primaryGreen, size: 20),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
           const SizedBox(height: 12),
           Text(
             label,
@@ -4563,10 +4295,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildStatCard(String value, String title, String subtitle,
       {Color accentColor = primaryGreen}) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4574,29 +4306,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 48,
+              fontSize: 22,
               fontWeight: FontWeight.w900,
               color: accentColor,
-              letterSpacing: -1,
+              letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             title,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 9,
               fontWeight: FontWeight.w900,
               color: textLight,
-              letterSpacing: 1,
+              letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           Text(
             subtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 13,
+              fontSize: 10,
               color: textLight,
-              height: 1.5,
+              height: 1.4,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -4804,6 +4538,8 @@ class _IntegratedFarmerChatSheetState extends State<_IntegratedFarmerChatSheet> 
                       decoration: const InputDecoration(
                         hintText: 'Type a message...',
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
                         hintStyle: TextStyle(fontSize: 14),
                       ),
                     ),

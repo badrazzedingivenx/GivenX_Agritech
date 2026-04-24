@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 import 'presentation/navigation/app_router.dart';
 import 'l10n/app_localizations.dart';
+import 'services/locale_controller.dart';
 
 
 
@@ -20,10 +21,27 @@ class AgriFlowApp extends StatefulWidget {
 class _AgriFlowAppState extends State<AgriFlowApp> {
   Locale? _locale;
 
+  @override
+  void initState() {
+    super.initState();
+    LocaleController.init();
+    LocaleController.notifier.addListener(_onLocaleChanged);
+  }
+
+  @override
+  void dispose() {
+    LocaleController.notifier.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() => _locale = LocaleController.notifier.value);
+    }
+  }
+
   void setLocale(Locale locale) {
-    setState(() {
-      _locale = locale;
-    });
+    setState(() => _locale = locale);
   }
 
   @override

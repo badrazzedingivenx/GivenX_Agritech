@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../l10n/app_localizations.dart';
+import '../../services/locale_controller.dart';
 import 'login_screen.dart';
 
 
@@ -90,52 +91,12 @@ class _IntroScreenState extends State<IntroScreen> {
                         return LayoutBuilder(
                           builder: (context, constraints) {
                             final double maxImageHeight = constraints.maxHeight * 0.38;
-                            final double imageCardRadius = 24;
+                            const double imageCardRadius = 24;
                             return Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Skip button
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Padding(
-                                      padding: Directionality.of(context) == TextDirection.rtl
-                                          ? const EdgeInsets.only(left: 20.0, top: 8)
-                                          : const EdgeInsets.only(right: 20.0, top: 8),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.circular(22),
-                                          onTap: () => Navigator.of(context).pushReplacementNamed(LoginScreen.routeName),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.circular(22),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black.withOpacity(0.08),
-                                                  blurRadius: 12,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                            child: const Text(
-                                              'Skip',
-                                              style: TextStyle(
-                                                color: Color(0xFF2E7D32),
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 14,
-                                                letterSpacing: 0.2,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
+                                // Space reserved for the top bar overlay
+                                const SizedBox(height: 56),
                                 Expanded(
                                   flex: 7,
                                   child: Center(
@@ -149,7 +110,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                             borderRadius: BorderRadius.circular(imageCardRadius),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.black.withOpacity(0.10),
+                                                color: Colors.black.withValues(alpha: 0.10),
                                                 blurRadius: 32,
                                                 offset: const Offset(0, 12),
                                               ),
@@ -249,7 +210,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                             ),
                                             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                                             elevation: 10,
-                                            shadowColor: const Color(0xFF2E7D32).withOpacity(0.22),
+                                            shadowColor: const Color(0xFF2E7D32).withValues(alpha: 0.22),
                                             textStyle: const TextStyle(
                                               fontWeight: FontWeight.w600,
                                               fontSize: 16,
@@ -281,7 +242,7 @@ class _IntroScreenState extends State<IntroScreen> {
                                             ),
                                             padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
                                             elevation: 10,
-                                            shadowColor: const Color(0xFF2E7D32).withOpacity(0.22),
+                                            shadowColor: const Color(0xFF2E7D32).withValues(alpha: 0.22),
                                             textStyle: const TextStyle(
                                               fontWeight: FontWeight.w600,
                                               fontSize: 16,
@@ -309,24 +270,73 @@ class _IntroScreenState extends State<IntroScreen> {
                       },
                     ),
                   ),
+                  // Top bar: language button (left) + Skip button (right)
+                  Positioned(
+                    top: 8,
+                    left: 16,
+                    right: 16,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Language / translate button
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(22),
+                            onTap: () => _showLanguagePicker(context),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(22),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(Icons.translate, color: Color(0xFF2E7D32), size: 18),
+                            ),
+                          ),
+                        ),
+                        // Skip button
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(22),
+                            onTap: () => Navigator.of(context).pushReplacementNamed(LoginScreen.routeName),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(22),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                AppLocalizations.of(context)!.skip,
+                                style: const TextStyle(
+                                  color: Color(0xFF2E7D32),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
-              ),
-            ),
-          ),
-          // Language picker icon (top left for LTR, top right for RTL)
-          Positioned(
-            top: 16,
-            left: Directionality.of(context) == TextDirection.rtl ? null : 16,
-            right: Directionality.of(context) == TextDirection.rtl ? 16 : null,
-            child: Material(
-              color: Colors.transparent,
-              child: IconButton(
-                icon: const Icon(Icons.translate, color: Color(0xFF2E7D32), size: 32),
-                onPressed: () {
-                  debugPrint('Translate icon tapped');
-                  _showLanguagePicker(context);
-                },
-                tooltip: 'Choose Language',
               ),
             ),
           ),
@@ -357,7 +367,7 @@ class _IntroScreenState extends State<IntroScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.language, color: Color(0xFF2E7D32), size: 26),
+                      const Icon(Icons.language, color: Color(0xFF2E7D32), size: 26),
                       const SizedBox(width: 10),
                       Text(
                         loc?.chooseLanguage ?? 'Choose Language',
@@ -371,13 +381,13 @@ class _IntroScreenState extends State<IntroScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Divider(thickness: 1.2, color: Color(0xFFB2DFDB)),
+                const Divider(thickness: 1.2, color: Color(0xFFB2DFDB)),
                 _buildLangTile(
                   context,
                   langCode: 'en',
                   title: 'English',
                   icon: Icons.language,
-                  iconColor: Color(0xFF1976D2),
+                  iconColor: const Color(0xFF1976D2),
                   selected: currentLocale == 'en',
                 ),
                 _buildLangTile(
@@ -385,7 +395,7 @@ class _IntroScreenState extends State<IntroScreen> {
                   langCode: 'fr',
                   title: 'Français',
                   icon: Icons.language,
-                  iconColor: Color(0xFFD32F2F),
+                  iconColor: const Color(0xFFD32F2F),
                   selected: currentLocale == 'fr',
                 ),
                 _buildLangTile(
@@ -393,7 +403,7 @@ class _IntroScreenState extends State<IntroScreen> {
                   langCode: 'ar',
                   title: 'العربية',
                   icon: Icons.language,
-                  iconColor: Color(0xFF388E3C),
+                  iconColor: const Color(0xFF388E3C),
                   selected: currentLocale == 'ar',
                 ),
                 _buildLangTile(
@@ -401,7 +411,7 @@ class _IntroScreenState extends State<IntroScreen> {
                   langCode: 'es',
                   title: 'Español',
                   icon: Icons.language,
-                  iconColor: Color(0xFFF57C00),
+                  iconColor: const Color(0xFFF57C00),
                   selected: currentLocale == 'es',
                 ),
                 const SizedBox(height: 8),
@@ -429,8 +439,7 @@ class _IntroScreenState extends State<IntroScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            debugPrint('Switching to $title');
-            widget.setLocale?.call(Locale(langCode));
+            LocaleController.setLocale(langCode, title);
             Navigator.pop(context);
           },
           child: Container(
@@ -445,12 +454,12 @@ class _IntroScreenState extends State<IntroScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 17,
-                      color: selected ? Color(0xFF2E7D32) : Color(0xFF222222),
+                      color: selected ? const Color(0xFF2E7D32) : const Color(0xFF222222),
                     ),
                   ),
                 ),
                 if (selected)
-                  Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 22),
+                  const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 22),
               ],
             ),
           ),

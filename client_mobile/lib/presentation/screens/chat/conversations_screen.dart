@@ -64,7 +64,11 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         }
       }
 
-      final convList = convMap.values.toList()
+      final convList = convMap.values
+          .where((c) =>
+              (c['partnerId'] as int? ?? 0) != 0 &&
+              (c['partnerName'] as String? ?? '').isNotEmpty)
+          .toList()
         ..sort((a, b) => (b['lastMessageTime'] ?? '').compareTo(a['lastMessageTime'] ?? ''));
 
       if (mounted) {
@@ -99,10 +103,10 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('Messages'),
-        centerTitle: true,
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
         elevation: 0,
+        toolbarHeight: 0,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -143,7 +147,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                             radius: 24,
                             backgroundColor: _primary.withOpacity(0.12),
                             child: Text(
-                              (conv['partnerName'] as String? ?? '?')[0].toUpperCase(),
+                              (() { final n = conv['partnerName'] as String? ?? ''; return n.isNotEmpty ? n[0].toUpperCase() : '?'; })(),
                               style: TextStyle(fontWeight: FontWeight.bold, color: _primary, fontSize: 18),
                             ),
                           ),

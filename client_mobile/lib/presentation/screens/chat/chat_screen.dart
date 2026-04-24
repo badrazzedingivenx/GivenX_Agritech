@@ -210,6 +210,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       decoration: const InputDecoration(
                         hintText: 'Type a message...',
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
                         hintStyle: TextStyle(color: Colors.grey),
                       ),
                       onSubmitted: (_) => _sendMessage(),

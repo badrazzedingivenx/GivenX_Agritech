@@ -279,6 +279,12 @@ abstract class AppLocalizations {
   /// **'Choose Language'**
   String get chooseLanguage;
 
+  /// No description provided for @skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skip;
+
   /// No description provided for @getStarted.
   ///
   /// In en, this message translates to:

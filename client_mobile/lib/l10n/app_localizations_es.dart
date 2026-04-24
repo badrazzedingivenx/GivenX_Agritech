@@ -72,31 +72,34 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appTitle => 'AgriFlow';
 
   @override
-  String get introFarmerTitle => 'Agricultor';
+  String get introFarmerTitle => 'Cultiva mejor, vende más rápido';
 
   @override
-  String get introFarmerDesc => 'Publica tus cosechas, recibe pedidos y solicita financiación.';
+  String get introFarmerDesc => 'Gestiona tus cultivos, controla tu producción y mantén el control de tu granja.\nConéctate con compradores, publica tus productos y recibe ofertas بسهولة.';
 
   @override
-  String get introFactoryTitle => 'Comprador';
+  String get introFactoryTitle => 'Compra fresco, directamente de los agricultores';
 
   @override
-  String get introFactoryDesc => 'Explora productos, realiza pedidos al por mayor y gestiona tu cadena de suministro.';
+  String get introFactoryDesc => 'Explora una variedad de productos frescos directamente de la fuente.\nCompara ofertas, conéctate con agricultores y ordena con facilidad.';
 
   @override
-  String get introTransporterTitle => 'Transportista';
+  String get introTransporterTitle => 'Entrega mejor, gana más';
 
   @override
-  String get introTransporterDesc => 'Ver entregas asignadas, aceptar nuevas misiones y optimizar tus rutas.';
+  String get introTransporterDesc => 'Accede a solicitudes de entrega y planifica tus viajes eficientemente.\nReduce viajes vacíos, optimiza rutas y aumenta tus ganancias.';
 
   @override
-  String get introBankTitle => 'Banco';
+  String get introBankTitle => 'Impulsa el crecimiento con finanzas inteligentes';
 
   @override
-  String get introBankDesc => 'Financia proyectos agrícolas, gestiona transacciones y apoya el ecosistema.';
+  String get introBankDesc => 'Apoya a los agricultores con servicios financieros personalizados y pagos seguros.\nAyuda a crecer el ecosistema agrícola mientras llegas a nuevos clientes.';
 
   @override
   String get chooseLanguage => 'Elegir idioma';
+
+  @override
+  String get skip => 'Omitir';
 
   @override
   String get getStarted => 'Comenzar';

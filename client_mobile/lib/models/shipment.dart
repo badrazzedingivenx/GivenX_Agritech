@@ -92,8 +92,8 @@ class Shipment {
     return Shipment(
       id: json['id'] as int?,
       orderId: json['orderId'] as int? ?? 0,
-      farmerId: json['farmerId'] as int? ?? 0,
-      farmerName: json['farmerName'] as String? ?? '',
+      farmerId: ((json['farmerId'] ?? json['buyerId']) as int?) ?? 0,
+      farmerName: ((json['farmerName'] ?? json['buyerName']) as String?) ?? '',
       transporterId: json['transporterId'] as int?,
       transporterName: json['transporterName'] as String?,
       pickupLocation: json['pickupLocation'] as String? ?? '',
