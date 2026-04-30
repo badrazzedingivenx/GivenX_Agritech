@@ -156,21 +156,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
             const SizedBox(height: 24),
             if (_loading)
               const Center(child: CircularProgressIndicator())
-            else
-              GridView.count(
-                crossAxisCount: _gridColumns(context),
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: _gridAspectRatio(context),
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _statCard('Total Users', '$_userCount', Icons.people_outline, const Color(0xFF1565C0)),
-                  _statCard('Products', '$_productCount', Icons.inventory_2_outlined, _primaryGreen),
-                  _statCard('Orders', '$_orderCount', Icons.receipt_long_outlined, const Color(0xFFE65100)),
-                  _statCard('Revenue', '${_totalRevenue.toStringAsFixed(0)} MAD', Icons.account_balance_wallet_outlined, const Color(0xFF6A1B9A)),
-                ],
+            else ...[
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: _statCard('Total Users', '$_userCount', Icons.people_outline, const Color(0xFF1565C0))),
+                    const SizedBox(width: 12),
+                    Expanded(child: _statCard('Products', '$_productCount', Icons.inventory_2_outlined, _primaryGreen)),
+                  ],
+                ),
               ),
+              const SizedBox(height: 12),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: _statCard('Orders', '$_orderCount', Icons.receipt_long_outlined, const Color(0xFFE65100))),
+                    const SizedBox(width: 12),
+                    Expanded(child: _statCard('Revenue', '${_totalRevenue.toStringAsFixed(0)} MAD', Icons.account_balance_wallet_outlined, const Color(0xFF6A1B9A))),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 28),
             _sectionLabel('User Distribution'),
             const SizedBox(height: 12),
@@ -204,25 +212,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _statCard(String title, String value, IconData icon, Color accent) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 12, offset: const Offset(0, 6))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: accent, size: 20),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: accent, size: 24),
           ),
           const SizedBox(height: 10),
           Text(value, maxLines: 2, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1A1D1A))),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: _textColor)),
           const SizedBox(height: 4),
-          Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+          Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
               style: TextStyle(color: _textLight, fontSize: 12)),
         ],
       ),

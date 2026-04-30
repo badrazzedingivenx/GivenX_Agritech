@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/api_service.dart';
 import '../../../services/session_service.dart';
 import '../../../models/user.dart';
@@ -20,6 +24,7 @@ class _BanqueFormState extends State<BanqueForm> {
   bool _showPassword = false;
   bool _showConfirmPassword = false;
   String? _uploadedLogoPath;
+  Uint8List? _uploadedLogoBytes;
 
   final List<String> _bankTypeOptions = [
     'Commercial Bank',
@@ -36,7 +41,8 @@ class _BanqueFormState extends State<BanqueForm> {
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
-      child: Column(
+      child: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -63,13 +69,11 @@ class _BanqueFormState extends State<BanqueForm> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          _buildTextField('Full Name', 'fullName', required: true, icon: Icons.person),
           const SizedBox(height: 14),
           _buildTextField('Bank Name', 'bankName', required: true, icon: Icons.account_balance),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           _buildTextField('City', 'city', required: true, icon: Icons.location_city),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           _buildDropdown(
             label: 'Bank Type',
             items: _bankTypeOptions,
@@ -78,13 +82,13 @@ class _BanqueFormState extends State<BanqueForm> {
             onSaved: (v) => _data['bankType'] = v,
             icon: Icons.account_balance_wallet,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           _buildTextField('Institutional Email', 'email', required: true, email: true, icon: Icons.email, keyboardType: TextInputType.emailAddress),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           _buildTextField('Phone Number', 'phone', required: true, icon: Icons.phone, keyboardType: TextInputType.phone),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           _buildLogoUploadField(),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           TextFormField(
             controller: _passwordController,
             obscureText: !_showPassword,
@@ -119,7 +123,7 @@ class _BanqueFormState extends State<BanqueForm> {
             },
             onSaved: (value) => _data['password'] = value,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           TextFormField(
             obscureText: !_showConfirmPassword,
             style: const TextStyle(color: Colors.white),
@@ -173,6 +177,15 @@ class _BanqueFormState extends State<BanqueForm> {
                       'logoPath': _uploadedLogoPath ?? '',
                     });
                     await SessionService.saveSession(User.fromJson(result));
+                    // Save the uploaded logo as profile picture for the bank profile tab
+                    if (_uploadedLogoBytes != null) {
+                      final bankName = _data['bankName'] ?? '';
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setString(
+                        'profile_image_$bankName',
+                        base64Encode(_uploadedLogoBytes!),
+                      );
+                    }
                     if (!mounted) return;
                     // Simulate admin validation required
                     showDialog(
@@ -237,6 +250,7 @@ class _BanqueFormState extends State<BanqueForm> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -377,8 +391,12 @@ class _BanqueFormState extends State<BanqueForm> {
                 final picker = ImagePicker();
                 final pickedFile = await picker.pickImage(source: ImageSource.gallery);
                 if (pickedFile != null) {
+                  final bytes = kIsWeb
+                      ? await pickedFile.readAsBytes()
+                      : await File(pickedFile.path).readAsBytes();
                   setState(() {
                     _uploadedLogoPath = pickedFile.path;
+                    _uploadedLogoBytes = bytes;
                     _logoController.text = pickedFile.name;
                   });
                 }

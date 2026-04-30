@@ -223,44 +223,6 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
               ),
             ),
           ),
-          const SizedBox(height: 18),
-          GridView.count(
-            crossAxisCount: _gridColumns(context),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: _gridAspectRatio(context),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _metricSquareCard(
-                title: 'Portfolio Value',
-                value: _financeLoading ? '...' : '${_portfolioValue.toStringAsFixed(0)} MAD',
-                accent: _primaryGreen,
-                icon: Icons.account_balance_wallet_outlined,
-              ),
-              _metricSquareCard(
-                title: 'Trend',
-                value: _financeLoading
-                    ? '...'
-                    : '${_portfolioTrendPercent >= 0 ? '+' : ''}${_portfolioTrendPercent.toStringAsFixed(1)}%',
-                accent: const Color(0xFF2E7D32),
-                icon: Icons.trending_up,
-              ),
-              _metricSquareCard(
-                title: 'Approval Rate',
-                value: _financeLoading ? '...' : '${_repaymentRate.toStringAsFixed(1)}%',
-                accent: const Color(0xFF2E7D32),
-                icon: Icons.check_circle_outline,
-              ),
-              _metricSquareCard(
-                title: 'Active Credit',
-                value: _financeLoading ? '...' : '$_activeCreditCount',
-                subtitle: 'Approved Requests',
-                accent: const Color(0xFF2E7D32),
-                icon: Icons.groups_outlined,
-              ),
-            ],
-          ),
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -285,28 +247,18 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                 ? [const Center(child: CircularProgressIndicator())]
                 : _financeRequests.isEmpty
                     ? [const Center(child: Text('No activity yet'))]
-                    : [
-                        GridView.count(
-                          crossAxisCount: _gridColumns(context),
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: _gridAspectRatio(context),
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: _financeRequests.take(6).map((req) {
-                            final status = (req['status'] ?? 'pending').toString();
-                            final amount = (req['amount'] as num? ?? 0).toDouble();
-                            final statusColor = _requestStatusColor(status);
-                            return _activityTile(
-                              req['farmerName']?.toString() ?? 'Farmer',
-                              req['title']?.toString() ?? '',
-                              '${amount.toStringAsFixed(0)} MAD',
-                              _requestStatusLabel(status),
-                              statusColor,
-                            );
-                          }).toList(),
-                        )
-                      ],
+                    : _financeRequests.take(6).map((req) {
+                        final status = (req['status'] ?? 'pending').toString();
+                        final amount = (req['amount'] as num? ?? 0).toDouble();
+                        final statusColor = _requestStatusColor(status);
+                        return _activityTile(
+                          req['farmerName']?.toString() ?? 'Farmer',
+                          req['title']?.toString() ?? '',
+                          '${amount.toStringAsFixed(0)} MAD',
+                          _requestStatusLabel(status),
+                          statusColor,
+                        );
+                      }).toList(),
           ),
         ],
       ),
@@ -1074,38 +1026,60 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
     String? subtitle,
   }) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           )
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: accent, size: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: accent, size: 24),
+              ),
+              if (subtitle != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: _primaryGreen,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 10),
           Text(
             value,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 22,
+            style: TextStyle(
+              fontSize: 24,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1A1D1A),
+              color: _textColor,
             ),
           ),
           const SizedBox(height: 4),
@@ -1113,17 +1087,8 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
             title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Color(0xFF757575), fontSize: 12),
+            style: TextStyle(color: _textLight, fontSize: 12),
           ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Color(0xFF757575), fontSize: 11),
-            ),
-          ],
         ],
       ),
     );
@@ -1137,38 +1102,76 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
     Color amountColor,
   ) {
     return Container(
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF4F6F4),
-                  borderRadius: BorderRadius.circular(14),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F6F4),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.upload_file, color: Color(0xFF5A5E5A), size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: Color(0xFF1A1D1A),
+                  ),
                 ),
-                child: const Icon(Icons.upload_file, color: Color(0xFF5A5E5A), size: 22),
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Color(0xFF757575), fontSize: 12),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                amount,
+                style: TextStyle(
+                  color: amountColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
               ),
+              const SizedBox(height: 4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: amountColor.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(12),
+                  color: amountColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   status,
@@ -1176,28 +1179,12 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                     color: amountColor,
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.4,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF1A1D1A)),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Color(0xFF757575), fontSize: 12),
-          ),
-          const Spacer(),
-          Text(amount, style: TextStyle(color: amountColor, fontWeight: FontWeight.w700)),
         ],
       ),
     );

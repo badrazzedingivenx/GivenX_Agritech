@@ -98,7 +98,7 @@ class ApiService {
 
   static Future<List<dynamic>> getProducts({String? sellerId}) async {
     String url = ApiConstants.products;
-    if (sellerId != null) url += '?sellerId=$sellerId';
+    if (sellerId != null) url += '?farmerId=$sellerId';
     return _getList(url);
   }
 

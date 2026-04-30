@@ -1440,7 +1440,17 @@ class _FarmerProductsTabState extends State<_FarmerProductsTab> {
     });
     try {
       final user = widget.currentUser ?? await SessionService.getUser();
-      final data = await ApiService.getProducts(sellerId: user?.id?.toString());
+      final sellerId = user?.id?.toString();
+      if (sellerId == null) {
+        // No valid user yet — show empty list, not all products
+        if (!mounted) return;
+        setState(() {
+          _products = [];
+          _loading = false;
+        });
+        return;
+      }
+      final data = await ApiService.getProducts(sellerId: sellerId);
       if (!mounted) return;
       setState(() {
         _products = data
@@ -1590,7 +1600,7 @@ class _FarmerProductsTabState extends State<_FarmerProductsTab> {
         backgroundColor: widget.green,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text('Add Product'),
+        label: Text(_products.isEmpty ? 'Add First Product' : 'Add Product'),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -1701,15 +1711,6 @@ class _FarmerProductsTabState extends State<_FarmerProductsTab> {
                                       style: TextStyle(
                                           color: widget.textLight,
                                           fontSize: 15)),
-                                  const SizedBox(height: 8),
-                                  ElevatedButton.icon(
-                                    onPressed: () => _openProductSheet(),
-                                    icon: const Icon(Icons.add),
-                                    label: const Text('Add First Product'),
-                                    style: ElevatedButton.styleFrom(
-                                        backgroundColor: widget.green,
-                                        foregroundColor: Colors.white),
-                                  ),
                                 ],
                               ),
                             )

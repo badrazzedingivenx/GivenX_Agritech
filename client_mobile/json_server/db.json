@@ -71,6 +71,90 @@
       "email": "user@test.com",
       "password": "1234",
       "role": "user"
+    },
+    {
+      "email": "aymanmoutie@gmail.com",
+      "password": "ayman1234",
+      "role": "Transporteur",
+      "fullName": "aymanmoutie",
+      "phone": "0676457654",
+      "city": "casablanca",
+      "vehicleType": "Pickup",
+      "capacity": "7000",
+      "id": 8
+    },
+    {
+      "email": "FouFouRestaurant@gmail.com",
+      "password": "FouFou1234",
+      "role": "Buyer",
+      "buyerType": "restaurant",
+      "fullName": "FouFou_Restaurant",
+      "phone": "0687987654",
+      "city": "agadir",
+      "companyName": "FouFou_Restaurant",
+      "cuisineType": "Moroccan",
+      "dailyOrderVolume": "Medium",
+      "id": 9
+    },
+    {
+      "email": "MonaIndustry@gmail.com",
+      "password": "mona1234",
+      "role": "Buyer",
+      "buyerType": "industry",
+      "fullName": "MonaIndustry",
+      "phone": "0576876433",
+      "city": "casablanca",
+      "companyName": "MonaIndustry",
+      "industryType": "Dairy Processing",
+      "certification": "",
+      "id": 10
+    },
+    {
+      "email": "admin@demo-bank.com",
+      "password": "cih1234",
+      "role": "Banque",
+      "fullName": "CIH banc",
+      "bankName": "CIH banc",
+      "phone": "0567897644",
+      "city": "agadir",
+      "bankType": "Microfinance",
+      "logoPath": "blob:http://localhost:51795/e58e80e1-a171-4927-a068-9a5f833d9887",
+      "id": 11,
+      "profileImage": "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"
+    },
+    {
+      "id": 12,
+      "email": "farmer2@gmail.com",
+      "password": "farmer123",
+      "role": "Agriculteur",
+      "fullName": "Zakaria Farmer",
+      "phone": "0600000001",
+      "city": "casablanca",
+      "farmingType": "Agriculture",
+      "mainProducts": "Maize, Wheat"
+    },
+    {
+      "email": "MarocBanc@gmail.ma",
+      "password": "Banc123",
+      "role": "Banque",
+      "fullName": "",
+      "bankName": "Maroc  Banc",
+      "phone": "0567879876",
+      "city": "Casa blanca",
+      "bankType": "Microfinance",
+      "logoPath": "blob:http://localhost:60473/cbd729d6-06c5-4345-b399-865b9c4a733e",
+      "id": 13
+    },
+    {
+      "email": "soukaina@gmail.com",
+      "password": "soukaina123",
+      "role": "Agriculteur",
+      "fullName": "soukaina JOUAH",
+      "phone": "0673159855",
+      "city": "Deroua",
+      "farmingType": "Both",
+      "mainProducts": "Vegetables, Fruits, Other",
+      "id": 14
     }
   ],
   "banks": [
@@ -118,24 +202,6 @@
       "isUrgent": false,
       "isAvailable": true,
       "createdAt": "2025-04-01T10:00:00.000Z"
-    },
-    {
-      "id": 2,
-      "name": "Bananas",
-      "description": "Imported premium bananas",
-      "price": 15,
-      "unit": "Kg",
-      "quantity": 200,
-      "category": "fruits",
-      "location": "Agadir",
-      "farmerId": 1,
-      "farmerName": "Ali Farmer",
-      "image": "assets/images/appbanans.png",
-      "images": [],
-      "isOrganic": false,
-      "isUrgent": false,
-      "isAvailable": true,
-      "createdAt": "2025-04-02T10:00:00.000Z"
     },
     {
       "id": 4,
@@ -841,7 +907,7 @@
         }
       ],
       "totalAmount": 12.5,
-      "status": "pending",
+      "status": "confirmed",
       "createdAt": "2026-04-24T11:56:37.112",
       "id": 32
     },
@@ -881,7 +947,7 @@
         }
       ],
       "totalAmount": 12.5,
-      "status": "pending",
+      "status": "cancelled",
       "createdAt": "2026-04-24T12:22:49.409447",
       "id": 34
     },
@@ -901,7 +967,7 @@
         }
       ],
       "totalAmount": 420,
-      "status": "pending",
+      "status": "confirmed",
       "createdAt": "2026-04-24T12:22:52.573089",
       "id": 35
     }
@@ -943,7 +1009,7 @@
       "deliveryLocation": "Rabat",
       "weight": 5000,
       "containerCount": 3,
-      "status": "accepted",
+      "status": "pickedUp",
       "estimatedDeliveryDate": "2026-04-24T15:34:14.183",
       "createdAt": "2026-04-21T15:34:14.187",
       "id": 3,
@@ -962,6 +1028,19 @@
       "estimatedDeliveryDate": "2026-04-27T12:23:37.420445",
       "createdAt": "2026-04-24T12:23:37.420513",
       "id": 4
+    },
+    {
+      "orderId": null,
+      "buyerId": 2,
+      "buyerType": "industry",
+      "pickupLocation": "Rabat",
+      "deliveryLocation": "Fes",
+      "weight": 500,
+      "containerCount": 1,
+      "status": "requested",
+      "estimatedDeliveryDate": "2026-05-02T16:15:06.757",
+      "createdAt": "2026-04-29T16:15:06.757",
+      "id": 5
     }
   ],
   "messages": [
@@ -1011,7 +1090,7 @@
       "receiverId": 1,
       "receiverName": "Ali Farmer",
       "content": "bghit a khoya n commander mn 3ndk 70 kg dyal l fraise wach kayn f stock?",
-      "isRead": false,
+      "isRead": true,
       "createdAt": "2026-04-22T13:38:56.843",
       "id": 5
     },
@@ -1051,7 +1130,7 @@
       "receiverId": 1,
       "receiverName": "Ali Farmer",
       "content": "hello",
-      "isRead": false,
+      "isRead": true,
       "createdAt": "2026-04-24T11:57:05.843",
       "id": 9
     },
@@ -1061,7 +1140,7 @@
       "receiverId": 1,
       "receiverName": "Ali Farmer",
       "content": "how i can help you?",
-      "isRead": false,
+      "isRead": true,
       "createdAt": "2026-04-24T12:22:33.050156",
       "id": 10
     },
@@ -1071,9 +1150,79 @@
       "receiverId": 1,
       "receiverName": "Ali Farmer",
       "content": "Your bulk offer for potatos was accepted. Please continue in chat.",
-      "isRead": false,
+      "isRead": true,
       "createdAt": "2026-04-24T12:24:50.834663",
       "id": 11
+    },
+    {
+      "senderId": 1,
+      "senderName": "Ali Farmer",
+      "receiverId": 7,
+      "receiverName": "Ahmed Restaurant",
+      "content": "oui mer7ba",
+      "isRead": false,
+      "createdAt": "2026-04-25T23:55:25.705",
+      "id": 12
+    },
+    {
+      "senderId": 1,
+      "senderName": "Ali Farmer",
+      "receiverId": 7,
+      "receiverName": "Ahmed Restaurant",
+      "content": "cc",
+      "isRead": false,
+      "createdAt": "2026-04-29T16:06:46.298",
+      "id": 13
+    },
+    {
+      "senderId": 2,
+      "senderName": "Sara Industry",
+      "receiverId": 1,
+      "receiverName": "Ali Farmer",
+      "content": "Your bulk offer for vraise was accepted. Please continue in chat.",
+      "isRead": true,
+      "createdAt": "2026-04-29T16:14:17.917",
+      "id": 14
+    },
+    {
+      "senderId": 2,
+      "senderName": "Sara Industry",
+      "receiverId": 1,
+      "receiverName": "Ali Farmer",
+      "content": "cc",
+      "isRead": true,
+      "createdAt": "2026-04-29T16:15:53.199",
+      "id": 15
+    },
+    {
+      "senderId": 2,
+      "senderName": "Sara Industry",
+      "receiverId": 1,
+      "receiverName": "Ali Farmer",
+      "content": "cccccc",
+      "isRead": true,
+      "createdAt": "2026-04-29T16:16:13.299",
+      "id": 16
+    },
+    {
+      "senderId": 1,
+      "senderName": "Ali Farmer",
+      "receiverId": 2,
+      "receiverName": "Sara Industry",
+      "content": "malk?",
+      "isRead": true,
+      "createdAt": "2026-04-29T16:21:01.969",
+      "id": 17
+    },
+    {
+      "senderId": 2,
+      "senderName": "Sara Industry",
+      "receiverId": 1,
+      "receiverName": "Ali Farmer",
+      "content": "rah sda3tina",
+      "isRead": true,
+      "createdAt": "2026-04-29T16:21:20.556",
+      "id": 18
     }
   ],
   "payments": [
@@ -1160,10 +1309,11 @@
       "unit": "Kg",
       "budget": 10000,
       "deadline": "2026-04-30T00:00:00.000",
-      "status": "open",
-      "acceptedOfferId": null,
+      "status": "in_progress",
+      "acceptedOfferId": 4,
       "createdAt": "2026-04-21T22:17:19.752",
-      "id": 6
+      "id": 6,
+      "updatedAt": "2026-04-29T16:14:17.844"
     }
   ],
   "bulkOffers": [
@@ -1211,9 +1361,10 @@
       "pricePerUnit": 20000,
       "proposedQuantity": 4000,
       "note": "",
-      "status": "pending",
+      "status": "accepted",
       "createdAt": "2026-04-22T13:34:16.981",
-      "id": 4
+      "id": 4,
+      "updatedAt": "2026-04-29T16:14:17.774"
     },
     {
       "requestId": 2,
@@ -1265,7 +1416,7 @@
       "amount": 5000000,
       "purpose": "infrastructure",
       "description": "I need this loan to buy some new materials that I will use for my harvest.",
-      "status": "pending",
+      "status": "approved",
       "createdAt": "2026-04-24T11:06:45.223",
       "id": 3
     }

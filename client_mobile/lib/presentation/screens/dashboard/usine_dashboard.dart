@@ -387,36 +387,40 @@ class _HomeTabState extends State<_HomeTab> {
             ],
           ),
           const SizedBox(height: 20),
-          GridView.count(
-            crossAxisCount: _gridColumns(context),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: _gridAspectRatio(context),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _buildStatCard(
-                  icon: Icons.local_shipping,
-                  iconBgColor: const Color(0xFFDDF1E3),
-                  iconColor: widget.primaryGreen,
-                  value: _loading ? '...' : '$_shipmentCount',
-                  title: _isIndustry ? 'Sourcing Shipments' : 'Delivery Shipments',
-                  badge: _inTransitCount > 0 ? '$_inTransitCount in transit' : null),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const OrdersPage()),
-                  );
-                },
-                child: _buildStatCard(
-                    icon: Icons.shopping_cart,
-                    iconBgColor: const Color(0xFFFCEAE8),
-                    iconColor: const Color(0xFFB52B35),
-                    value: _loading ? '...' : '$_recentOrderCount',
-                    title: _isIndustry ? 'Open Procurement Orders' : 'Pending Orders'),
-              ),
-            ],
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    icon: Icons.local_shipping,
+                    iconBgColor: const Color(0xFFDDF1E3),
+                    iconColor: widget.primaryGreen,
+                    value: _loading ? '...' : '$_shipmentCount',
+                    title: _isIndustry ? 'Sourcing Shipments' : 'Delivery Shipments',
+                    badge: _inTransitCount > 0 ? '$_inTransitCount in transit' : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const OrdersPage()),
+                      );
+                    },
+                    child: _buildStatCard(
+                      icon: Icons.shopping_cart,
+                      iconBgColor: const Color(0xFFFCEAE8),
+                      iconColor: const Color(0xFFB52B35),
+                      value: _loading ? '...' : '$_recentOrderCount',
+                      title: _isIndustry ? 'Open Procurement Orders' : 'Pending Orders',
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
           LiveNetworkCard(

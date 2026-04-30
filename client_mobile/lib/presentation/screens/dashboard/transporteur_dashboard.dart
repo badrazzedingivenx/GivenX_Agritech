@@ -207,33 +207,44 @@ class _TransporteurDashboardState extends State<TransporteurDashboard> {
               ],
             ),
             const SizedBox(height: 24),
-            GridView.count(
-              crossAxisCount: _gridColumns(context),
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: _gridAspectRatio(context),
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _fleetCard(),
-                _nextPickupCard(),
-                _statCard(
-                  'LIVE',
-                  _loading ? '...' : '${_completionRate.toStringAsFixed(0)}%',
-                  'DELIVERY COMPLETION',
-                  Icons.local_shipping,
-                  Colors.green,
-                  _loading ? 0 : (_completionRate / 100).clamp(0, 1).toDouble(),
-                ),
-                _statCard(
-                  'OPEN',
-                  _loading ? '...' : '$_pendingCount',
-                  'MY ACTIVE SHIPMENTS',
-                  Icons.timeline,
-                  Colors.pink,
-                  _loading ? 0 : _pendingRate,
-                ),
-              ],
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: _fleetCard()),
+                  const SizedBox(width: 12),
+                  Expanded(child: _nextPickupCard()),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _statCard(
+                      'LIVE',
+                      _loading ? '...' : '${_completionRate.toStringAsFixed(0)}%',
+                      'DELIVERY COMPLETION',
+                      Icons.local_shipping,
+                      Colors.green,
+                      _loading ? 0 : (_completionRate / 100).clamp(0, 1).toDouble(),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _statCard(
+                      'OPEN',
+                      _loading ? '...' : '$_pendingCount',
+                      'MY ACTIVE SHIPMENTS',
+                      Icons.timeline,
+                      Colors.pink,
+                      _loading ? 0 : _pendingRate,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
           ],
@@ -1197,12 +1208,12 @@ class _TransporteurDashboardState extends State<TransporteurDashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: _primaryGreen.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.local_shipping, color: Color(0xFF23763D), size: 20),
+                child: const Icon(Icons.local_shipping, color: Color(0xFF23763D), size: 24),
               ),
               Text(
                 'LIVE',
@@ -1215,28 +1226,23 @@ class _TransporteurDashboardState extends State<TransporteurDashboard> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             _loading ? '...' : '$_activeCount',
-            style: const TextStyle(
-              color: Color(0xFF1A1D1A),
-              fontSize: 30,
+            style: TextStyle(
+              color: _textColor,
+              fontSize: 24,
               fontWeight: FontWeight.w800,
-              height: 1.0,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Active Shipments',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Color(0xFF757575),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(color: _textLight, fontSize: 12),
           ),
-          const Spacer(),
+          const SizedBox(height: 8),
           Text(
             _loading ? '...' : '$_deliveredCount delivered',
             maxLines: 1,
@@ -1254,6 +1260,7 @@ class _TransporteurDashboardState extends State<TransporteurDashboard> {
 
   Widget _statCard(String tag, String val, String sub, IconData icon, Color color, double progress) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1278,15 +1285,22 @@ class _TransporteurDashboardState extends State<TransporteurDashboard> {
                   color: color.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: color, size: 22),
+                child: Icon(icon, color: color, size: 24),
               ),
-              Text(tag, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(tag, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          Text(val, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF1A1D1A))),
+          Text(val, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: _textColor)),
           const SizedBox(height: 4),
-          Text(sub, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF757575), fontSize: 12)),
+          Text(sub, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: _textLight, fontSize: 12)),
           const SizedBox(height: 10),
           LinearProgressIndicator(value: progress, color: color, backgroundColor: Colors.grey.shade100, minHeight: 6),
         ],
@@ -1302,43 +1316,43 @@ class _TransporteurDashboardState extends State<TransporteurDashboard> {
         .toList();
     final next = pending.isNotEmpty ? pending.first : null;
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           )
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(15)),
-                child: const Icon(Icons.inventory_2_outlined, color: Colors.green),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.inventory_2_outlined, color: Colors.green, size: 24),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             next != null ? 'Next: ${next.pickupLocation}' : 'No upcoming pickups',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 24, color: _textColor),
           ),
           const SizedBox(height: 4),
           Text(
             next != null ? '${next.deliveryLocation} • ${next.status.label}' : '',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.grey, fontSize: 13),
+            style: TextStyle(color: _textLight, fontSize: 12),
           ),
         ],
       ),

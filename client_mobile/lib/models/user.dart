@@ -95,6 +95,9 @@ class User {
   final String? bankType;
   final String? servicesOffered;
 
+  // Profile
+  final String? profileImage; // base64-encoded image stored in DB
+
   // Auth
   final String? token;
   final bool isVerified;
@@ -126,6 +129,7 @@ class User {
     this.logoPath,
     this.bankType,
     this.servicesOffered,
+    this.profileImage,
     this.token,
     this.isVerified = false,
   });
@@ -161,6 +165,7 @@ class User {
       logoPath: json['logoPath'] as String?,
       bankType: json['bankType'] as String?,
       servicesOffered: json['servicesOffered'] as String?,
+      profileImage: json['profileImage'] as String?,
       token: json['token'] as String?,
       isVerified: json['isVerified'] as bool? ?? false,
     );
@@ -194,6 +199,7 @@ class User {
       if (logoPath != null) 'logoPath': logoPath,
       if (bankType != null) 'bankType': bankType,
       if (servicesOffered != null) 'servicesOffered': servicesOffered,
+      if (profileImage != null) 'profileImage': profileImage,
       if (token != null) 'token': token,
       'isVerified': isVerified,
     };
@@ -226,6 +232,7 @@ class User {
     String? logoPath,
     String? bankType,
     String? servicesOffered,
+    String? profileImage,
     String? token,
     bool? isVerified,
   }) {
@@ -256,6 +263,7 @@ class User {
       logoPath: logoPath ?? this.logoPath,
       bankType: bankType ?? this.bankType,
       servicesOffered: servicesOffered ?? this.servicesOffered,
+      profileImage: profileImage ?? this.profileImage,
       token: token ?? this.token,
       isVerified: isVerified ?? this.isVerified,
     );

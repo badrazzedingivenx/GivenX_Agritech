@@ -46,7 +46,8 @@ class _FermerFormState extends State<FermerForm> {
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
-      child: Column(
+      child: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -215,9 +216,9 @@ class _FermerFormState extends State<FermerForm> {
                 backgroundColor: const Color(0xFF2E7D32),
                 foregroundColor: Colors.white,
               ),
-              child: Text(
-                AppLocalizations.of(context)!.loginSignup,
-                style: const TextStyle(
+              child: const Text(
+                'Register',
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
@@ -227,6 +228,7 @@ class _FermerFormState extends State<FermerForm> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -271,7 +273,7 @@ class _FermerFormState extends State<FermerForm> {
         if (required && (value == null || value.isEmpty)) {
           return AppLocalizations.of(context)!.registerFieldRequired;
         }
-        if (email && value != null && !RegExp(r'^[\w\-.]+@[\w\-]+\.[a-zA-Z]{2,4} 24').hasMatch(value)) {
+        if (email && value != null && !RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$').hasMatch(value)) {
           return AppLocalizations.of(context)!.registerInvalidEmail;
         }
         return null;

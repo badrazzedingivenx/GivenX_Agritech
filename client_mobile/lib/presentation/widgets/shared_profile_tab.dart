@@ -102,6 +102,18 @@ class _SharedProfileTabState extends State<SharedProfileTab> {
     if (savedImage != null) {
       try { bytes = base64Decode(savedImage); } catch (_) {}
     }
+    // If not in prefs, try loading from the DB (persisted profileImage)
+    if (bytes == null) {
+      try {
+        final user = await SessionService.getUser();
+        final dbImage = user?.profileImage;
+        if (dbImage != null && dbImage.isNotEmpty) {
+          bytes = base64Decode(dbImage);
+          // Cache it locally so we don't hit the DB every time
+          await prefs.setString(_imageKey, dbImage);
+        }
+      } catch (_) {}
+    }
     setState(() {
       _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
       _biometricEnabled = prefs.getBool('biometric_enabled') ?? false;
@@ -155,8 +167,17 @@ class _SharedProfileTabState extends State<SharedProfileTab> {
     if (picked != null && mounted) {
       if (kIsWeb) {
         final bytes = await picked.readAsBytes();
+        final encoded = base64Encode(bytes);
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_imageKey, base64Encode(bytes));
+        await prefs.setString(_imageKey, encoded);
+        // Persist to DB
+        try {
+          final user = await SessionService.getUser();
+          if (user?.id != null) {
+            await ApiService.updateUser(user!.id!, {'profileImage': encoded});
+            await SessionService.saveSession(user.copyWith(profileImage: encoded));
+          }
+        } catch (_) {}
         if (!mounted) return;
         setState(() {
           _imageBytes = bytes;
@@ -164,8 +185,17 @@ class _SharedProfileTabState extends State<SharedProfileTab> {
         });
       } else {
         final bytes = await picked.readAsBytes();
+        final encoded = base64Encode(bytes);
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_imageKey, base64Encode(bytes));
+        await prefs.setString(_imageKey, encoded);
+        // Persist to DB
+        try {
+          final user = await SessionService.getUser();
+          if (user?.id != null) {
+            await ApiService.updateUser(user!.id!, {'profileImage': encoded});
+            await SessionService.saveSession(user.copyWith(profileImage: encoded));
+          }
+        } catch (_) {}
         if (!mounted) return;
         setState(() {
           _image = File(picked.path);

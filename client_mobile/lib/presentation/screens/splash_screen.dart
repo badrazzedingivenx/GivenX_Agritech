@@ -115,7 +115,7 @@ class _SplashScreenState extends State<SplashScreen>
           // Move logo higher by using a Column
           Column(
             children: [
-              const SizedBox(height: 40), // Move logo even higher
+              const SizedBox(height: 20), // Move logo even higher
               FadeTransition(
                 opacity: _animation,
                 child: ScaleTransition(

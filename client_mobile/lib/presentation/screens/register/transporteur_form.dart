@@ -29,7 +29,8 @@ class _TransporteurFormState extends State<TransporteurForm> {
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
-      child: Column(
+      child: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -193,9 +194,9 @@ class _TransporteurFormState extends State<TransporteurForm> {
                 backgroundColor: const Color(0xFF2E7D32),
                 foregroundColor: Colors.white,
               ),
-              child: Text(
-                AppLocalizations.of(context)!.loginSignup,
-                style: const TextStyle(
+              child: const Text(
+                'Register',
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
@@ -205,6 +206,7 @@ class _TransporteurFormState extends State<TransporteurForm> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

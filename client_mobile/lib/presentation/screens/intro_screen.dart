@@ -19,7 +19,6 @@ class IntroScreen extends StatefulWidget {
 
 class _IntroScreenState extends State<IntroScreen> {
   final PageController _controller = PageController();
-  int _currentPage = 0;
 
   List<Map<String, String>> _localizedPages(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -30,7 +29,7 @@ class _IntroScreenState extends State<IntroScreen> {
         'desc': loc.introFarmerDesc,
       },
       {
-        'image': 'assets/images/app3.png',
+        'image': 'assets/images/app30.png',
         'title': loc.introFactoryTitle,
         'desc': loc.introFactoryDesc,
       },
@@ -81,11 +80,7 @@ class _IntroScreenState extends State<IntroScreen> {
                     child: PageView.builder(
                       controller: _controller,
                       itemCount: pages.length,
-                      onPageChanged: (index) {
-                        setState(() {
-                          _currentPage = index;
-                        });
-                      },
+                      onPageChanged: (_) {},
                       itemBuilder: (context, index) {
                         final page = pages[index];
                         return LayoutBuilder(
