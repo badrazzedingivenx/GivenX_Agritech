@@ -106,13 +106,7 @@ build/app/outputs/flutter-apk/app-release.apk
 * Ensure correct API base URL configuration
 
 ---
-
-## 👨‍💻 Internship Context
-
-This project was developed as part of an **internship** to demonstrate a prototype solution for agricultural digitalization.
-
----
 ## 👤 Author
 
 * **Soukaina Jouah**
-* Internship Project
+
