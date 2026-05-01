@@ -1,86 +1,24 @@
 import 'package:flutter/material.dart';
-import '../../../services/api_service.dart';
-import '../../../services/session_service.dart';
+import 'package:provider/provider.dart';
+import '../../../viewmodels/conversations_viewmodel.dart';
 import 'chat_screen.dart';
 
-class ConversationsScreen extends StatefulWidget {
+class ConversationsScreen extends StatelessWidget {
   const ConversationsScreen({super.key});
 
   @override
-  State<ConversationsScreen> createState() => _ConversationsScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<ConversationsViewModel>(
+      create: (_) => ConversationsViewModel()..loadConversations(),
+      child: const _ConversationsView(),
+    );
+  }
 }
 
-class _ConversationsScreenState extends State<ConversationsScreen> {
+class _ConversationsView extends StatelessWidget {
+  const _ConversationsView();
+
   static const Color _primary = Color(0xFF1B5E20);
-
-  List<Map<String, dynamic>> _conversations = [];
-  bool _loading = true;
-  int? _currentUserId;
-  String _currentUserName = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadConversations();
-  }
-
-  Future<void> _loadConversations() async {
-    setState(() => _loading = true);
-    try {
-      final user = await SessionService.getUser();
-      if (user == null) return;
-      _currentUserId = user.id;
-      _currentUserName = user.fullName;
-
-      // Get all messages where this user is sender or receiver
-      final sent = await ApiService.getMessages(senderId: user.id.toString());
-      final received = await ApiService.getMessages(receiverId: user.id.toString());
-
-      final allMessages = [
-        ...sent.cast<Map<String, dynamic>>(),
-        ...received.cast<Map<String, dynamic>>(),
-      ];
-
-      // Group by conversation partner
-      final Map<int, Map<String, dynamic>> convMap = {};
-      for (final msg in allMessages) {
-        final senderId = msg['senderId'] as int? ?? 0;
-        final receiverId = msg['receiverId'] as int? ?? 0;
-        final partnerId = senderId == user.id ? receiverId : senderId;
-        final partnerName = senderId == user.id
-            ? (msg['receiverName'] ?? 'Unknown')
-            : (msg['senderName'] ?? 'Unknown');
-
-        if (!convMap.containsKey(partnerId) ||
-            (msg['createdAt'] ?? '').compareTo(convMap[partnerId]!['lastMessageTime'] ?? '') > 0) {
-          convMap[partnerId] = {
-            'partnerId': partnerId,
-            'partnerName': partnerName,
-            'lastMessage': msg['content'] ?? '',
-            'lastMessageTime': msg['createdAt'] ?? '',
-            'isRead': msg['isRead'] ?? true,
-            'isFromMe': senderId == user.id,
-          };
-        }
-      }
-
-      final convList = convMap.values
-          .where((c) =>
-              (c['partnerId'] as int? ?? 0) != 0 &&
-              (c['partnerName'] as String? ?? '').isNotEmpty)
-          .toList()
-        ..sort((a, b) => (b['lastMessageTime'] ?? '').compareTo(a['lastMessageTime'] ?? ''));
-
-      if (mounted) {
-        setState(() {
-          _conversations = convList;
-          _loading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
 
   String _formatTime(String? iso) {
     if (iso == null || iso.isEmpty) return '';
@@ -100,6 +38,7 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<ConversationsViewModel>();
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -108,9 +47,9 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
         elevation: 0,
         toolbarHeight: 0,
       ),
-      body: _loading
+      body: vm.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _conversations.isEmpty
+          : vm.conversations.isEmpty
               ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -124,12 +63,12 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                   ),
                 )
               : RefreshIndicator(
-                  onRefresh: _loadConversations,
+                  onRefresh: vm.loadConversations,
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: _conversations.length,
+                    itemCount: vm.conversations.length,
                     itemBuilder: (_, i) {
-                      final conv = _conversations[i];
+                      final conv = vm.conversations[i];
                       final isUnread = !(conv['isRead'] as bool? ?? true) && !(conv['isFromMe'] as bool? ?? false);
 
                       return Container(
@@ -198,12 +137,12 @@ class _ConversationsScreenState extends State<ConversationsScreen> {
                                 builder: (_) => ChatScreen(
                                   partnerId: conv['partnerId'] as int,
                                   partnerName: conv['partnerName'] as String,
-                                  currentUserId: _currentUserId!,
-                                  currentUserName: _currentUserName,
+                                  currentUserId: vm.currentUserId!,
+                                  currentUserName: vm.currentUserName,
                                 ),
                               ),
                             );
-                            _loadConversations();
+                            vm.loadConversations();
                           },
                         ),
                       );

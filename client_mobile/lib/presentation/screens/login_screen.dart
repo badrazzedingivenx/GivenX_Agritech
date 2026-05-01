@@ -2,11 +2,11 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'package:agriflow/l10n/app_localizations.dart';
-import '../../services/api_service.dart';
-import '../../services/session_service.dart';
 import '../../models/user.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import 'dashboard/farmer_dashboard.dart';
 import 'dashboard/usine_dashboard.dart';
 import 'dashboard/transporteur_dashboard.dart';
@@ -55,7 +55,10 @@ class LoginScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: _LoginForm(),
+                      child: ChangeNotifierProvider<AuthViewModel>(
+                  create: (_) => AuthViewModel(),
+                  child: _LoginForm(),
+                ),
                     ),
                   ),
                 ),
@@ -80,62 +83,42 @@ class _LoginFormState extends State<_LoginForm> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
-  String? _emailError;
-  String? _passwordError;
-  bool _isLoading = false;
-
   void _validateAndLogin() async {
-    setState(() {
-      _emailError = null;
-      _passwordError = null;
-    });
-
+    final vm = context.read<AuthViewModel>();
     final email = _usernameController.text.trim();
     final password = _passwordController.text;
-    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final loc = AppLocalizations.of(context)!;
 
+    // Perform validation through ViewModel (updates emailError/passwordError)
+    // We also set locale-specific error messages here
+    vm.setEmailError(null);
+    vm.setPasswordError(null);
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     if (email.isEmpty) {
-      setState(() => _emailError = AppLocalizations.of(context)!.loginEmailRequired);
+      vm.setEmailError(loc.loginEmailRequired);
       return;
     } else if (!emailRegex.hasMatch(email)) {
-      setState(() => _emailError = AppLocalizations.of(context)!.loginEmailInvalid);
+      vm.setEmailError(AppLocalizations.of(context)!.loginEmailInvalid);
       return;
     }
     if (password.isEmpty) {
-      setState(() => _passwordError = AppLocalizations.of(context)!.loginPasswordRequired);
+      vm.setPasswordError(AppLocalizations.of(context)!.loginPasswordRequired);
       return;
     }
 
-    setState(() => _isLoading = true);
-
-    try {
-      final result = await ApiService.login(email, password);
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      final userData = result['user'] as Map<String, dynamic>;
-      final token = result['token'] as String?;
-      if (token != null) {
-        userData['token'] = token;
-      }
-      final user = User.fromJson(userData);
-
-      // Save session
-      await SessionService.saveSession(user);
-
-      if (!mounted) return;
+    final user = await vm.login(email, password);
+    if (!mounted) return;
+    if (user != null) {
       _navigateToDashboard(user);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      final errorMsg = e.toString();
-      if (errorMsg.contains('401')) {
+    } else {
+      final errorMsg = vm.errorMessage ?? '';
+      if (errorMsg == 'invalid_credentials') {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context)!.loginInvalidCredentials)),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Connection error: $e')),
+          SnackBar(content: Text(errorMsg)),
         );
       }
     }
@@ -207,6 +190,7 @@ class _LoginFormState extends State<_LoginForm> {
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<AuthViewModel>();
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,7 +231,7 @@ class _LoginFormState extends State<_LoginForm> {
             hintStyle: const TextStyle(color: Colors.white70),
             prefixIcon: const Icon(Icons.email, color: Colors.white70),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            errorText: _emailError,
+            errorText: vm.emailError,
             errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -283,7 +267,7 @@ class _LoginFormState extends State<_LoginForm> {
                 });
               },
             ),
-            errorText: _passwordError,
+            errorText: vm.passwordError,
             errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 13),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -466,7 +450,7 @@ class _LoginFormState extends State<_LoginForm> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _isLoading ? null : _validateAndLogin,
+            onPressed: vm.isLoading ? null : _validateAndLogin,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -482,7 +466,7 @@ class _LoginFormState extends State<_LoginForm> {
               backgroundColor: const Color(0xFF2E7D32),
               foregroundColor: Colors.white,
             ),
-            child: _isLoading
+            child: vm.isLoading
                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                 : Text(
               AppLocalizations.of(context)!.loginButton,

@@ -74,6 +74,10 @@ class ApiService {
     return _patch('${ApiConstants.users}/$id', data);
   }
 
+  static Future<void> deleteUser(int id) async {
+    return _delete('${ApiConstants.users}/$id');
+  }
+
   static Future<Map<String, dynamic>> getUserById(int id) async {
     final response = await http.get(Uri.parse('${ApiConstants.users}/$id'));
     if (response.statusCode == 200) {

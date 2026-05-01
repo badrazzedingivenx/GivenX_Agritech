@@ -3,10 +3,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../services/api_service.dart';
-import '../../../services/session_service.dart';
-import '../../../models/user.dart';
+import '../../../viewmodels/register_viewmodel.dart';
 import '../dashboard/banque_dashboard.dart';
 
 class BanqueForm extends StatefulWidget {
@@ -39,7 +38,10 @@ class _BanqueFormState extends State<BanqueForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
+    return ChangeNotifierProvider<RegisterViewModel>(
+      create: (_) => RegisterViewModel(),
+      child: Consumer<RegisterViewModel>(
+        builder: (context, vm, _) => Form(
       key: _formKey,
       child: SingleChildScrollView(
         child: Column(
@@ -98,8 +100,6 @@ class _BanqueFormState extends State<BanqueForm> {
               fillColor: Colors.white.withOpacity(0.13),
               labelText: 'Password',
               labelStyle: const TextStyle(color: Colors.white70, fontSize: 13),
-              hintText: 'Password',
-              hintStyle: const TextStyle(color: Colors.white70),
               prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70, size: 20),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               suffixIcon: IconButton(
@@ -132,8 +132,6 @@ class _BanqueFormState extends State<BanqueForm> {
               fillColor: Colors.white.withOpacity(0.13),
               labelText: 'Confirm Password',
               labelStyle: const TextStyle(color: Colors.white70, fontSize: 13),
-              hintText: 'Confirm Password',
-              hintStyle: const TextStyle(color: Colors.white70),
               prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70, size: 20),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               suffixIcon: IconButton(
@@ -164,8 +162,8 @@ class _BanqueFormState extends State<BanqueForm> {
                 final valid = _formKey.currentState!.validate();
                 if (valid) {
                   _formKey.currentState!.save();
-                  try {
-                    final result = await ApiService.registerUser({
+                  final vm = context.read<RegisterViewModel>();
+                  final user = await vm.register({
                       'email': _data['email'] ?? '',
                       'password': _data['password'] ?? '',
                       'role': 'Banque',
@@ -175,8 +173,9 @@ class _BanqueFormState extends State<BanqueForm> {
                       'city': _data['city'] ?? '',
                       'bankType': _data['bankType'] ?? '',
                       'logoPath': _uploadedLogoPath ?? '',
-                    });
-                    await SessionService.saveSession(User.fromJson(result));
+                  });
+                  if (!mounted) return;
+                  if (user != null) {
                     // Save the uploaded logo as profile picture for the bank profile tab
                     if (_uploadedLogoBytes != null) {
                       final bankName = _data['bankName'] ?? '';
@@ -215,10 +214,9 @@ class _BanqueFormState extends State<BanqueForm> {
                         ],
                       ),
                     );
-                  } catch (e) {
-                    if (!mounted) return;
+                  } else if (vm.errorMessage != null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Registration failed: $e')),
+                      SnackBar(content: Text('Registration failed: ${vm.errorMessage}')),
                     );
                   }
                 }
@@ -252,7 +250,9 @@ class _BanqueFormState extends State<BanqueForm> {
         ],
       ),
       ),
-    );
+      ),
+    ),
+  );
   }
 
   Widget _buildDropdown({
@@ -262,7 +262,7 @@ class _BanqueFormState extends State<BanqueForm> {
     required ValueChanged<String?> onChanged,
     required FormFieldSetter<String> onSaved,
     required IconData icon,
-    bool required = true,
+    bool isRequired = true,
   }) {
     return DropdownButtonFormField<String>(
       value: value,
@@ -274,7 +274,7 @@ class _BanqueFormState extends State<BanqueForm> {
           .toList(),
       onChanged: onChanged,
       onSaved: onSaved,
-      validator: required
+      validator: isRequired
           ? (v) => (v == null || v.isEmpty) ? 'Required' : null
           : null,
       decoration: InputDecoration(
@@ -320,8 +320,6 @@ class _BanqueFormState extends State<BanqueForm> {
         fillColor: Colors.white.withOpacity(0.13),
         labelText: label,
         labelStyle: const TextStyle(color: Colors.white70, fontSize: 13),
-        hintText: label,
-        hintStyle: const TextStyle(color: Colors.white70),
         prefixIcon: icon != null ? Icon(icon, color: Colors.white70, size: 20) : null,
         suffixIcon: suffixIcon,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

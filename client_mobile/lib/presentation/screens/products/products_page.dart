@@ -1,24 +1,34 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:math_expressions/math_expressions.dart';
+import 'package:provider/provider.dart';
 import '../../../models/product.dart';
 import '../../../services/api_service.dart';
-import '../../../services/session_service.dart';
+import '../../../viewmodels/products_viewmodel.dart';
 
-class ProductsPage extends StatefulWidget {
+class ProductsPage extends StatelessWidget {
   static const routeName = '/products';
   const ProductsPage({super.key});
 
   @override
-  State<ProductsPage> createState() => _ProductsPageState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<ProductsViewModel>(
+      create: (_) => ProductsViewModel()..loadProducts(),
+      child: const _ProductsPageContent(),
+    );
+  }
 }
 
-class _ProductsPageState extends State<ProductsPage> {
-  bool _isLoading = true;
-  String? _error;
+class _ProductsPageContent extends StatefulWidget {
+  const _ProductsPageContent();
 
-    void _showLowStockAlert() {
-      final lowStockProducts = myProducts.where((p) => p.quantity < 5).toList();
+  @override
+  State<_ProductsPageContent> createState() => _ProductsPageContentState();
+}
+
+class _ProductsPageContentState extends State<_ProductsPageContent> {
+
+  void _showLowStockAlert(List<Product> lowStockProducts) {
       showModalBottomSheet(
         context: context,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
@@ -50,74 +60,26 @@ class _ProductsPageState extends State<ProductsPage> {
         ),
       );
     }
-  String searchQuery = "";
-  String selectedCategory = "All";
-  String sortBy = "Name";
-
   final List<String> categories = ["All", "Vegetables", "Fruits", "Grains"];
   final List<String> units = ["Kg", "Ton", "Gram", "Piece"];
 
-  List<Product> myProducts = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProducts();
-  }
-
-  Future<void> _loadProducts() async {
-    setState(() { _isLoading = true; _error = null; });
-    try {
-      final user = await SessionService.getUser();
-      final sellerId = user?.id?.toString();
-      final data = await ApiService.getProducts(sellerId: sellerId);
-      if (!mounted) return;
-      setState(() {
-        myProducts = data.map((json) => Product.fromJson(json as Map<String, dynamic>)).toList();
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() { _error = e.toString(); _isLoading = false; });
-    }
-  }
-
-  List<Product> get filteredProducts {
-    List<Product> list = myProducts.where((product) {
-      final catName = product.category.name[0].toUpperCase() + product.category.name.substring(1);
-      final matchesCategory = selectedCategory == 'All' || catName == selectedCategory;
-      final matchesSearch = product.name.toLowerCase().contains(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    }).toList();
-
-    if (sortBy == "Price") {
-      list.sort((a, b) => a.price.compareTo(b.price));
-    } else if (sortBy == "Stock") {
-      list.sort((a, b) => a.quantity.compareTo(b.quantity));
-    } else {
-      list.sort((a, b) => a.name.compareTo(b.name));
-    }
-    return list;
-  }
-
-  int get lowStockCount => myProducts.where((p) => p.quantity < 5).length;
-
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    final vm = context.watch<ProductsViewModel>();
+    if (vm.isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator(color: Color(0xFF1B5E20))),
       );
     }
-    if (_error != null) {
+    if (vm.error != null) {
       return Scaffold(
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Error: $_error'),
+              Text('Error: ${vm.error}'),
               const SizedBox(height: 12),
-              ElevatedButton(onPressed: _loadProducts, child: const Text('Retry')),
+              ElevatedButton(onPressed: () => vm.loadProducts(), child: const Text('Retry')),
             ],
           ),
         ),
@@ -146,12 +108,12 @@ class _ProductsPageState extends State<ProductsPage> {
                 children: [
                   IconButton(
                     icon: Icon(
-                      lowStockCount > 0 ? Icons.notifications_active : Icons.notifications_none,
-                      color: lowStockCount > 0 ? Colors.orange[700] : Colors.black87,
+                      vm.lowStockCount > 0 ? Icons.notifications_active : Icons.notifications_none,
+                      color: vm.lowStockCount > 0 ? Colors.orange[700] : Colors.black87,
                     ),
-                    onPressed: _showLowStockAlert, // Affiche la liste des produits en rupture
+                    onPressed: () => _showLowStockAlert(vm.products.where((p) => p.quantity < 5).toList()),
                   ),
-                  if (lowStockCount > 0)
+                  if (vm.lowStockCount > 0)
                     Positioned(
                       right: 8,
                       top: 8,
@@ -160,7 +122,7 @@ class _ProductsPageState extends State<ProductsPage> {
                         decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(10)),
                         constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                         child: Text(
-                          '$lowStockCount',
+                          '${vm.lowStockCount}',
                           style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
@@ -170,7 +132,7 @@ class _ProductsPageState extends State<ProductsPage> {
               ),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.sort, color: Colors.black87),
-                onSelected: (value) => setState(() => sortBy = value),
+                onSelected: (value) => vm.setSortBy(value),
                 itemBuilder: (context) => [
                   const PopupMenuItem(value: "Name", child: Text("Sort by Name")),
                   const PopupMenuItem(value: "Price", child: Text("Sort by Price")),
@@ -200,7 +162,7 @@ class _ProductsPageState extends State<ProductsPage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 100, 16, 8),
                 child: TextField(
-                  onChanged: (val) => setState(() => searchQuery = val),
+                  onChanged: (val) => vm.setSearchQuery(val),
                   decoration: InputDecoration(
                     hintText: "Rechercher...",
                     prefixIcon: const Icon(Icons.search),
@@ -219,10 +181,10 @@ class _ProductsPageState extends State<ProductsPage> {
                     padding: const EdgeInsets.only(right: 8),
                     child: ChoiceChip(
                       label: Text(cat),
-                      selected: selectedCategory == cat,
-                      onSelected: (val) => setState(() => selectedCategory = cat),
+                      selected: vm.selectedCategory == cat,
+                      onSelected: (val) => vm.setCategory(cat),
                       selectedColor: const Color(0xFF1B5E20),
-                      labelStyle: TextStyle(color: selectedCategory == cat ? Colors.white : Colors.black87),
+                      labelStyle: TextStyle(color: vm.selectedCategory == cat ? Colors.white : Colors.black87),
                     ),
                   )).toList(),
                 ),
@@ -230,8 +192,8 @@ class _ProductsPageState extends State<ProductsPage> {
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: filteredProducts.length,
-                  itemBuilder: (context, index) => _buildLargeProductCard(filteredProducts[index]),
+                  itemCount: vm.filteredProducts.length,
+                  itemBuilder: (context, index) => _buildLargeProductCard(vm.filteredProducts[index]),
                 ),
               ),
             ],
@@ -409,15 +371,9 @@ class _ProductsPageState extends State<ProductsPage> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              try {
-                await ApiService.deleteProduct(product.id!);
-                _loadProducts();
-              } catch (e) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Delete failed: $e')),
-                );
-              }
+              await context.read<ProductsViewModel>().deleteProduct(product.id!);
+              if (!mounted) return;
+              context.read<ProductsViewModel>().loadProducts();
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -502,7 +458,7 @@ class _ProductsPageState extends State<ProductsPage> {
                         });
                         if (!mounted) return;
                         Navigator.pop(context);
-                        _loadProducts();
+                        context.read<ProductsViewModel>().loadProducts();
                       } catch (e) {
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(

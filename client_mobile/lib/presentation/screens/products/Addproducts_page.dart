@@ -1,20 +1,32 @@
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import '../../../services/api_service.dart';
-import '../../../services/session_service.dart';
+import '../../../viewmodels/add_product_viewmodel.dart';
 
-class AddProductPage extends StatefulWidget {
+class AddProductPage extends StatelessWidget {
   final Function(Map<String, dynamic>)? onProductAdded;
   const AddProductPage({super.key, this.onProductAdded});
 
   @override
-  State<AddProductPage> createState() => _AddProductPageState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<AddProductViewModel>(
+      create: (_) => AddProductViewModel(),
+      child: _AddProductContent(onProductAdded: onProductAdded),
+    );
+  }
 }
 
-class _AddProductPageState extends State<AddProductPage> with SingleTickerProviderStateMixin {
+class _AddProductContent extends StatefulWidget {
+  final Function(Map<String, dynamic>)? onProductAdded;
+  const _AddProductContent({this.onProductAdded});
+
+  @override
+  State<_AddProductContent> createState() => _AddProductContentState();
+}
+
+class _AddProductContentState extends State<_AddProductContent> with SingleTickerProviderStateMixin {
 
   final nameController = TextEditingController();
   final priceController = TextEditingController();
@@ -186,52 +198,35 @@ class _AddProductPageState extends State<AddProductPage> with SingleTickerProvid
         onPressed: () async {
           if (!(_formKey.currentState?.validate() ?? false)) return;
 
-          try {
-            final user = await SessionService.getUser();
+          final vm = context.read<AddProductViewModel>();
+          vm.selectedUnit = selectedUnit;
+          vm.selectedCategory = selectedCategory;
+          vm.imageBytesList = List.from(_imageBytesList);
 
-            // Encode first picked image as base64
-            String? imageBase64;
-            if (_imageBytesList.isNotEmpty) {
-              imageBase64 = 'data:image/png;base64,${base64Encode(_imageBytesList.first)}';
-            }
+          await vm.saveProduct(
+            name: nameController.text.trim(),
+            price: double.tryParse(priceController.text.trim()) ?? 0,
+            quantity: double.tryParse(stockController.text.trim()) ?? 0,
+            description: descController.text.trim(),
+            location: '',
+            otherCategory: selectedCategory == 'Others'
+                ? otherCategoryController.text.trim()
+                : null,
+          );
 
-            final productData = {
-              'name': nameController.text.trim(),
-              'price': double.tryParse(priceController.text.trim()) ?? 0,
-              'quantity': double.tryParse(stockController.text.trim()) ?? 0,
-              'unit': selectedUnit,
-              'description': descController.text.trim(),
-              'category': (selectedCategory == 'Others'
-                  ? otherCategoryController.text.trim()
-                  : selectedCategory).toLowerCase(),
-              'location': user?.city ?? '',
-              'farmerId': user?.id ?? 0,
-              'farmerName': user?.fullName ?? '',
-              'isOrganic': false,
-              'isUrgent': false,
-              'isAvailable': true,
-              if (imageBase64 != null) 'image': imageBase64,
-              'images': <String>[],
-              'createdAt': DateTime.now().toIso8601String(),
-            };
-
-            await ApiService.createProduct(productData);
-
-            widget.onProductAdded?.call(productData);
-
-            if (!mounted) return;
+          if (!mounted) return;
+          if (vm.isSuccess) {
+            widget.onProductAdded?.call({});
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Product added successfully!'),
                 backgroundColor: Colors.green,
               ),
             );
-
             Navigator.pop(context, true);
-          } catch (e) {
-            if (!mounted) return;
+          } else if (vm.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to add product: $e'), backgroundColor: Colors.red),
+              SnackBar(content: Text('Failed to add product: ${vm.errorMessage}'), backgroundColor: Colors.red),
             );
           }
         },

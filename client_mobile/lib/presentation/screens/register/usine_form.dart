@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../services/api_service.dart';
-import '../../../services/session_service.dart';
-import '../../../models/user.dart';
+import 'package:provider/provider.dart';
+import '../../../viewmodels/register_viewmodel.dart';
 import '../dashboard/usine_dashboard.dart';
 
 class UsineForm extends StatefulWidget {
@@ -93,7 +92,10 @@ class _UsineFormState extends State<UsineForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
+    return ChangeNotifierProvider<RegisterViewModel>(
+      create: (_) => RegisterViewModel(),
+      child: Consumer<RegisterViewModel>(
+        builder: (context, vm, _) => Form(
       key: _formKey,
       child: SingleChildScrollView(
         child: Column(
@@ -128,13 +130,6 @@ class _UsineFormState extends State<UsineForm> {
               ),
             ),
             const SizedBox(height: 20),
-            _buildTextField(
-              label: 'Full Name',
-              keyName: 'fullName',
-              required: true,
-              icon: Icons.person,
-            ),
-            const SizedBox(height: 12),
             _buildTextField(
               label: 'Phone Number',
               keyName: 'phone',
@@ -244,7 +239,6 @@ class _UsineFormState extends State<UsineForm> {
                   final valid = _formKey.currentState!.validate();
                   if (valid) {
                     _formKey.currentState!.save();
-                    try {
                       final Map<String, dynamic> userData = {
                         'email': _data['email'] ?? '',
                         'password': _data['password'] ?? '',
@@ -262,31 +256,31 @@ class _UsineFormState extends State<UsineForm> {
                         userData['industryType'] = _data['industryType'] ?? '';
                         userData['certification'] = _data['certification'] ?? '';
                       }
-                      final result = await ApiService.registerUser(userData);
-                      await SessionService.saveSession(User.fromJson(result));
+                      final vm = context.read<RegisterViewModel>();
+                      final user = await vm.register(userData);
                       if (!mounted) return;
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => UsineDashboard(
-                            fullName: _data['fullName'] ?? '',
-                            phone: _data['phone'] ?? '',
-                            city: _data['city'] ?? '',
-                            companyName: _data['companyName'] ?? '',
-                            productTypes: '',  
-                            email: _data['email'] ?? '',
-                            buyerType: widget.buyerType,
-                            userId: (result['id'] as num?)?.toInt(),
+                      if (user != null) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => UsineDashboard(
+                              fullName: _data['fullName'] ?? '',
+                              phone: _data['phone'] ?? '',
+                              city: _data['city'] ?? '',
+                              companyName: _data['companyName'] ?? '',
+                              productTypes: '',
+                              email: _data['email'] ?? '',
+                              buyerType: widget.buyerType,
+                              userId: user.id,
+                            ),
                           ),
-                        ),
-                      );
-                    } catch (e) {
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Registration failed: $e')),
-                      );
+                        );
+                      } else if (vm.errorMessage != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Registration failed: ${vm.errorMessage}')),
+                        );
+                      }
                     }
-                  }
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -317,7 +311,9 @@ class _UsineFormState extends State<UsineForm> {
           ],
         ),
       ),
-    );
+      ),
+    ),
+  );
   }
 
   List<Widget> _buildRestaurantFields() {

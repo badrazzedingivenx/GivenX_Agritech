@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 
 class ApiConstants {
   // ── Change this to your PC's local WiFi IP for real-device testing ──
-  static const String _localIp = '192.168.8.83'; // ← IP ديالك في الشبكة WiFi
+  static const String _localIp = '192.168.8.99'; // ← IP ديالك في الشبكة WiFi
 
   static const int _port = 3000;
 

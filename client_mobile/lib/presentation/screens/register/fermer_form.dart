@@ -1,10 +1,9 @@
 ﻿
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:agriflow/l10n/app_localizations.dart';
-import '../../../services/api_service.dart';
-import '../../../services/session_service.dart';
-import '../../../models/user.dart';
+import '../../../viewmodels/register_viewmodel.dart';
 import '../dashboard/farmer_dashboard.dart';
 
 class FermerForm extends StatefulWidget {
@@ -44,6 +43,16 @@ class _FermerFormState extends State<FermerForm> {
 
   @override
   Widget build(BuildContext context) {
+    return ChangeNotifierProvider<RegisterViewModel>(
+      create: (_) => RegisterViewModel(),
+      child: Consumer<RegisterViewModel>(
+        builder: (context, vm, _) => _buildForm(context, vm),
+      ),
+    );
+  }
+
+  Widget _buildForm(BuildContext context, RegisterViewModel vm) {
+    _isLoading = vm.isLoading;
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
@@ -96,8 +105,6 @@ class _FermerFormState extends State<FermerForm> {
               fillColor: Colors.white.withOpacity(0.13),
               labelText: AppLocalizations.of(context)!.loginPasswordHint,
               labelStyle: const TextStyle(color: Colors.white70, fontSize: 13),
-              hintText: AppLocalizations.of(context)!.loginPasswordHint,
-              hintStyle: const TextStyle(color: Colors.white70),
               prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70, size: 20),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               suffixIcon: IconButton(
@@ -130,8 +137,6 @@ class _FermerFormState extends State<FermerForm> {
               fillColor: Colors.white.withOpacity(0.13),
               labelText: AppLocalizations.of(context)!.registerConfirmPassword,
               labelStyle: const TextStyle(color: Colors.white70, fontSize: 13),
-              hintText: AppLocalizations.of(context)!.registerConfirmPassword,
-              hintStyle: const TextStyle(color: Colors.white70),
               prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70, size: 20),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               suffixIcon: IconButton(
@@ -165,20 +170,19 @@ class _FermerFormState extends State<FermerForm> {
                 });
                 if (valid && !_mainProductsError) {
                   _formKey.currentState!.save();
-                  setState(() => _isLoading = true);
-                  try {
-                    final result = await ApiService.registerUser({
-                      'email': _data['email'] ?? '',
-                      'password': _data['password'] ?? '',
-                      'role': 'Agriculteur',
-                      'fullName': _data['fullName'] ?? '',
-                      'phone': _data['phone'] ?? '',
-                      'city': _data['city'] ?? '',
-                      'farmingType': _data['farmingType'] ?? '',
-                      'mainProducts': _mainProducts.join(', '),
-                    });
-                    await SessionService.saveSession(User.fromJson(result));
-                    if (!mounted) return;
+                  final vm = context.read<RegisterViewModel>();
+                  final user = await vm.register({
+                    'email': _data['email'] ?? '',
+                    'password': _data['password'] ?? '',
+                    'role': 'Agriculteur',
+                    'fullName': _data['fullName'] ?? '',
+                    'phone': _data['phone'] ?? '',
+                    'city': _data['city'] ?? '',
+                    'farmingType': _data['farmingType'] ?? '',
+                    'mainProducts': _mainProducts.join(', '),
+                  });
+                  if (!mounted) return;
+                  if (user != null) {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
@@ -192,11 +196,9 @@ class _FermerFormState extends State<FermerForm> {
                         ),
                       ),
                     );
-                  } catch (e) {
-                    if (!mounted) return;
-                    setState(() => _isLoading = false);
+                  } else if (vm.errorMessage != null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Registration failed: $e')),
+                      SnackBar(content: Text('Registration failed: ${vm.errorMessage}')),
                     );
                   }
                 }
@@ -254,8 +256,6 @@ class _FermerFormState extends State<FermerForm> {
         fillColor: Colors.white.withOpacity(0.13),
         labelText: label,
         labelStyle: const TextStyle(color: Colors.white70, fontSize: 13),
-        hintText: label,
-        hintStyle: const TextStyle(color: Colors.white70),
         prefixIcon: icon != null ? Icon(icon, color: Colors.white70, size: 20) : null,
         suffixIcon: suffixIcon,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
