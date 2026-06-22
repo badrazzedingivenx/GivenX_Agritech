@@ -100,10 +100,26 @@ class ApiService {
 
   // ─── Products ──────────────────────────────────────────
 
-  static Future<List<dynamic>> getProducts({String? sellerId}) async {
+  static Future<List<dynamic>> getProducts({
+    String? sellerId,
+    int? page,
+    int? limit,
+  }) async {
+    final params = <String>[];
+    if (sellerId != null) params.add('farmerId=$sellerId');
+    if (page != null) params.add('_page=$page');
+    if (limit != null) params.add('_limit=$limit');
     String url = ApiConstants.products;
-    if (sellerId != null) url += '?farmerId=$sellerId';
+    if (params.isNotEmpty) url += '?${params.join('&')}';
     return _getList(url);
+  }
+
+  static Future<Map<String, dynamic>> getProductById(int id) async {
+    final response = await http.get(Uri.parse('${ApiConstants.products}/$id'));
+    if (response.statusCode == 200) {
+      return _unwrap(jsonDecode(response.body)) as Map<String, dynamic>;
+    }
+    throw Exception('GET product/$id failed (${response.statusCode})');
   }
 
   static Future<Map<String, dynamic>> createProduct(Map<String, dynamic> data) async {
@@ -120,11 +136,18 @@ class ApiService {
 
   // ─── Orders ────────────────────────────────────────────
 
-  static Future<List<dynamic>> getOrders({String? buyerId, String? farmerId}) async {
+  static Future<List<dynamic>> getOrders({
+    String? buyerId,
+    String? farmerId,
+    int? page,
+    int? limit,
+  }) async {
     String url = ApiConstants.orders;
     final params = <String>[];
     if (buyerId != null) params.add('buyerId=$buyerId');
     if (farmerId != null) params.add('farmerId=$farmerId');
+    if (page != null) params.add('_page=$page');
+    if (limit != null) params.add('_limit=$limit');
     if (params.isNotEmpty) url += '?${params.join('&')}';
     return _getList(url);
   }
@@ -135,6 +158,10 @@ class ApiService {
 
   static Future<Map<String, dynamic>> updateOrder(int id, Map<String, dynamic> data) async {
     return _patch('${ApiConstants.orders}/$id', data);
+  }
+
+  static Future<void> deleteOrder(int id) async {
+    return _delete('${ApiConstants.orders}/$id');
   }
 
   // ─── Shipments ─────────────────────────────────────────
@@ -158,11 +185,18 @@ class ApiService {
 
   // ─── Messages ──────────────────────────────────────────
 
-  static Future<List<dynamic>> getMessages({String? senderId, String? receiverId}) async {
+  static Future<List<dynamic>> getMessages({
+    String? senderId,
+    String? receiverId,
+    int? page,
+    int? limit,
+  }) async {
     String url = ApiConstants.messages;
     final params = <String>[];
     if (senderId != null) params.add('senderId=$senderId');
     if (receiverId != null) params.add('receiverId=$receiverId');
+    if (page != null) params.add('_page=$page');
+    if (limit != null) params.add('_limit=$limit');
     if (params.isNotEmpty) url += '?${params.join('&')}';
     return _getList(url);
   }

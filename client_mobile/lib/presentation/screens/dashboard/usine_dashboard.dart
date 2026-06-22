@@ -1983,7 +1983,8 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
       final farmerName = selectedOffer.isNotEmpty ? (selectedOffer.first['farmerName'] ?? 'Farmer').toString() : 'Farmer';
       final productName = request.isNotEmpty ? (request.first['productName'] ?? 'your request').toString() : 'your request';
 
-      if (buyer != null && farmerId != null) {
+      int? newOrderId;
+      if (buyer != null && farmerId != null && selectedOffer.isNotEmpty) {
         await ApiService.sendMessage({
           'senderId': buyer.id,
           'senderName': buyer.fullName,
@@ -1993,16 +1994,55 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
           'isRead': false,
           'createdAt': DateTime.now().toIso8601String(),
         });
+
+        // Automatically create an Order from the accepted offer,
+        // linked back to the bulk offer via bulkOfferId.
+        final offerData = selectedOffer.first;
+        final unitPrice =
+            (offerData['pricePerUnit'] as num?)?.toDouble() ?? 0;
+        final quantity =
+            (offerData['proposedQuantity'] as num?)?.toDouble() ??
+                (request.first['quantity'] as num?)?.toDouble() ??
+                0;
+        final unit = (request.first['unit'] ?? 'Kg').toString();
+        final createdOrder = await ApiService.createOrder({
+          'buyerId': buyer.id,
+          'buyerName': buyer.fullName,
+          'buyerType': widget.buyerType.toLowerCase(),
+          'farmerId': farmerId,
+          'farmerName': farmerName,
+          'items': [
+            {
+              'productId': 0,
+              'productName': productName,
+              'unitPrice': unitPrice,
+              'quantity': quantity,
+              'unit': unit,
+            }
+          ],
+          'totalAmount': unitPrice * quantity,
+          'status': 'pending',
+          'bulkOfferId': offerId.toString(),
+          'createdAt': DateTime.now().toIso8601String(),
+        });
+        newOrderId = createdOrder['id'] as int?;
       }
 
       await _loadBulkMarketplaceData();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Offer accepted and request updated'),
+          content: Text(newOrderId != null
+              ? 'Offer accepted — order #$newOrderId created'
+              : 'Offer accepted and request updated'),
           backgroundColor: widget.primaryGreen,
           behavior: SnackBarBehavior.floating,
         ),
+      );
+
+      // Navigate the buyer to the order (details) screen.
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const OrdersPage()),
       );
     } catch (_) {
       if (!mounted) return;
@@ -2982,7 +3022,7 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
         return;
       }
 
-      await ApiService.createOrder({
+      final created = await ApiService.createOrder({
         'buyerId': user.id,
         'buyerName': user.fullName,
         'buyerType': widget.buyerType.toLowerCase(),
@@ -3001,6 +3041,42 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
         'status': 'pending',
         'createdAt': DateTime.now().toIso8601String(),
       });
+
+      // ── Decrement stock for each ordered item ──────────────────────
+      // For every item: fetch the product, ensure enough stock, then
+      // write back the reduced quantity. If any item lacks stock, cancel
+      // (delete) the freshly-created order and surface an error.
+      final orderId = created['id'] as int?;
+      final orderedItems =
+          (created['items'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
+      for (final item in orderedItems) {
+        final productId = item['productId'] as int?;
+        final orderedQty = (item['quantity'] as num?)?.toDouble() ?? 0;
+        if (productId == null || productId == 0) continue;
+
+        final productJson = await ApiService.getProductById(productId);
+        final available =
+            (productJson['quantity'] as num?)?.toDouble() ?? 0;
+
+        if (available < orderedQty) {
+          if (orderId != null) {
+            await ApiService.deleteOrder(orderId);
+          }
+          if (mounted) {
+            Navigator.pop(context); // close the processing dialog
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Stock insuffisant')),
+            );
+          }
+          return;
+        }
+
+        await ApiService.updateProduct(
+          productId,
+          {'quantity': available - orderedQty},
+        );
+      }
+
       if (mounted) {
         Navigator.pop(context);
         _showSuccessSheet(product);

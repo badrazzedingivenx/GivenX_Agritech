@@ -58,7 +58,8 @@
       "phone": "0600000004",
       "city": "Casablanca",
       "bankType": "Commercial Bank",
-      "logoPath": ""
+      "logoPath": "",
+      "profileImage": "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"
     },
     {
       "id": 5,
@@ -457,7 +458,7 @@
     {
       "name": "chicken",
       "price": 40,
-      "quantity": 30,
+      "quantity": 29,
       "location": "agadir",
       "unit": "Kg",
       "category": "other",
@@ -475,7 +476,7 @@
     {
       "name": "eggs",
       "price": 1.5,
-      "quantity": 300,
+      "quantity": 299,
       "location": "agadir",
       "unit": "Piece",
       "category": "other",
@@ -698,7 +699,9 @@
       "totalAmount": 22,
       "status": "pending",
       "createdAt": "2026-04-21T15:51:18.698",
-      "id": 9
+      "id": 9,
+      "paymentId": 2,
+      "updatedAt": "2026-06-21T00:23:16.903"
     },
     {
       "buyerId": 7,
@@ -718,7 +721,9 @@
       "totalAmount": 22,
       "status": "pending",
       "createdAt": "2026-04-21T15:52:36.637",
-      "id": 10
+      "id": 10,
+      "paymentId": 3,
+      "updatedAt": "2026-06-21T00:23:28.841"
     },
     {
       "buyerId": 2,
@@ -878,7 +883,7 @@
         }
       ],
       "totalAmount": 22,
-      "status": "pending",
+      "status": "confirmed",
       "createdAt": "2026-04-21T22:11:40.010",
       "id": 18
     },
@@ -938,7 +943,7 @@
         }
       ],
       "totalAmount": 22,
-      "status": "pending",
+      "status": "confirmed",
       "createdAt": "2026-04-21T23:03:00.100",
       "id": 21
     },
@@ -958,7 +963,7 @@
         }
       ],
       "totalAmount": 22,
-      "status": "pending",
+      "status": "confirmed",
       "createdAt": "2026-04-21T23:44:09.741",
       "id": 22
     },
@@ -978,7 +983,7 @@
         }
       ],
       "totalAmount": 22,
-      "status": "pending",
+      "status": "confirmed",
       "createdAt": "2026-04-21T23:49:05.541",
       "id": 23
     },
@@ -998,7 +1003,7 @@
         }
       ],
       "totalAmount": 22,
-      "status": "pending",
+      "status": "confirmed",
       "createdAt": "2026-04-22T00:02:28.865",
       "id": 24
     },
@@ -1018,7 +1023,7 @@
         }
       ],
       "totalAmount": 22,
-      "status": "pending",
+      "status": "confirmed",
       "createdAt": "2026-04-22T00:05:36.902",
       "id": 25
     },
@@ -1038,7 +1043,7 @@
         }
       ],
       "totalAmount": 22,
-      "status": "pending",
+      "status": "confirmed",
       "createdAt": "2026-04-22T00:07:22.138",
       "id": 26
     },
@@ -1058,7 +1063,7 @@
         }
       ],
       "totalAmount": 22,
-      "status": "pending",
+      "status": "confirmed",
       "createdAt": "2026-04-22T00:15:46.710",
       "id": 27
     },
@@ -1138,7 +1143,7 @@
         }
       ],
       "totalAmount": 22,
-      "status": "pending",
+      "status": "confirmed",
       "createdAt": "2026-04-24T11:56:24.201",
       "id": 31
     },
@@ -1178,7 +1183,7 @@
         }
       ],
       "totalAmount": 420,
-      "status": "pending",
+      "status": "confirmed",
       "createdAt": "2026-04-24T11:56:47.864",
       "id": 33
     },
@@ -1218,9 +1223,10 @@
         }
       ],
       "totalAmount": 420,
-      "status": "confirmed",
+      "status": "processing",
       "createdAt": "2026-04-24T12:22:52.573089",
-      "id": 35
+      "id": 35,
+      "shipmentId": 7
     },
     {
       "buyerId": 25,
@@ -1241,6 +1247,46 @@
       "status": "pending",
       "createdAt": "2026-04-30T15:53:04.954749",
       "id": 36
+    },
+    {
+      "buyerId": 7,
+      "buyerName": "Ahmed Restaurant",
+      "buyerType": "restaurant",
+      "farmerId": 15,
+      "farmerName": "Fatima farmer",
+      "items": [
+        {
+          "productId": 13,
+          "productName": "chicken",
+          "unitPrice": 40,
+          "quantity": 1,
+          "unit": "Kg"
+        }
+      ],
+      "totalAmount": 40,
+      "status": "pending",
+      "createdAt": "2026-06-21T00:21:44.861",
+      "id": 37
+    },
+    {
+      "buyerId": 7,
+      "buyerName": "Ahmed Restaurant",
+      "buyerType": "restaurant",
+      "farmerId": 15,
+      "farmerName": "Fatima farmer",
+      "items": [
+        {
+          "productId": 14,
+          "productName": "eggs",
+          "unitPrice": 1.5,
+          "quantity": 1,
+          "unit": "Piece"
+        }
+      ],
+      "totalAmount": 1.5,
+      "status": "pending",
+      "createdAt": "2026-06-21T00:21:53.756",
+      "id": 38
     }
   ],
   "shipments": [
@@ -1329,6 +1375,22 @@
       "estimatedDeliveryDate": "2026-05-03T15:52:41.353640",
       "createdAt": "2026-04-30T15:52:41.353857",
       "id": 6
+    },
+    {
+      "orderId": 35,
+      "farmerId": 1,
+      "farmerName": "Ali Farmer",
+      "buyerId": 2,
+      "buyerName": "Sara Industry",
+      "pickupLocation": "Agadir",
+      "deliveryLocation": "casa blanca",
+      "weight": 500,
+      "status": "accepted",
+      "trackingNote": "",
+      "createdAt": "2026-06-21T01:55:12.747",
+      "id": 7,
+      "transporterId": 3,
+      "transporterName": "Mohamed Transport"
     }
   ],
   "messages": [
@@ -1571,6 +1633,26 @@
       "isRead": false,
       "createdAt": "2026-04-30T15:54:10.350345",
       "id": 24
+    },
+    {
+      "senderId": 1,
+      "senderName": "Ali Farmer",
+      "receiverId": 2,
+      "receiverName": "Sara Industry",
+      "content": "ok merhba",
+      "isRead": false,
+      "createdAt": "2026-05-09T01:26:49.997236",
+      "id": 25
+    },
+    {
+      "senderId": 4,
+      "senderName": "Banque Agricole",
+      "receiverId": 22,
+      "receiverName": "soukaina farmer",
+      "content": "bonjour madame soukaina",
+      "isRead": false,
+      "createdAt": "2026-05-09T01:32:17.733896",
+      "id": 26
     }
   ],
   "payments": [
@@ -1587,6 +1669,33 @@
       "createdAt": "2026-04-22T22:38:25.506",
       "escrowHeldAt": "2026-04-22T22:38:25.506",
       "id": 1
+    },
+    {
+      "orderId": 9,
+      "buyerId": 7,
+      "buyerName": "Ahmed Restaurant",
+      "farmerId": 1,
+      "farmerName": "Ali Farmer",
+      "userId": 7,
+      "amount": 22,
+      "method": "online",
+      "status": "held",
+      "createdAt": "2026-06-21T00:23:16.903",
+      "escrowHeldAt": "2026-06-21T00:23:16.903",
+      "id": 2
+    },
+    {
+      "orderId": 10,
+      "buyerId": 7,
+      "buyerName": "Ahmed Restaurant",
+      "farmerId": 1,
+      "farmerName": "Ali Farmer",
+      "userId": 7,
+      "amount": 22,
+      "method": "cashOnDelivery",
+      "status": "pending",
+      "createdAt": "2026-06-21T00:23:28.841",
+      "id": 3
     }
   ],
   "bulkRequests": [
@@ -1676,6 +1785,20 @@
       "acceptedOfferId": null,
       "createdAt": "2026-04-30T15:59:33.167042",
       "id": 7
+    },
+    {
+      "buyerId": 2,
+      "buyerName": "Sara Industry",
+      "buyerType": "industry",
+      "productName": "grain",
+      "quantity": 50,
+      "unit": "Kg",
+      "budget": 3000,
+      "deadline": "2026-06-30T00:00:00.000",
+      "status": "open",
+      "acceptedOfferId": null,
+      "createdAt": "2026-06-21T01:47:47.048",
+      "id": 8
     }
   ],
   "bulkOffers": [
@@ -1791,7 +1914,7 @@
       "amount": 60000,
       "purpose": "seeds",
       "description": "This is a request from a farmer to the bank to purchase fertilizers for agricultural use, in order to support crop production and improve farming productivity.",
-      "status": "rejected",
+      "status": "reviewing",
       "createdAt": "2026-04-30T00:52:02.089",
       "id": 4
     },

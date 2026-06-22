@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../models/order.dart';
 import '../../../models/payment.dart';
-import '../../../models/review.dart';
 import '../../../models/user.dart';
 import '../../../services/api_service.dart';
 import '../../../services/session_service.dart';
@@ -27,36 +26,61 @@ class _OrdersPageState extends State<OrdersPage>
   bool _loading = true;
   String? _error;
 
+  // Pagination (json-server _page/_limit)
+  static const int _limit = 10;
+  int _page = 1;
+  bool _hasMore = true;
+  bool _loadingMore = false;
+
   @override
   void initState() {
     super.initState();
     _loadOrders();
   }
 
-  Future<void> _loadOrders() async {
-    setState(() { _loading = true; _error = null; });
-    try {
-      final user = await SessionService.getUser();
-      _currentUserId = user?.id;
-      _currentUserName = user?.fullName ?? '';
-      _isBuyer = user?.role == UserRole.buyer;
-      final currentBuyerType = user?.buyerType?.toJson().toLowerCase();
+  Future<List<dynamic>> _fetchOrdersPage(int page) async {
+    final user = await SessionService.getUser();
+    _currentUserId = user?.id;
+    _currentUserName = user?.fullName ?? '';
+    _isBuyer = user?.role == UserRole.buyer;
+    final currentBuyerType = user?.buyerType?.toJson().toLowerCase();
 
-      List<dynamic> data;
-      if (user != null && user.role.name == 'farmer') {
-        data = await ApiService.getOrders(farmerId: user.id.toString());
-      } else if (user != null) {
-        data = await ApiService.getOrders(buyerId: user.id.toString());
-        if (currentBuyerType != null && currentBuyerType.isNotEmpty) {
-          data = data.where((entry) {
-            final order = entry as Map<String, dynamic>;
-            final orderBuyerType = (order['buyerType'] ?? '').toString().toLowerCase();
-            return orderBuyerType == currentBuyerType;
-          }).toList();
-        }
-      } else {
-        data = await ApiService.getOrders();
-      }
+    List<dynamic> data;
+    if (user != null && user.role.name == 'farmer') {
+      data = await ApiService.getOrders(
+          farmerId: user.id.toString(), page: page, limit: _limit);
+    } else if (user != null) {
+      data = await ApiService.getOrders(
+          buyerId: user.id.toString(), page: page, limit: _limit);
+    } else {
+      data = await ApiService.getOrders(page: page, limit: _limit);
+    }
+
+    // hasMore is decided on the raw page size (before the buyerType filter).
+    _hasMore = data.length >= _limit;
+
+    if (currentBuyerType != null &&
+        currentBuyerType.isNotEmpty &&
+        user?.role == UserRole.buyer) {
+      data = data.where((entry) {
+        final order = entry as Map<String, dynamic>;
+        final orderBuyerType =
+            (order['buyerType'] ?? '').toString().toLowerCase();
+        return orderBuyerType == currentBuyerType;
+      }).toList();
+    }
+    return data;
+  }
+
+  Future<void> _loadOrders() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+      _page = 1;
+      _hasMore = true;
+    });
+    try {
+      final data = await _fetchOrdersPage(_page);
 
       final allPayments = await ApiService.getPayments();
       final paymentsByOrder = <int, Map<String, dynamic>>{};
@@ -79,6 +103,48 @@ class _OrdersPageState extends State<OrdersPage>
     }
   }
 
+  Future<void> _loadMoreOrders() async {
+    if (_loadingMore || _loading || !_hasMore) return;
+    setState(() => _loadingMore = true);
+    try {
+      final nextPage = _page + 1;
+      final data = await _fetchOrdersPage(nextPage);
+      final more =
+          data.map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();
+      setState(() {
+        orders.addAll(more);
+        _page = nextPage;
+        _loadingMore = false;
+      });
+    } catch (_) {
+      setState(() => _loadingMore = false);
+    }
+  }
+
+  Widget _buildLoadMoreButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: _loadingMore
+            ? const CircularProgressIndicator(color: Color(0xFF1B5E20))
+            : OutlinedButton.icon(
+                onPressed: _loadMoreOrders,
+                icon: const Icon(Icons.expand_more),
+                label: const Text('Charger plus'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1B5E20),
+                  side: const BorderSide(color: Color(0xFF1B5E20)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
+
   List<Order> get filteredOrders {
     if (selectedFilter == "ALL") return orders;
     return orders.where((o) {
@@ -87,6 +153,14 @@ class _OrdersPageState extends State<OrdersPage>
   }
 
   Future<void> _updateStatus(Order order, OrderStatus newStatus) async {
+    if (!OrderStatus.validateStatusTransition(order.status, newStatus)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transition de statut invalide')),
+        );
+      }
+      return;
+    }
     try {
       await ApiService.updateOrder(order.id!, {'status': newStatus.toJson()});
       _loadOrders();
@@ -203,8 +277,12 @@ class _OrdersPageState extends State<OrdersPage>
                           : RefreshIndicator(
                               onRefresh: _loadOrders,
                               child: ListView.builder(
-                                itemCount: filteredOrders.length,
+                                itemCount: filteredOrders.length +
+                                    (_hasMore ? 1 : 0),
                                 itemBuilder: (context, index) {
+                                  if (index >= filteredOrders.length) {
+                                    return _buildLoadMoreButton();
+                                  }
                                   final order = filteredOrders[index];
                                   return AnimatedContainer(
                                     duration: const Duration(milliseconds: 300),

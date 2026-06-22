@@ -1,5 +1,6 @@
 enum ShipmentStatus {
   requested,
+  assigned,
   accepted,
   pickedUp,
   inTransit,
@@ -12,6 +13,8 @@ enum ShipmentStatus {
     switch (value?.toLowerCase()) {
       case 'requested':
         return ShipmentStatus.requested;
+      case 'assigned':
+        return ShipmentStatus.assigned;
       case 'accepted':
         return ShipmentStatus.accepted;
       case 'pickedup':
@@ -35,6 +38,8 @@ enum ShipmentStatus {
     switch (this) {
       case ShipmentStatus.requested:
         return 'Requested';
+      case ShipmentStatus.assigned:
+        return 'Assigned';
       case ShipmentStatus.accepted:
         return 'Accepted';
       case ShipmentStatus.pickedUp:

@@ -781,6 +781,7 @@ class _TransporteurDashboardState extends State<TransporteurDashboard> {
   Widget _buildMyTripsTab() {
     final active = _myShipments
         .where((s) =>
+            s.status == ShipmentStatus.assigned ||
             s.status == ShipmentStatus.accepted ||
             s.status == ShipmentStatus.pickedUp ||
             s.status == ShipmentStatus.inTransit)
@@ -928,6 +929,10 @@ class _TransporteurDashboardState extends State<TransporteurDashboard> {
     final Color statusColor;
     final IconData statusIcon;
     switch (s.status) {
+      case ShipmentStatus.assigned:
+        statusColor = Colors.indigo;
+        statusIcon = Icons.assignment_turned_in_outlined;
+        break;
       case ShipmentStatus.accepted:
         statusColor = Colors.blue;
         statusIcon = Icons.check_outlined;
@@ -1120,7 +1125,9 @@ class _TransporteurDashboardState extends State<TransporteurDashboard> {
   void _showStatusUpdateSheet(Shipment shipment) {
     if (shipment.status == ShipmentStatus.delivered) return;
     final nextStatuses = <String, String>{
-      if (shipment.status == ShipmentStatus.accepted) 'pickedUp': 'Mark as Picked Up',
+      if (shipment.status == ShipmentStatus.assigned ||
+          shipment.status == ShipmentStatus.accepted)
+        'pickedUp': 'Mark as Picked Up',
       if (shipment.status == ShipmentStatus.pickedUp) 'inTransit': 'Mark In Transit',
       if (shipment.status == ShipmentStatus.inTransit) 'delivered': 'Mark Delivered',
     };

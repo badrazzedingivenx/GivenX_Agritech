@@ -5,8 +5,14 @@ import '../services/session_service.dart';
 
 class ProductsViewModel extends ChangeNotifier {
   bool isLoading = false;
+  bool isLoadingMore = false;
+  bool hasMore = true;
   String? error;
   List<Product> products = [];
+
+  // Pagination (json-server _page/_limit)
+  static const int pageSize = 10;
+  int _page = 1;
 
   String searchQuery = '';
   String selectedCategory = 'All';
@@ -41,14 +47,21 @@ class ProductsViewModel extends ChangeNotifier {
   Future<void> loadProducts() async {
     isLoading = true;
     error = null;
+    _page = 1;
+    hasMore = true;
     notifyListeners();
     try {
       final user = await SessionService.getUser();
       final sellerId = user?.id?.toString();
-      final data = await ApiService.getProducts(sellerId: sellerId);
+      final data = await ApiService.getProducts(
+        sellerId: sellerId,
+        page: _page,
+        limit: pageSize,
+      );
       products = data
           .map((json) => Product.fromJson(json as Map<String, dynamic>))
           .toList();
+      hasMore = data.length >= pageSize;
       isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -56,6 +69,33 @@ class ProductsViewModel extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Loads the next page and appends to [products] ("Charger plus").
+  Future<void> loadMore() async {
+    if (isLoadingMore || isLoading || !hasMore) return;
+    isLoadingMore = true;
+    notifyListeners();
+    try {
+      final user = await SessionService.getUser();
+      final sellerId = user?.id?.toString();
+      final nextPage = _page + 1;
+      final data = await ApiService.getProducts(
+        sellerId: sellerId,
+        page: nextPage,
+        limit: pageSize,
+      );
+      final more = data
+          .map((json) => Product.fromJson(json as Map<String, dynamic>))
+          .toList();
+      products.addAll(more);
+      _page = nextPage;
+      hasMore = more.length >= pageSize;
+    } catch (_) {
+      // keep existing items on failure
+    }
+    isLoadingMore = false;
+    notifyListeners();
   }
 
   Future<void> deleteProduct(int id) async {

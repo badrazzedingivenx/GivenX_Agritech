@@ -47,6 +47,23 @@ enum OrderStatus {
         return 'Cancelled';
     }
   }
+
+  /// Enforces the order lifecycle:
+  ///   pending → confirmed → processing → inTransit (shipped) → delivered
+  /// with `cancelled` allowed only from `pending` or `confirmed`.
+  ///
+  /// Returns `true` when moving from [from] to [to] is permitted.
+  static bool validateStatusTransition(OrderStatus from, OrderStatus to) {
+    const allowed = <OrderStatus, List<OrderStatus>>{
+      OrderStatus.pending: [OrderStatus.confirmed, OrderStatus.cancelled],
+      OrderStatus.confirmed: [OrderStatus.processing, OrderStatus.cancelled],
+      OrderStatus.processing: [OrderStatus.inTransit],
+      OrderStatus.inTransit: [OrderStatus.delivered],
+      OrderStatus.delivered: [],
+      OrderStatus.cancelled: [],
+    };
+    return allowed[from]?.contains(to) ?? false;
+  }
 }
 
 class OrderItem {
@@ -98,6 +115,7 @@ class Order {
   final OrderStatus status;
   final int? shipmentId;
   final int? paymentId;
+  final String? bulkOfferId;
   final String? note;
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -113,6 +131,7 @@ class Order {
     this.status = OrderStatus.pending,
     this.shipmentId,
     this.paymentId,
+    this.bulkOfferId,
     this.note,
     required this.createdAt,
     this.updatedAt,
@@ -133,6 +152,7 @@ class Order {
       status: OrderStatus.fromJson(json['status'] as String?),
       shipmentId: json['shipmentId'] as int?,
       paymentId: json['paymentId'] as int?,
+      bulkOfferId: json['bulkOfferId']?.toString(),
       note: json['note'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -155,6 +175,7 @@ class Order {
       'status': status.toJson(),
       if (shipmentId != null) 'shipmentId': shipmentId,
       if (paymentId != null) 'paymentId': paymentId,
+      if (bulkOfferId != null) 'bulkOfferId': bulkOfferId,
       if (note != null) 'note': note,
       'createdAt': createdAt.toIso8601String(),
       if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
@@ -172,6 +193,7 @@ class Order {
     OrderStatus? status,
     int? shipmentId,
     int? paymentId,
+    String? bulkOfferId,
     String? note,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -187,6 +209,7 @@ class Order {
       status: status ?? this.status,
       shipmentId: shipmentId ?? this.shipmentId,
       paymentId: paymentId ?? this.paymentId,
+      bulkOfferId: bulkOfferId ?? this.bulkOfferId,
       note: note ?? this.note,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

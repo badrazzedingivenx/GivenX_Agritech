@@ -192,8 +192,14 @@ class _ProductsPageContentState extends State<_ProductsPageContent> {
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: vm.filteredProducts.length,
-                  itemBuilder: (context, index) => _buildLargeProductCard(vm.filteredProducts[index]),
+                  itemCount:
+                      vm.filteredProducts.length + (vm.hasMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index >= vm.filteredProducts.length) {
+                      return _buildLoadMoreButton(vm);
+                    }
+                    return _buildLargeProductCard(vm.filteredProducts[index]);
+                  },
                 ),
               ),
             ],
@@ -205,6 +211,30 @@ class _ProductsPageContentState extends State<_ProductsPageContent> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildLoadMoreButton(ProductsViewModel vm) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: vm.isLoadingMore
+            ? const CircularProgressIndicator(color: Color(0xFF1B5E20))
+            : OutlinedButton.icon(
+                onPressed: () => vm.loadMore(),
+                icon: const Icon(Icons.expand_more),
+                label: const Text('Charger plus'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1B5E20),
+                  side: const BorderSide(color: Color(0xFF1B5E20)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+              ),
+      ),
     );
   }
 

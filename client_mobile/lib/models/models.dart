@@ -6,3 +6,4 @@ export 'payment.dart';
 export 'chat_message.dart';
 export 'review.dart';
 export 'bulk_sourcing_request.dart';
+export 'finance_request.dart';

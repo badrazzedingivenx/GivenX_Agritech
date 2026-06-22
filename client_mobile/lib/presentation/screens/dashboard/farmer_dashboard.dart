@@ -12,6 +12,7 @@ import '../../../models/product.dart';
 import '../../../models/review.dart';
 import '../../../models/shipment.dart';
 import '../../../models/user.dart';
+import '../../../models/finance_request.dart';
 import '../../../services/api_service.dart';
 import '../../../services/session_service.dart';
 import '../../widgets/dashboard_scaffold.dart';
@@ -2254,6 +2255,8 @@ class _FarmerOrdersTabState extends State<_FarmerOrdersTab> {
     switch (s) {
       case ShipmentStatus.requested:
         return Colors.blue;
+      case ShipmentStatus.assigned:
+        return Colors.indigo;
       case ShipmentStatus.accepted:
         return Colors.teal;
       case ShipmentStatus.pickedUp:
@@ -2671,7 +2674,7 @@ class _FarmerFinancingTab extends StatefulWidget {
 }
 
 class _FarmerFinancingTabState extends State<_FarmerFinancingTab> {
-  List<Map<String, dynamic>> _requests = [];
+  List<FinanceRequest> _requests = [];
   bool _loading = true;
 
   static const _purposes = [
@@ -2716,14 +2719,10 @@ class _FarmerFinancingTabState extends State<_FarmerFinancingTab> {
       final data = await ApiService.getFinanceRequests(farmerId: user?.id?.toString());
       if (!mounted) return;
       setState(() {
-        _requests = data.cast<Map<String, dynamic>>();
-        _requests.sort((a, b) {
-          final aDate = DateTime.tryParse((a['createdAt'] ?? '').toString()) ??
-              DateTime.fromMillisecondsSinceEpoch(0);
-          final bDate = DateTime.tryParse((b['createdAt'] ?? '').toString()) ??
-              DateTime.fromMillisecondsSinceEpoch(0);
-          return bDate.compareTo(aDate);
-        });
+        _requests = data
+            .map((e) => FinanceRequest.fromJson(e as Map<String, dynamic>))
+            .toList();
+        _requests.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         _loading = false;
       });
     } catch (_) {
@@ -2942,18 +2941,21 @@ class _FarmerFinancingTabState extends State<_FarmerFinancingTab> {
                                   if (user == null) return;
                                   setModal(() => submitting = true);
                                   try {
-                                    await ApiService.createFinanceRequest({
-                                      'farmerId': user.id,
-                                      'farmerName': user.fullName,
-                                      'farmerCity': user.city,
-                                      'farmerPhone': user.phone,
-                                      'title': titleCtrl.text.trim(),
-                                      'amount': double.parse(amountCtrl.text.trim()),
-                                      'purpose': selectedPurpose,
-                                      'description': descCtrl.text.trim(),
-                                      'status': 'pending',
-                                      'createdAt': DateTime.now().toIso8601String(),
-                                    });
+                                    final request = FinanceRequest(
+                                      farmerId: user.id.toString(),
+                                      farmerName: user.fullName,
+                                      farmerCity: user.city,
+                                      farmerPhone: user.phone,
+                                      title: titleCtrl.text.trim(),
+                                      amount:
+                                          double.parse(amountCtrl.text.trim()),
+                                      purpose: selectedPurpose,
+                                      description: descCtrl.text.trim(),
+                                      status: 'pending',
+                                      createdAt: DateTime.now(),
+                                    );
+                                    await ApiService.createFinanceRequest(
+                                        request.toJson());
                                     if (!ctx.mounted) return;
                                     Navigator.pop(ctx);
                                     await _load();
@@ -3008,12 +3010,12 @@ class _FarmerFinancingTabState extends State<_FarmerFinancingTab> {
     );
   }
 
-  Future<void> _deleteRequest(Map<String, dynamic> req) async {
+  Future<void> _deleteRequest(FinanceRequest req) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Request'),
-        content: Text('Delete "${req['title']}"? This cannot be undone.'),
+        content: Text('Delete "${req.title}"? This cannot be undone.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -3028,10 +3030,10 @@ class _FarmerFinancingTabState extends State<_FarmerFinancingTab> {
       ),
     );
     if (confirmed != true) return;
-    final id = req['id'];
+    final id = req.numericId;
     if (id == null) return;
     try {
-      await ApiService.deleteFinanceRequest(id is int ? id : int.parse(id.toString()));
+      await ApiService.deleteFinanceRequest(id);
       await _load();
       if (!mounted) return;
       ScaffoldMessenger.of(context)
@@ -3230,24 +3232,16 @@ class _FarmerFinancingTabState extends State<_FarmerFinancingTab> {
                       delegate: SliverChildBuilderDelegate(
                         (ctx, i) {
                           final req = _requests[i];
-                          final status = (req['status'] ?? 'pending').toString();
-                          final purpose = (req['purpose'] ?? 'other').toString();
+                          final status = req.status;
+                          final purpose = req.purpose;
                           final purposeColor =
                               _purposeColors[purpose] ?? widget.green;
                           final purposeIcon =
                               _purposeIcons[purpose] ?? Icons.more_horiz;
-                          final amount = req['amount'];
-                          final amountStr = amount != null
-                              ? '${(amount as num).toStringAsFixed(0)} MAD'
-                              : '—';
-                          final dateStr = req['createdAt'] != null
-                              ? DateTime.tryParse(req['createdAt'].toString())
-                                      ?.toLocal()
-                                      .toString()
-                                      .split(' ')
-                                      .first ??
-                                  ''
-                              : '';
+                          final amountStr =
+                              '${req.amount.toStringAsFixed(0)} MAD';
+                          final dateStr =
+                              req.createdAt.toLocal().toString().split(' ').first;
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
@@ -3285,7 +3279,7 @@ class _FarmerFinancingTabState extends State<_FarmerFinancingTab> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              req['title']?.toString() ?? '',
+                                              req.title,
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
@@ -3327,7 +3321,7 @@ class _FarmerFinancingTabState extends State<_FarmerFinancingTab> {
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
-                                    req['description']?.toString() ?? '',
+                                    req.description,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
@@ -3460,6 +3454,69 @@ class _FarmerProfileTabState extends State<_FarmerProfileTab> {
     return _reviews.fold(0.0, (s, r) => s + r.rating) / _reviews.length;
   }
 
+  /// Renders a 5-star row (full / half / empty) for the given [rating].
+  Widget _buildStars(double rating, {double size = 22}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (i) {
+        IconData icon;
+        if (rating >= i + 1) {
+          icon = Icons.star_rounded;
+        } else if (rating >= i + 0.5) {
+          icon = Icons.star_half_rounded;
+        } else {
+          icon = Icons.star_outline_rounded;
+        }
+        return Icon(icon, color: Colors.amber, size: size);
+      }),
+    );
+  }
+
+  /// Average-rating summary: ★★★★☆ 4.2 (12 avis)
+  Widget _buildRatingSummary() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Text(
+            _avgRating.toStringAsFixed(1),
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w900,
+              color: widget.textColor,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildStars(_avgRating),
+              const SizedBox(height: 4),
+              Text(
+                '${_reviews.length} avis',
+                style: TextStyle(color: widget.textLight, fontSize: 12),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   String _fmtDate(DateTime dt) =>
       '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
 
@@ -3539,7 +3596,7 @@ class _FarmerProfileTabState extends State<_FarmerProfileTab> {
                                     fontSize: 13),
                               ),
                               Text(
-                                ' (${_reviews.length})',
+                                ' (${_reviews.length} avis)',
                                 style: TextStyle(
                                     color: widget.textLight,
                                     fontSize: 12),
@@ -3550,6 +3607,9 @@ class _FarmerProfileTabState extends State<_FarmerProfileTab> {
                     ],
                   ),
                   const SizedBox(height: 16),
+
+                  if (!_reviewsLoading && _reviews.isNotEmpty)
+                    _buildRatingSummary(),
 
                   if (_reviewsLoading)
                     const Center(child: CircularProgressIndicator())

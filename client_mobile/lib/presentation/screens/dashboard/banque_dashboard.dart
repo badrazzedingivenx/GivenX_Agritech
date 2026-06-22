@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/payment.dart';
+import '../../../models/finance_request.dart';
 import '../../../services/api_service.dart';
 import '../../../services/session_service.dart';
 import '../../widgets/dashboard_scaffold.dart';
@@ -37,7 +38,7 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
   List<Payment> _payments = [];
   bool _loading = true;
   int? _currentUserId;
-  List<Map<String, dynamic>> _financeRequests = [];
+  List<FinanceRequest> _financeRequests = [];
   bool _financeLoading = true;
 
   int _gridColumns(BuildContext context) {
@@ -68,14 +69,10 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
       final data = await ApiService.getFinanceRequests();
       if (mounted) {
         setState(() {
-          _financeRequests = data.cast<Map<String, dynamic>>();
-          _financeRequests.sort((a, b) {
-            final aDate = DateTime.tryParse((a['createdAt'] ?? '').toString()) ??
-                DateTime.fromMillisecondsSinceEpoch(0);
-            final bDate = DateTime.tryParse((b['createdAt'] ?? '').toString()) ??
-                DateTime.fromMillisecondsSinceEpoch(0);
-            return bDate.compareTo(aDate);
-          });
+          _financeRequests = data
+              .map((e) => FinanceRequest.fromJson(e as Map<String, dynamic>))
+              .toList();
+          _financeRequests.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           _financeLoading = false;
         });
       }
@@ -105,18 +102,17 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
   // ── Finance-request based metrics ────────────────────────────────
 
   double get _portfolioValue => _financeRequests
-      .where((r) => r['status'] == 'approved')
-      .fold<double>(0, (sum, r) => sum + (r['amount'] as num? ?? 0).toDouble());
+      .where((r) => r.status == 'approved')
+      .fold<double>(0, (sum, r) => sum + r.amount);
 
   double _financeAmountInWindow(DateTime from, DateTime to) {
     return _financeRequests
-        .where((r) => r['status'] == 'approved')
+        .where((r) => r.status == 'approved')
         .where((r) {
-          final d = DateTime.tryParse(r['createdAt']?.toString() ?? '');
-          if (d == null) return false;
+          final d = r.createdAt;
           return !d.isBefore(from) && d.isBefore(to);
         })
-        .fold<double>(0, (sum, r) => sum + (r['amount'] as num? ?? 0).toDouble());
+        .fold<double>(0, (sum, r) => sum + r.amount);
   }
 
   double get _portfolioTrendPercent {
@@ -130,16 +126,16 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
   }
 
   double get _repaymentRate {
-    final approved = _financeRequests.where((r) => r['status'] == 'approved').length;
+    final approved = _financeRequests.where((r) => r.status == 'approved').length;
     final settled = _financeRequests
-        .where((r) => r['status'] == 'approved' || r['status'] == 'rejected')
+        .where((r) => r.status == 'approved' || r.status == 'rejected')
         .length;
     if (settled == 0) return 0;
     return (approved / settled) * 100;
   }
 
   int get _activeCreditCount =>
-      _financeRequests.where((r) => r['status'] == 'approved').length;
+      _financeRequests.where((r) => r.status == 'approved').length;
 
   @override
   Widget build(BuildContext context) {
@@ -248,13 +244,12 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                 : _financeRequests.isEmpty
                     ? [const Center(child: Text('No activity yet'))]
                     : _financeRequests.take(6).map((req) {
-                        final status = (req['status'] ?? 'pending').toString();
-                        final amount = (req['amount'] as num? ?? 0).toDouble();
+                        final status = req.status;
                         final statusColor = _requestStatusColor(status);
                         return _activityTile(
-                          req['farmerName']?.toString() ?? 'Farmer',
-                          req['title']?.toString() ?? '',
-                          '${amount.toStringAsFixed(0)} MAD',
+                          req.farmerName.isEmpty ? 'Farmer' : req.farmerName,
+                          req.title,
+                          '${req.amount.toStringAsFixed(0)} MAD',
                           _requestStatusLabel(status),
                           statusColor,
                         );
@@ -313,31 +308,23 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
     }
   }
 
-  void _openRequestDetail(Map<String, dynamic> req) {
+  void _openRequestDetail(FinanceRequest req) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        final status = (req['status'] ?? 'pending').toString();
-        final purpose = (req['purpose'] ?? 'other').toString();
+        final status = req.status;
+        final purpose = req.purpose;
         final purposeColor = _purposeColors[purpose] ?? _primaryGreen;
         final purposeIcon = _purposeIcons[purpose] ?? Icons.more_horiz;
-        final amount = req['amount'];
-        final amountStr =
-            amount != null ? '${(amount as num).toStringAsFixed(0)} MAD' : '—';
-        final farmerId = req['farmerId'];
-        final farmerName = req['farmerName']?.toString() ?? 'Farmer';
-        final farmerCity = req['farmerCity']?.toString() ?? '';
-        final farmerPhone = req['farmerPhone']?.toString() ?? '';
-        final dateStr = req['createdAt'] != null
-            ? DateTime.tryParse(req['createdAt'].toString())
-                    ?.toLocal()
-                    .toString()
-                    .split(' ')
-                    .first ??
-                ''
-            : '';
+        final amountStr = '${req.amount.toStringAsFixed(0)} MAD';
+        final int? farmerId = int.tryParse(req.farmerId);
+        final farmerName = req.farmerName.isEmpty ? 'Farmer' : req.farmerName;
+        final farmerCity = req.farmerCity;
+        final farmerPhone = req.farmerPhone;
+        final dateStr =
+            req.createdAt.toLocal().toString().split(' ').first;
 
         return Container(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -376,7 +363,7 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            req['title']?.toString() ?? '',
+                            req.title,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
@@ -484,7 +471,7 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  req['description']?.toString() ?? '',
+                  req.description,
                   style: TextStyle(
                       fontSize: 14, color: _textColor, height: 1.5),
                 ),
@@ -509,10 +496,10 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                         const Color(0xFF1565C0),
                         status == 'reviewing',
                         () async {
-                          final id = req['id'];
+                          final id = req.numericId;
                           if (id == null) return;
                           await ApiService.updateFinanceRequest(
-                            id is int ? id : int.parse(id.toString()),
+                            id,
                             {'status': 'reviewing'},
                           );
                           if (!ctx.mounted) return;
@@ -529,11 +516,14 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                         const Color(0xFF2E7D32),
                         status == 'approved',
                         () async {
-                          final id = req['id'];
+                          final id = req.numericId;
                           if (id == null) return;
                           await ApiService.updateFinanceRequest(
-                            id is int ? id : int.parse(id.toString()),
-                            {'status': 'approved'},
+                            id,
+                            {
+                              'status': 'approved',
+                              'reviewedBy': _currentUserId?.toString(),
+                            },
                           );
                           if (!ctx.mounted) return;
                           Navigator.pop(ctx);
@@ -549,11 +539,14 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                         Colors.red,
                         status == 'rejected',
                         () async {
-                          final id = req['id'];
+                          final id = req.numericId;
                           if (id == null) return;
                           await ApiService.updateFinanceRequest(
-                            id is int ? id : int.parse(id.toString()),
-                            {'status': 'rejected'},
+                            id,
+                            {
+                              'status': 'rejected',
+                              'reviewedBy': _currentUserId?.toString(),
+                            },
                           );
                           if (!ctx.mounted) return;
                           Navigator.pop(ctx);
@@ -576,9 +569,7 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => ChatScreen(
-                              partnerId: farmerId is int
-                                  ? farmerId
-                                  : int.parse(farmerId.toString()),
+                              partnerId: farmerId,
                               partnerName: farmerName,
                               currentUserId: _currentUserId!,
                               currentUserName: widget.bankName,
@@ -719,21 +710,21 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                         Row(
                           children: [
                             _summaryChip(
-                              '${_financeRequests.where((r) => r['status'] == 'pending').length}',
+                              '${_financeRequests.where((r) => r.status == 'pending').length}',
                               'Pending',
                               Colors.orange,
                               Icons.hourglass_empty,
                             ),
                             const SizedBox(width: 8),
                             _summaryChip(
-                              '${_financeRequests.where((r) => r['status'] == 'reviewing').length}',
+                              '${_financeRequests.where((r) => r.status == 'reviewing').length}',
                               'Reviewing',
                               const Color(0xFF1565C0),
                               Icons.visibility_outlined,
                             ),
                             const SizedBox(width: 8),
                             _summaryChip(
-                              '${_financeRequests.where((r) => r['status'] == 'approved').length}',
+                              '${_financeRequests.where((r) => r.status == 'approved').length}',
                               'Approved',
                               const Color(0xFF2E7D32),
                               Icons.check_circle_outline,
@@ -780,22 +771,17 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                       delegate: SliverChildBuilderDelegate(
                         (ctx, i) {
                           final req = _financeRequests[i];
-                          final status =
-                              (req['status'] ?? 'pending').toString();
-                          final purpose =
-                              (req['purpose'] ?? 'other').toString();
+                          final status = req.status;
+                          final purpose = req.purpose;
                           final purposeColor =
                               _purposeColors[purpose] ?? _primaryGreen;
                           final purposeIcon =
                               _purposeIcons[purpose] ?? Icons.more_horiz;
-                          final amount = req['amount'];
-                          final amountStr = amount != null
-                              ? '${(amount as num).toStringAsFixed(0)} MAD'
-                              : '—';
+                          final amountStr =
+                              '${req.amount.toStringAsFixed(0)} MAD';
                           final farmerName =
-                              req['farmerName']?.toString() ?? 'Farmer';
-                          final farmerCity =
-                              req['farmerCity']?.toString() ?? '';
+                              req.farmerName.isEmpty ? 'Farmer' : req.farmerName;
+                          final farmerCity = req.farmerCity;
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
@@ -838,7 +824,7 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                req['title']?.toString() ?? '',
+                                                req.title,
                                                 maxLines: 1,
                                                 overflow:
                                                     TextOverflow.ellipsis,
@@ -896,7 +882,7 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      req['description']?.toString() ?? '',
+                                      req.description,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
