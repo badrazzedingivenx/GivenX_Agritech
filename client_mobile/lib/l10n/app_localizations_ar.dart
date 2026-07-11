@@ -9,64 +9,64 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get registerFarmingType => 'Type of Farming';
+  String get registerFarmingType => 'نوع النشاط الزراعي';
 
   @override
-  String get registerFarmingTypeAgriculture => 'Agriculture';
+  String get registerFarmingTypeAgriculture => 'زراعة';
 
   @override
-  String get registerFarmingTypeLivestock => 'Livestock';
+  String get registerFarmingTypeLivestock => 'تربية الماشية';
 
   @override
-  String get registerFarmingTypeBoth => 'Both';
+  String get registerFarmingTypeBoth => 'كلاهما';
 
   @override
-  String get registerMainProducts => 'Main Products';
+  String get registerMainProducts => 'المنتجات الرئيسية';
 
   @override
-  String get registerProductMaize => 'Maize';
+  String get registerProductMaize => 'الذرة';
 
   @override
-  String get registerProductWheat => 'Wheat';
+  String get registerProductWheat => 'القمح';
 
   @override
-  String get registerProductRice => 'Rice';
+  String get registerProductRice => 'الأرز';
 
   @override
-  String get registerProductCattle => 'Cattle';
+  String get registerProductCattle => 'الأبقار';
 
   @override
-  String get registerProductGoats => 'Goats';
+  String get registerProductGoats => 'الماعز';
 
   @override
-  String get registerProductSheep => 'Sheep';
+  String get registerProductSheep => 'الأغنام';
 
   @override
-  String get registerProductVegetables => 'Vegetables';
+  String get registerProductVegetables => 'الخضروات';
 
   @override
-  String get registerProductFruits => 'Fruits';
+  String get registerProductFruits => 'الفواكه';
 
   @override
-  String get registerProductOther => 'Other';
+  String get registerProductOther => 'أخرى';
 
   @override
-  String get registerFieldRequired => 'Required';
+  String get registerFieldRequired => 'مطلوب';
 
   @override
-  String get registerInvalidEmail => 'Invalid email';
+  String get registerInvalidEmail => 'بريد إلكتروني غير صالح';
 
   @override
-  String get registerPasswordTooWeak => 'Password too weak';
+  String get registerPasswordTooWeak => 'كلمة المرور ضعيفة جداً';
 
   @override
-  String get registerPasswordsDoNotMatch => 'Passwords do not match';
+  String get registerPasswordsDoNotMatch => 'كلمتا المرور غير متطابقتين';
 
   @override
-  String get registerConfirmPassword => 'Confirm Password';
+  String get registerConfirmPassword => 'تأكيد كلمة المرور';
 
   @override
-  String get registerSelectAtLeastOneProduct => 'Select at least one product';
+  String get registerSelectAtLeastOneProduct => 'اختر منتجاً واحداً على الأقل';
 
   @override
   String get appTitle => 'أجري فلو';
@@ -99,10 +99,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get chooseLanguage => 'اختر اللغة';
 
   @override
-  String get skip => 'تخطي';
+  String get getStarted => 'ابدأ';
 
   @override
-  String get getStarted => 'ابدأ';
+  String get skip => 'تخطي';
 
   @override
   String get next => 'التالي';

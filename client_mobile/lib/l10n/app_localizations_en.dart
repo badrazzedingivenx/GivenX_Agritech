@@ -99,10 +99,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chooseLanguage => 'Choose Language';
 
   @override
-  String get skip => 'Skip';
+  String get getStarted => 'Get Started';
 
   @override
-  String get getStarted => 'Get Started';
+  String get skip => 'Skip';
 
   @override
   String get next => 'Next';

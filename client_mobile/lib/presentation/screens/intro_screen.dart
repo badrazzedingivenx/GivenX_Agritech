@@ -345,116 +345,184 @@ class _IntroScreenState extends State<IntroScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
       builder: (context) {
         final loc = AppLocalizations.of(context);
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+        final languages = [
+          {'code': 'en', 'name': 'English', 'native': 'English', 'flag': '🇬🇧'},
+          {'code': 'fr', 'name': 'French', 'native': 'Français', 'flag': '🇫🇷'},
+          {'code': 'ar', 'name': 'Arabic', 'native': 'العربية', 'flag': '🇸🇦'},
+          {'code': 'es', 'name': 'Spanish', 'native': 'Español', 'flag': '🇪🇸'},
+        ];
+        return Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFFFCFBF8),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag handle
+                  Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD9D6CE),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Header
+                  Row(
                     children: [
-                      const Icon(Icons.language, color: Color(0xFF2E7D32), size: 26),
-                      const SizedBox(width: 10),
-                      Text(
-                        loc?.chooseLanguage ?? 'Choose Language',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: Color(0xFF1B5E20),
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(Icons.translate_rounded,
+                            color: Color(0xFF2E7D32), size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              loc?.chooseLanguage ?? 'Choose Language',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 19,
+                                color: Color(0xFF1B5E20),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Select your preferred language',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.black.withValues(alpha: 0.45),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                const Divider(thickness: 1.2, color: Color(0xFFB2DFDB)),
-                _buildLangTile(
-                  context,
-                  langCode: 'en',
-                  title: 'English',
-                  icon: Icons.language,
-                  iconColor: const Color(0xFF1976D2),
-                  selected: currentLocale == 'en',
-                ),
-                _buildLangTile(
-                  context,
-                  langCode: 'fr',
-                  title: 'Français',
-                  icon: Icons.language,
-                  iconColor: const Color(0xFFD32F2F),
-                  selected: currentLocale == 'fr',
-                ),
-                _buildLangTile(
-                  context,
-                  langCode: 'ar',
-                  title: 'العربية',
-                  icon: Icons.language,
-                  iconColor: const Color(0xFF388E3C),
-                  selected: currentLocale == 'ar',
-                ),
-                _buildLangTile(
-                  context,
-                  langCode: 'es',
-                  title: 'Español',
-                  icon: Icons.language,
-                  iconColor: const Color(0xFFF57C00),
-                  selected: currentLocale == 'es',
-                ),
-                const SizedBox(height: 8),
-              ],
+                  const SizedBox(height: 22),
+                  // Language list
+                  ...languages.map((lang) => _buildLangTile(
+                        context,
+                        langCode: lang['code']!,
+                        title: lang['native']!,
+                        subtitle: lang['name']!,
+                        flag: lang['flag']!,
+                        selected: currentLocale == lang['code'],
+                      )),
+                ],
+              ),
             ),
           ),
         );
       },
     );
-
   }
 
   Widget _buildLangTile(BuildContext context, {
     required String langCode,
     required String title,
-    required IconData icon,
-    required Color iconColor,
+    required String subtitle,
+    required String flag,
     required bool selected,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: selected ? const Color(0xFFE8F5E9) : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        color: selected ? const Color(0xFFE8F5E9) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           onTap: () {
             LocaleController.setLocale(langCode, title);
             Navigator.pop(context);
           },
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: selected
+                    ? const Color(0xFF2E7D32)
+                    : const Color(0xFFE9E6DF),
+                width: selected ? 1.6 : 1,
+              ),
+            ),
             child: Row(
               children: [
-                Icon(icon, color: iconColor, size: 26),
-                const SizedBox(width: 16),
+                // Flag badge
+                Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3EFE7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(flag, style: const TextStyle(fontSize: 24)),
+                ),
+                const SizedBox(width: 14),
                 Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 17,
-                      color: selected ? const Color(0xFF2E7D32) : const Color(0xFF222222),
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: selected
+                              ? const Color(0xFF1B5E20)
+                              : const Color(0xFF222222),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Colors.black.withValues(alpha: 0.45),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                if (selected)
-                  const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 22),
+                // Selection indicator
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: selected ? const Color(0xFF2E7D32) : Colors.transparent,
+                    border: Border.all(
+                      color: selected
+                          ? const Color(0xFF2E7D32)
+                          : const Color(0xFFCFCBC2),
+                      width: 2,
+                    ),
+                  ),
+                  child: selected
+                      ? const Icon(Icons.check, color: Colors.white, size: 15)
+                      : null,
+                ),
               ],
             ),
           ),

@@ -228,49 +228,49 @@ abstract class AppLocalizations {
   /// No description provided for @introFarmerTitle.
   ///
   /// In en, this message translates to:
-  /// **'Farmer'**
+  /// **'Grow smarter, sell faster'**
   String get introFarmerTitle;
 
   /// No description provided for @introFarmerDesc.
   ///
   /// In en, this message translates to:
-  /// **'Publish your harvests, receive orders, and request financing.'**
+  /// **'Manage your crops, track your production, and stay in control of your farm.\nConnect with buyers, publish your products, and receive offers easily.'**
   String get introFarmerDesc;
 
   /// No description provided for @introFactoryTitle.
   ///
   /// In en, this message translates to:
-  /// **'Buyer'**
+  /// **'Buy fresh, directly from farmers'**
   String get introFactoryTitle;
 
   /// No description provided for @introFactoryDesc.
   ///
   /// In en, this message translates to:
-  /// **'Browse products, place bulk orders, and manage your supply chain.'**
+  /// **'Explore a variety of fresh products straight from the source.\nCompare offers, connect with farmers, and order with ease.'**
   String get introFactoryDesc;
 
   /// No description provided for @introTransporterTitle.
   ///
   /// In en, this message translates to:
-  /// **'Transporter'**
+  /// **'Deliver smarter, earn more'**
   String get introTransporterTitle;
 
   /// No description provided for @introTransporterDesc.
   ///
   /// In en, this message translates to:
-  /// **'View assigned deliveries, accept new missions, and optimize your routes.'**
+  /// **'Access delivery requests and plan your trips efficiently.\nReduce empty runs, optimize routes, and increase your earnings.'**
   String get introTransporterDesc;
 
   /// No description provided for @introBankTitle.
   ///
   /// In en, this message translates to:
-  /// **'Bank'**
+  /// **'Power growth with smart finance'**
   String get introBankTitle;
 
   /// No description provided for @introBankDesc.
   ///
   /// In en, this message translates to:
-  /// **'Finance agricultural projects, manage transactions, and support the ecosystem.'**
+  /// **'Support farmers with tailored financial services and secure payments.\nHelp grow the agricultural ecosystem while reaching new clients.'**
   String get introBankDesc;
 
   /// No description provided for @chooseLanguage.
@@ -279,17 +279,17 @@ abstract class AppLocalizations {
   /// **'Choose Language'**
   String get chooseLanguage;
 
-  /// No description provided for @skip.
-  ///
-  /// In en, this message translates to:
-  /// **'Skip'**
-  String get skip;
-
   /// No description provided for @getStarted.
   ///
   /// In en, this message translates to:
   /// **'Get Started'**
   String get getStarted;
+
+  /// No description provided for @skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skip;
 
   /// No description provided for @next.
   ///

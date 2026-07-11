@@ -211,9 +211,19 @@ class _TransporteurDashboardState extends State<TransporteurDashboard> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(child: _fleetCard()),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _currentIndex = 3),
+                      child: _fleetCard(),
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _nextPickupCard()),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _currentIndex = 3),
+                      child: _nextPickupCard(),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -223,24 +233,30 @@ class _TransporteurDashboardState extends State<TransporteurDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
-                    child: _statCard(
-                      'LIVE',
-                      _loading ? '...' : '${_completionRate.toStringAsFixed(0)}%',
-                      'DELIVERY COMPLETION',
-                      Icons.local_shipping,
-                      Colors.green,
-                      _loading ? 0 : (_completionRate / 100).clamp(0, 1).toDouble(),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _currentIndex = 3),
+                      child: _statCard(
+                        'LIVE',
+                        _loading ? '...' : '${_completionRate.toStringAsFixed(0)}%',
+                        'DELIVERY COMPLETION',
+                        Icons.local_shipping,
+                        Colors.green,
+                        _loading ? 0 : (_completionRate / 100).clamp(0, 1).toDouble(),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _statCard(
-                      'OPEN',
-                      _loading ? '...' : '$_pendingCount',
-                      'MY ACTIVE SHIPMENTS',
-                      Icons.timeline,
-                      Colors.pink,
-                      _loading ? 0 : _pendingRate,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _currentIndex = 3),
+                      child: _statCard(
+                        'OPEN',
+                        _loading ? '...' : '$_pendingCount',
+                        'MY ACTIVE SHIPMENTS',
+                        Icons.timeline,
+                        Colors.pink,
+                        _loading ? 0 : _pendingRate,
+                      ),
                     ),
                   ),
                 ],
@@ -1414,9 +1430,11 @@ class _MissionDetailSheetState extends State<_MissionDetailSheet> {
     super.dispose();
   }
 
+  // The contact is the buyer who published the mission, fallback to farmer.
+  int get _partnerId => widget.mission.buyerId ?? widget.mission.farmerId;
+
   Future<void> _loadContactUser() async {
-    // The contact is the buyer who published the mission, fallback to farmer
-    final contactId = widget.mission.farmerId;
+    final contactId = _partnerId;
     try {
       final data = await ApiService.getUserById(contactId);
       if (mounted) setState(() => _contactUser = data);
@@ -1426,7 +1444,7 @@ class _MissionDetailSheetState extends State<_MissionDetailSheet> {
   Future<void> _loadChatMessages() async {
     setState(() => _chatLoading = true);
     try {
-      final partnerId = widget.mission.farmerId;
+      final partnerId = _partnerId;
       final sent = await ApiService.getMessages(
         senderId: '${widget.currentUserId}',
         receiverId: '$partnerId',
@@ -1456,7 +1474,7 @@ class _MissionDetailSheetState extends State<_MissionDetailSheet> {
     final text = _msgCtrl.text.trim();
     if (text.isEmpty) return;
     _msgCtrl.clear();
-    final partnerId = widget.mission.farmerId;
+    final partnerId = _partnerId;
     final partnerName =
         _contactUser?['fullName'] as String? ?? widget.mission.farmerName;
     try {

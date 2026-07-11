@@ -57,6 +57,7 @@ enum ShipmentStatus {
 class Shipment {
   final int? id;
   final int orderId;
+  final int? buyerId;
   final int farmerId;
   final String farmerName;
   final int? transporterId;
@@ -76,6 +77,7 @@ class Shipment {
   const Shipment({
     this.id,
     required this.orderId,
+    this.buyerId,
     required this.farmerId,
     this.farmerName = '',
     this.transporterId,
@@ -97,6 +99,7 @@ class Shipment {
     return Shipment(
       id: json['id'] as int?,
       orderId: json['orderId'] as int? ?? 0,
+      buyerId: json['buyerId'] as int?,
       farmerId: ((json['farmerId'] ?? json['buyerId']) as int?) ?? 0,
       farmerName: ((json['farmerName'] ?? json['buyerName']) as String?) ?? '',
       transporterId: json['transporterId'] as int?,
@@ -127,6 +130,7 @@ class Shipment {
     return {
       if (id != null) 'id': id,
       'orderId': orderId,
+      if (buyerId != null) 'buyerId': buyerId,
       'farmerId': farmerId,
       'farmerName': farmerName,
       if (transporterId != null) 'transporterId': transporterId,
@@ -150,6 +154,7 @@ class Shipment {
   Shipment copyWith({
     int? id,
     int? orderId,
+    int? buyerId,
     int? farmerId,
     String? farmerName,
     int? transporterId,
@@ -169,6 +174,7 @@ class Shipment {
     return Shipment(
       id: id ?? this.id,
       orderId: orderId ?? this.orderId,
+      buyerId: buyerId ?? this.buyerId,
       farmerId: farmerId ?? this.farmerId,
       farmerName: farmerName ?? this.farmerName,
       transporterId: transporterId ?? this.transporterId,

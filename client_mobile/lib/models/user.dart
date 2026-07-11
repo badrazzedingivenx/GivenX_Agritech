@@ -33,6 +33,42 @@ enum UserRole {
   }
 }
 
+/// Account validation status, set/updated by the admin.
+enum UserStatus {
+  pending,
+  active,
+  blocked;
+
+  String toJson() => name;
+
+  static UserStatus fromJson(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'pending':
+        return UserStatus.pending;
+      case 'blocked':
+      case 'rejected':
+      case 'suspended':
+        return UserStatus.blocked;
+      case 'active':
+      case 'approved':
+        return UserStatus.active;
+      default:
+        return UserStatus.active;
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case UserStatus.pending:
+        return 'Pending';
+      case UserStatus.active:
+        return 'Active';
+      case UserStatus.blocked:
+        return 'Blocked';
+    }
+  }
+}
+
 /// Buyer sub-types: Restaurant or Industry.
 enum BuyerType {
   restaurant,
@@ -102,6 +138,9 @@ class User {
   final String? token;
   final bool isVerified;
 
+  // Account validation status (admin-managed)
+  final UserStatus status;
+
   const User({
     this.id,
     required this.email,
@@ -132,6 +171,7 @@ class User {
     this.profileImage,
     this.token,
     this.isVerified = false,
+    this.status = UserStatus.active,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -168,6 +208,7 @@ class User {
       profileImage: json['profileImage'] as String?,
       token: json['token'] as String?,
       isVerified: json['isVerified'] as bool? ?? false,
+      status: UserStatus.fromJson(json['status'] as String?),
     );
   }
 
@@ -202,6 +243,7 @@ class User {
       if (profileImage != null) 'profileImage': profileImage,
       if (token != null) 'token': token,
       'isVerified': isVerified,
+      'status': status.toJson(),
     };
   }
 
@@ -235,6 +277,7 @@ class User {
     String? profileImage,
     String? token,
     bool? isVerified,
+    UserStatus? status,
   }) {
     return User(
       id: id ?? this.id,
@@ -266,6 +309,7 @@ class User {
       profileImage: profileImage ?? this.profileImage,
       token: token ?? this.token,
       isVerified: isVerified ?? this.isVerified,
+      status: status ?? this.status,
     );
   }
 

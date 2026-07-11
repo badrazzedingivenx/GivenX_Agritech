@@ -1087,7 +1087,9 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
     String status,
     Color amountColor,
   ) {
-    return Container(
+    return GestureDetector(
+      onTap: () => setState(() => _currentIndex = 1),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -1172,6 +1174,7 @@ class _BanqueDashboardState extends State<BanqueDashboard> {
             ],
           ),
         ],
+      ),
       ),
     );
   }

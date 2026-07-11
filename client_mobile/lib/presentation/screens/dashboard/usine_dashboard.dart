@@ -5,7 +5,9 @@ import '../../../services/api_service.dart';
 import '../../../services/session_service.dart';
 import '../../widgets/dashboard_scaffold.dart';
 import '../../widgets/shared_profile_tab.dart';
+import '../chat/chat_screen.dart';
 import '../chat/conversations_screen.dart';
+import '../orders/buyer_orders_screen.dart';
 import '../register/orders_page.dart';
 
 // ─────────────────────────────────────────────────────────
@@ -86,6 +88,11 @@ class _UsineDashboardState extends State<UsineDashboard> {
       _currentIndex = i;
       if (i == 3) {
         _unreadMessagesCount = 0;
+      }
+      // Re-create the shipments tab each time it is opened so newly requested
+      // transports (created from the procurement orders screen) show up.
+      if (i == 1) {
+        _shipmentsVersion++;
       }
     });
     if (i != 3) {
@@ -373,7 +380,10 @@ class _HomeTabState extends State<_HomeTab> {
                     } else {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const OrdersPage()),
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              BuyerOrdersScreen(buyerType: widget.buyerType),
+                        ),
                       );
                     }
                   },
@@ -392,22 +402,29 @@ class _HomeTabState extends State<_HomeTab> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: _buildStatCard(
-                    icon: Icons.local_shipping,
-                    iconBgColor: const Color(0xFFDDF1E3),
-                    iconColor: widget.primaryGreen,
-                    value: _loading ? '...' : '$_shipmentCount',
-                    title: _isIndustry ? 'Sourcing Shipments' : 'Delivery Shipments',
-                    badge: _inTransitCount > 0 ? '$_inTransitCount in transit' : null,
+                  child: GestureDetector(
+                    onTap: () => widget.onTabChange?.call(1),
+                    child: _buildStatCard(
+                      icon: Icons.local_shipping,
+                      iconBgColor: const Color(0xFFDDF1E3),
+                      iconColor: widget.primaryGreen,
+                      value: _loading ? '...' : '$_shipmentCount',
+                      title: _isIndustry ? 'Sourcing Shipments' : 'Delivery Shipments',
+                      badge: _inTransitCount > 0 ? '$_inTransitCount in transit' : null,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
+                      // BUG 1 fix: open the dedicated buyer orders screen.
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const OrdersPage()),
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              BuyerOrdersScreen(buyerType: widget.buyerType),
+                        ),
                       );
                     },
                     child: _buildStatCard(
@@ -969,36 +986,19 @@ class _ShipmentsTabState extends State<_ShipmentsTab> {
       final buyerIdStr = widget.userId?.toString();
       final buyerType = widget.buyerType.toLowerCase();
 
-      final results = await Future.wait([
-        ApiService.getShipments(),
-        if (buyerIdStr != null)
-          ApiService.getOrders(buyerId: buyerIdStr)
-        else
-          Future.value(<dynamic>[]),
-      ]);
+      // GET /shipments?buyerId={currentUser.id} — only this buyer's shipments.
+      final rawShipments = (buyerIdStr != null
+              ? await ApiService.getShipments(buyerId: buyerIdStr)
+              : await ApiService.getShipments())
+          .cast<Map<String, dynamic>>();
 
-      final rawShipments = results[0].cast<Map<String, dynamic>>();
-      final buyerOrders = results[1].cast<dynamic>().map((e) => e as Map<String, dynamic>).where((o) {
-        final orderBuyerType = (o['buyerType'] ?? '').toString().toLowerCase();
-        return orderBuyerType == buyerType;
-      }).toList();
-
-      final orderIds = buyerOrders
-          .map((o) => (o['id'] as num?)?.toInt())
-          .whereType<int>()
-          .toSet();
-
+      // The server already scoped by buyerId; keep buyerType-consistency so a
+      // restaurant buyer never sees an industry shipment and vice-versa.
       final scopedShipments = widget.userId == null
           ? rawShipments
           : rawShipments.where((s) {
-              final shipmentBuyerId = (s['buyerId'] as num?)?.toInt();
               final shipmentBuyerType = (s['buyerType'] ?? '').toString().toLowerCase();
-              final shipmentOrderId = (s['orderId'] as num?)?.toInt();
-
-              final matchesBuyer = shipmentBuyerId != null && shipmentBuyerId == widget.userId;
-              final matchesOrder = shipmentOrderId != null && orderIds.contains(shipmentOrderId);
-              final matchesType = shipmentBuyerType.isEmpty || shipmentBuyerType == buyerType;
-              return (matchesBuyer || matchesOrder) && matchesType;
+              return shipmentBuyerType.isEmpty || shipmentBuyerType == buyerType;
             }).toList();
 
       final shipments = scopedShipments.map((s) {
@@ -1019,6 +1019,8 @@ class _ShipmentsTabState extends State<_ShipmentsTab> {
           'statusText': colors['text'],
           'icon': _statusIcon(status),
           'rawStatus': status,
+          'transporterId': (s['transporterId'] as num?)?.toInt(),
+          'transporterName': s['transporterName']?.toString() ?? '',
         };
       }).toList();
       if (mounted) setState(() { _shipmentData = shipments; _loading = false; });
@@ -1090,7 +1092,11 @@ class _ShipmentsTabState extends State<_ShipmentsTab> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return RefreshIndicator(
+      color: widget.primaryGreen,
+      onRefresh: _loadShipments,
+      child: SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1228,6 +1234,7 @@ class _ShipmentsTabState extends State<_ShipmentsTab> {
           const SizedBox(height: 30),
         ],
       ),
+      ),
     );
   }
 
@@ -1359,6 +1366,7 @@ class _ShipmentsTabState extends State<_ShipmentsTab> {
                 _infoItem('ETA', s['date'] as String),
               ],
             ),
+            if (s['transporterId'] != null) _buildTransporterBanner(s),
             if (isExpanded) ...[
               const SizedBox(height: 20),
               const Divider(height: 1),
@@ -1389,6 +1397,104 @@ class _ShipmentsTabState extends State<_ShipmentsTab> {
                 color: widget.textLight,
                 size: 20),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Shown once a transporter has accepted the request, giving the buyer a
+  // direct line to that transporter.
+  Widget _buildTransporterBanner(Map<String, dynamic> s) {
+    final transporterId = s['transporterId'] as int;
+    final transporterName = (s['transporterName'] as String?) ?? '';
+    final rawStatus = (s['rawStatus'] as String?) ?? '';
+
+    String headline;
+    switch (rawStatus) {
+      case 'inTransit':
+        headline = 'In transit with your transporter';
+        break;
+      case 'pickedUp':
+        headline = 'Picked up by your transporter';
+        break;
+      case 'delivered':
+        headline = 'Delivered by your transporter';
+        break;
+      default:
+        headline = 'Accepted by a transporter';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8F5E9),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.check_circle, color: widget.primaryGreen, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(headline,
+                          style: TextStyle(
+                              color: widget.primaryGreen,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800)),
+                      if (transporterName.isNotEmpty)
+                        Text(transporterName,
+                            style: TextStyle(
+                                color: widget.textLight, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () =>
+                    _openTransporterChat(transporterId, transporterName),
+                icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                label: const Text('Talk to the transporter',
+                    style:
+                        TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: widget.primaryGreen,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openTransporterChat(
+      int transporterId, String transporterName) async {
+    final user = await SessionService.getUser();
+    if (user == null || user.id == null || !mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(
+          partnerId: transporterId,
+          partnerName: transporterName.isNotEmpty ? transporterName : 'Transporter',
+          currentUserId: user.id!,
+          currentUserName: user.fullName,
         ),
       ),
     );
@@ -2990,6 +3096,36 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
   }
 
   void _handleOrder(Map<String, dynamic> product) async {
+    final availableQty = (product['quantity'] as num?)?.toInt() ?? 0;
+    if (availableQty <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This product is out of stock.')),
+      );
+      return;
+    }
+
+    // Let the buyer pick how much they want — a restaurant / industry rarely
+    // orders just 1 unit.
+    final quantity = await showModalBottomSheet<double>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _QuantityPickerSheet(
+        productName: (product['name'] ?? '').toString(),
+        unit: (product['unit'] ?? 'Kg').toString(),
+        unitPrice: ((product['priceValue'] ?? product['price'] ?? 0) as num).toDouble(),
+        maxQuantity: availableQty,
+        primaryGreen: widget.primaryGreen,
+        textColor: widget.textColor,
+        textLight: widget.textLight,
+      ),
+    );
+
+    if (quantity == null || quantity <= 0) return; // cancelled
+    await _placeOrder(product, quantity);
+  }
+
+  Future<void> _placeOrder(Map<String, dynamic> product, double quantity) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -3022,6 +3158,9 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
         return;
       }
 
+      final unitPrice =
+          ((product['priceValue'] ?? product['price'] ?? 0) as num).toDouble();
+
       final created = await ApiService.createOrder({
         'buyerId': user.id,
         'buyerName': user.fullName,
@@ -3032,12 +3171,12 @@ class _MarketplaceTabState extends State<_MarketplaceTab> {
           {
             'productId': product['id'],
             'productName': product['name'],
-            'unitPrice': product['priceValue'] ?? product['price'],
-            'quantity': 1,
+            'unitPrice': unitPrice,
+            'quantity': quantity,
             'unit': product['unit'] ?? 'Kg',
           }
         ],
-        'totalAmount': (product['priceValue'] ?? product['price'] ?? 0) as num,
+        'totalAmount': unitPrice * quantity,
         'status': 'pending',
         'createdAt': DateTime.now().toIso8601String(),
       });
@@ -3675,6 +3814,212 @@ class _CreateShipmentSheetState extends State<_CreateShipmentSheet> {
           border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
         ),
         child: Icon(icon, size: 16, color: widget.textColor),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+//  QUANTITY PICKER (Order Now)
+// ─────────────────────────────────────────────────────────
+class _QuantityPickerSheet extends StatefulWidget {
+  final String productName;
+  final String unit;
+  final double unitPrice;
+  final int maxQuantity;
+  final Color primaryGreen;
+  final Color textColor;
+  final Color textLight;
+
+  const _QuantityPickerSheet({
+    required this.productName,
+    required this.unit,
+    required this.unitPrice,
+    required this.maxQuantity,
+    required this.primaryGreen,
+    required this.textColor,
+    required this.textLight,
+  });
+
+  @override
+  State<_QuantityPickerSheet> createState() => _QuantityPickerSheetState();
+}
+
+class _QuantityPickerSheetState extends State<_QuantityPickerSheet> {
+  late final TextEditingController _qtyCtrl;
+  int _quantity = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _qtyCtrl = TextEditingController(text: '$_quantity');
+  }
+
+  @override
+  void dispose() {
+    _qtyCtrl.dispose();
+    super.dispose();
+  }
+
+  void _setQuantity(int value) {
+    final clamped = value.clamp(1, widget.maxQuantity);
+    setState(() => _quantity = clamped);
+    final text = '$clamped';
+    if (_qtyCtrl.text != text) {
+      _qtyCtrl.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = widget.unitPrice * _quantity;
+    final quickValues = [5, 10, 25, 50, 100]
+        .where((v) => v <= widget.maxQuantity)
+        .toList();
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+          24, 12, 24, 24 + MediaQuery.of(context).viewInsets.bottom),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text('Select Quantity',
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: widget.textColor)),
+          const SizedBox(height: 4),
+          Text(widget.productName,
+              style: TextStyle(fontSize: 14, color: widget.textLight)),
+          const SizedBox(height: 6),
+          Text(
+            '${widget.unitPrice.toStringAsFixed(2)} MAD / ${widget.unit}  •  ${widget.maxQuantity} ${widget.unit} available',
+            style: TextStyle(
+                fontSize: 12,
+                color: widget.primaryGreen,
+                fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 24),
+          // Stepper + manual entry
+          Row(
+            children: [
+              _stepperButton(
+                  icon: Icons.remove, onTap: () => _setQuantity(_quantity - 1)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FBF9),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+                  ),
+                  child: TextField(
+                    controller: _qtyCtrl,
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: widget.textColor),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      suffixText: widget.unit,
+                      suffixStyle:
+                          TextStyle(color: widget.textLight, fontSize: 13),
+                    ),
+                    onChanged: (v) {
+                      final parsed = int.tryParse(v.trim());
+                      if (parsed != null) _setQuantity(parsed);
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              _stepperButton(
+                  icon: Icons.add, onTap: () => _setQuantity(_quantity + 1)),
+            ],
+          ),
+          if (quickValues.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              children: quickValues
+                  .map((v) => ActionChip(
+                        label: Text('$v'),
+                        backgroundColor: const Color(0xFFF1F4F1),
+                        labelStyle: TextStyle(
+                            color: widget.textColor,
+                            fontWeight: FontWeight.w600),
+                        onPressed: () => _setQuantity(v),
+                      ))
+                  .toList(),
+            ),
+          ],
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Total',
+                  style: TextStyle(color: widget.textLight, fontSize: 14)),
+              Text('${total.toStringAsFixed(2)} MAD',
+                  style: TextStyle(
+                      color: widget.textColor,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context, _quantity.toDouble()),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: widget.primaryGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18)),
+              ),
+              child: const Text('Confirm Order',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepperButton({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: widget.primaryGreen.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(icon, color: widget.primaryGreen),
       ),
     );
   }

@@ -166,11 +166,12 @@ class ApiService {
 
   // ─── Shipments ─────────────────────────────────────────
 
-  static Future<List<dynamic>> getShipments({String? transporterId, String? orderId}) async {
+  static Future<List<dynamic>> getShipments({String? transporterId, String? orderId, String? buyerId}) async {
     String url = ApiConstants.shipments;
     final params = <String>[];
     if (transporterId != null) params.add('transporterId=$transporterId');
     if (orderId != null) params.add('orderId=$orderId');
+    if (buyerId != null) params.add('buyerId=$buyerId');
     if (params.isNotEmpty) url += '?${params.join('&')}';
     return _getList(url);
   }

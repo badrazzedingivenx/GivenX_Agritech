@@ -6,6 +6,10 @@ import '../../../services/api_service.dart';
 import '../../../services/session_service.dart';
 import '../../widgets/dashboard_scaffold.dart';
 import '../login_screen.dart';
+import '../admin/admin_users_screen.dart';
+import '../admin/admin_statistics_screen.dart';
+import '../admin/admin_orders_screen.dart';
+import '../admin/admin_finance_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -161,9 +165,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(child: _statCard('Total Users', '$_userCount', Icons.people_outline, const Color(0xFF1565C0))),
+                    Expanded(child: _statCard('Total Users', '$_userCount', Icons.people_outline, const Color(0xFF1565C0), onTap: () => setState(() => _currentIndex = 1))),
                     const SizedBox(width: 12),
-                    Expanded(child: _statCard('Products', '$_productCount', Icons.inventory_2_outlined, _primaryGreen)),
+                    Expanded(child: _statCard('Products', '$_productCount', Icons.inventory_2_outlined, _primaryGreen, onTap: () => setState(() => _currentIndex = 2))),
                   ],
                 ),
               ),
@@ -172,9 +176,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(child: _statCard('Orders', '$_orderCount', Icons.receipt_long_outlined, const Color(0xFFE65100))),
+                    Expanded(child: _statCard('Orders', '$_orderCount', Icons.receipt_long_outlined, const Color(0xFFE65100), onTap: () => setState(() => _currentIndex = 3))),
                     const SizedBox(width: 12),
-                    Expanded(child: _statCard('Revenue', '${_totalRevenue.toStringAsFixed(0)} MAD', Icons.account_balance_wallet_outlined, const Color(0xFF6A1B9A))),
+                    Expanded(child: _statCard('Revenue', '${_totalRevenue.toStringAsFixed(0)} MAD', Icons.account_balance_wallet_outlined, const Color(0xFF6A1B9A), onTap: () => setState(() => _currentIndex = 3))),
                   ],
                 ),
               ),
@@ -200,6 +204,40 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Expanded(child: _miniStat('Cancelled', cancelledOrders, Colors.red)),
             ]),
             const SizedBox(height: 28),
+            _sectionLabel('Management'),
+            const SizedBox(height: 12),
+            _managementTile(
+              'User Validation',
+              'Approve, reject and filter accounts',
+              Icons.how_to_reg_outlined,
+              const Color(0xFF1565C0),
+              () => _openScreen(const AdminUsersScreen()),
+            ),
+            const SizedBox(height: 10),
+            _managementTile(
+              'Statistics',
+              'Platform-wide KPIs and activity',
+              Icons.bar_chart_outlined,
+              const Color(0xFF6A1B9A),
+              () => _openScreen(const AdminStatisticsScreen()),
+            ),
+            const SizedBox(height: 10),
+            _managementTile(
+              'Orders Supervision',
+              'Monitor and override every order',
+              Icons.receipt_long_outlined,
+              const Color(0xFFE65100),
+              () => _openScreen(const AdminOrdersScreen()),
+            ),
+            const SizedBox(height: 10),
+            _managementTile(
+              'Finance Requests',
+              'Overview of all financing requests',
+              Icons.request_quote_outlined,
+              _primaryGreen,
+              () => _openScreen(const AdminFinanceScreen()),
+            ),
+            const SizedBox(height: 28),
             _sectionLabel('Recent Orders'),
             const SizedBox(height: 12),
             ..._orders.take(5).map(_orderTile),
@@ -210,8 +248,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _statCard(String title, String value, IconData icon, Color accent) {
-    return Container(
+  Widget _statCard(String title, String value, IconData icon, Color accent,
+      {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -237,6 +279,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
               style: TextStyle(color: _textLight, fontSize: 12)),
         ],
+      ),
       ),
     );
   }
@@ -281,6 +324,43 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _sectionLabel(String text) {
     return Text(text, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _textColor));
+  }
+
+  Future<void> _openScreen(Widget screen) async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+    if (mounted) _loadAll();
+  }
+
+  Widget _managementTile(
+      String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Row(children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(14)),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: _textColor)),
+              const SizedBox(height: 2),
+              Text(subtitle, style: TextStyle(fontSize: 12, color: _textLight)),
+            ]),
+          ),
+          Icon(Icons.chevron_right, color: _textLight),
+        ]),
+      ),
+    );
   }
 
   Widget _buildUsersTab() {

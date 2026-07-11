@@ -739,6 +739,7 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
                     subLabel: null,
                     color: Colors.green.shade50,
                     valueColor: Colors.green,
+                    onTap: () => _onTabSelected(1),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -754,6 +755,7 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
                         : '${_orders.where((o) => o.status == OrderStatus.pending).length} pending',
                     color: Colors.pink.shade50,
                     valueColor: Colors.pink,
+                    onTap: () => _onTabSelected(2),
                   ),
                 ),
               ],
@@ -1102,8 +1104,12 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
     String? subLabel,
     required Color color,
     required Color valueColor,
+    VoidCallback? onTap,
   }) {
-    return Container(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1167,6 +1173,7 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
             style: TextStyle(color: _textLight, fontSize: 12),
           ),
         ],
+      ),
       ),
     );
   }
